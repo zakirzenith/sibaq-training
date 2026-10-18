@@ -818,8 +818,51 @@ class StateService {
       return { success: false, error: 'Incorrect password. Please verify credentials.' };
     }
 
+    localStorage.setItem('mentorflow_auth_role', 'trainer');
+    localStorage.setItem('mentorflow_active_portal', 'trainer');
     this.setActiveTrainer(trainer.id);
     return { success: true, trainer };
+  }
+
+  // --- CONTROLLER AUTHENTICATION ---
+  authenticateController(username, password) {
+    const u = String(username || '').trim().toLowerCase();
+    const p = String(password || '').trim();
+
+    if (!u || !p) {
+      return { success: false, error: 'Please enter both username and password.' };
+    }
+
+    if (u === 'sibaq' && p === 'champion2023') {
+      localStorage.setItem('mentorflow_auth_role', 'controller');
+      localStorage.setItem('mentorflow_controller_user', 'sibaq');
+      localStorage.setItem('mentorflow_active_portal', 'controller');
+      this.clearActiveTrainer();
+      return { success: true };
+    }
+
+    return { success: false, error: 'Incorrect username or password. Please verify controller credentials.' };
+  }
+
+  getAuthSession() {
+    const role = localStorage.getItem('mentorflow_auth_role');
+    if (role === 'controller') {
+      return { role: 'controller', user: 'sibaq' };
+    }
+    if (role === 'trainer') {
+      const trainer = this.getActiveTrainer();
+      if (trainer) {
+        return { role: 'trainer', trainer };
+      }
+    }
+    return null;
+  }
+
+  logout() {
+    localStorage.removeItem('mentorflow_auth_role');
+    localStorage.removeItem('mentorflow_controller_user');
+    this.clearActiveTrainer();
+    localStorage.removeItem('mentorflow_active_portal');
   }
 
   getActiveTrainer() {

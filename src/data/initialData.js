@@ -15,6 +15,8 @@ export const SAMPLE_DEMO_TRAINERS = [
     name: 'Dr. Marcus Vance',
     expertise: 'Classical Performing Arts & Stage Presence',
     experience: '12 Years',
+    username: 'marcus',
+    password: 'champion2023',
     status: 'Active',
     color: '#8b5cf6',
     createdAt: '2026-09-01T10:00:00.000Z'
@@ -24,6 +26,8 @@ export const SAMPLE_DEMO_TRAINERS = [
     name: 'Elena Rostova',
     expertise: 'Elocution, Debate & Public Oratory',
     experience: '9 Years',
+    username: 'elena',
+    password: 'champion2023',
     status: 'Active',
     color: '#06b6d4',
     createdAt: '2026-09-02T11:30:00.000Z'
@@ -33,6 +37,8 @@ export const SAMPLE_DEMO_TRAINERS = [
     name: 'Sarah Jenkins',
     expertise: 'Choral Music, Vocal Acoustics & Symphony',
     experience: '7 Years',
+    username: 'sarah',
+    password: 'champion2023',
     status: 'Active',
     color: '#ec4899',
     createdAt: '2026-09-05T09:15:00.000Z'

@@ -2,6 +2,7 @@ import { state } from './services/state.js';
 import { firebaseService } from './services/firebase.js';
 import { toast } from './components/toast.js';
 import { getIcon } from './components/icons.js';
+import { renderLoginView } from './components/loginView.js';
 import { renderDashboardView } from './components/dashboardView.js';
 import { renderCandidatesView } from './components/candidatesView.js';
 import { renderProgramsView } from './components/programsView.js';
@@ -26,20 +27,30 @@ class App {
 
     this.mainContent = document.getElementById('mainContent');
 
-    // Check active portal and active trainer
-    const activeTrainer = state.getActiveTrainer();
-    const savedPortal = localStorage.getItem('mentorflow_active_portal');
-    if (activeTrainer && savedPortal === 'trainer') {
-      this.currentPortal = 'trainer';
-      this.currentView = 'trainer-dashboard';
+    // 1. Session & Authentication Verification
+    const session = state.getAuthSession();
+    if (!session) {
+      this.isAuthenticated = false;
+      this.currentPortal = 'login';
+      this.currentView = 'login';
+      this.loginDefaultRole = 'controller';
+      document.body.classList.add('auth-mode');
     } else {
-      this.currentPortal = 'controller';
-      this.currentView = 'dashboard';
+      this.isAuthenticated = true;
+      document.body.classList.remove('auth-mode');
+      if (session.role === 'trainer') {
+        this.currentPortal = 'trainer';
+        this.currentView = 'trainer-dashboard';
+      } else {
+        this.currentPortal = 'controller';
+        this.currentView = 'dashboard';
+      }
     }
 
     this.initTheme();
     this.initPortalTriggers();
     this.initNavigation();
+    this.initAuthActions();
     this.initDataActions();
     this.initCloudDatabaseSync();
     this.initSidebarShortcuts();
@@ -65,7 +76,7 @@ class App {
       const isTyping = document.activeElement && 
         (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA');
 
-      if (!activeModal && !isTyping && this.currentView !== 'programs') {
+      if (this.isAuthenticated && !activeModal && !isTyping && this.currentView !== 'programs' && this.currentView !== 'login') {
         this.render();
       }
     });
@@ -79,26 +90,85 @@ class App {
     localStorage.setItem('mentorflow_theme', 'light');
   }
 
-  switchPortal(portalType, trainer = null) {
-    this.currentPortal = portalType;
-    localStorage.setItem('mentorflow_active_portal', portalType);
+  initAuthActions() {
+    const btnLogout = document.getElementById('btnTopLogout');
+    if (btnLogout) {
+      btnLogout.onclick = () => {
+        this.logout();
+      };
+    }
 
-    if (portalType === 'trainer') {
-      if (trainer) {
-        state.setActiveTrainer(trainer.id);
+    document.querySelectorAll('[data-action="logout"]').forEach(el => {
+      el.onclick = () => {
+        this.logout();
+      };
+    });
+  }
+
+  logout() {
+    state.logout();
+    this.isAuthenticated = false;
+    this.currentPortal = 'login';
+    this.currentView = 'login';
+    this.loginDefaultRole = 'controller';
+    document.body.classList.add('auth-mode');
+    toast.info('You have been signed out.');
+    this.render();
+  }
+
+  handleLoginSuccess(role, data) {
+    this.isAuthenticated = true;
+    document.body.classList.remove('auth-mode');
+
+    if (role === 'trainer') {
+      this.currentPortal = 'trainer';
+      localStorage.setItem('mentorflow_active_portal', 'trainer');
+      if (data && data.id) {
+        state.setActiveTrainer(data.id);
       }
-      this.currentView = 'trainer-dashboard';
       this.updatePortalUI();
       this.navigateTo('trainer-dashboard');
     } else {
-      state.clearActiveTrainer();
-      this.currentView = 'trainers';
+      this.currentPortal = 'controller';
+      localStorage.setItem('mentorflow_active_portal', 'controller');
       this.updatePortalUI();
-      this.navigateTo('trainers');
+      this.navigateTo('dashboard');
+    }
+  }
+
+  switchPortal(portalType, trainer = null) {
+    if (portalType === 'trainer') {
+      this.currentPortal = 'trainer';
+      localStorage.setItem('mentorflow_active_portal', 'trainer');
+      if (trainer) {
+        state.setActiveTrainer(trainer.id);
+      }
+      this.updatePortalUI();
+      this.navigateTo('trainer-dashboard');
+    } else {
+      const session = state.getAuthSession();
+      if (session && session.role === 'controller') {
+        this.currentPortal = 'controller';
+        localStorage.setItem('mentorflow_active_portal', 'controller');
+        state.clearActiveTrainer();
+        this.updatePortalUI();
+        this.navigateTo('dashboard');
+      } else {
+        // Not authenticated as controller -> redirect to login with controller tab
+        this.loginDefaultRole = 'controller';
+        this.logout();
+      }
     }
   }
 
   updatePortalUI() {
+    if (!this.isAuthenticated) {
+      document.body.classList.add('auth-mode');
+      return;
+    }
+
+    document.body.classList.remove('auth-mode');
+
     const isTrainer = this.currentPortal === 'trainer';
     const activeTrainer = state.getActiveTrainer();
 
@@ -106,9 +176,14 @@ class App {
     const statusCapsule = document.querySelector('.topbar-status-capsule');
     const userPill = document.querySelector('.saas-user-pill');
     const btnTopTrainer = document.getElementById('btnTopTrainerPortal');
+    const btnTopLogout = document.getElementById('btnTopLogout');
     const sidebarNav = document.querySelector('.sidebar-nav');
     const sidebarFooter = document.querySelector('.sidebar-footer');
     const mobileNav = document.getElementById('mobileNavBar');
+
+    if (btnTopLogout) {
+      btnTopLogout.style.display = 'inline-flex';
+    }
 
     if (isTrainer && activeTrainer) {
       if (brandSubtitle) brandSubtitle.textContent = 'Trainer Portal';
@@ -153,6 +228,10 @@ class App {
             <span class="nav-item-icon">${getIcon('logout')}</span>
             <span>Exit to Controller</span>
           </a>
+          <a class="nav-item" data-action="logout" style="cursor: pointer; color: #ef4444;">
+            <span class="nav-item-icon">${getIcon('logout')}</span>
+            <span>Sign Out</span>
+          </a>
         `;
       }
 
@@ -184,9 +263,9 @@ class App {
             ${getIcon('calendar')}
             <span>Daily Progress</span>
           </button>
-          <button class="mobile-nav-btn" data-action="exit-portal">
+          <button class="mobile-nav-btn" data-action="logout">
             ${getIcon('logout')}
-            <span>Exit</span>
+            <span>Sign Out</span>
           </button>
         `;
       }
@@ -231,6 +310,7 @@ class App {
     // Re-bind listeners
     this.initNavigation();
     this.initPortalTriggers();
+    this.initAuthActions();
     this.initSidebarShortcuts();
     this.updateBadges();
   }
@@ -282,6 +362,12 @@ class App {
   }
 
   navigateTo(viewName) {
+    if (!this.isAuthenticated) {
+      this.currentView = 'login';
+      this.render();
+      return;
+    }
+
     this.currentView = viewName;
 
     // Update active nav items (Desktop sidebar + Mobile bottom nav)
@@ -520,6 +606,19 @@ class App {
 
   render() {
     this.mainContent.innerHTML = '';
+
+    // If not authenticated, render Official Login Page
+    if (!this.isAuthenticated || this.currentView === 'login') {
+      document.body.classList.add('auth-mode');
+      renderLoginView(
+        this.mainContent,
+        (role, data) => this.handleLoginSuccess(role, data),
+        { defaultRole: this.loginDefaultRole || 'controller' }
+      );
+      return;
+    }
+
+    document.body.classList.remove('auth-mode');
     const navigate = (view) => this.navigateTo(view);
 
     switch (this.currentView) {

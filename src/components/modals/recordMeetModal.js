@@ -16,7 +16,40 @@ export function openRecordMeetModal({ candidateId, programId = null, trainerId =
   const todayStr = new Date().toISOString().split('T')[0];
   const targetDate = dateStr || todayStr;
 
-  const candidatePrograms = state.getCandidatePrograms(candidate.id);
+  const session = state.getAuthSession();
+  const isTrainer = session && session.role === 'trainer';
+  const activeTrainer = isTrainer ? session.trainer : null;
+
+  const allCandidatePrograms = state.getCandidatePrograms(candidate.id);
+  let candidatePrograms = allCandidatePrograms;
+  let otherTrainerPrograms = [];
+
+  // Security check: restrict candidate programs strictly to this trainer's assigned programs
+  if (isTrainer && activeTrainer) {
+    const allowedPrograms = allCandidatePrograms.filter(
+      p => String(p.trainerId || '').trim() === String(activeTrainer.id).trim()
+    );
+
+    if (allowedPrograms.length === 0) {
+      toast.error(`You have no assigned programs for ${candidate.name}. Evaluation is restricted to assigned mentors.`);
+      return;
+    }
+
+    // If a specific program was requested, verify it belongs to this trainer
+    if (programId) {
+      const requestedProg = state.getProgramById(programId);
+      if (requestedProg && String(requestedProg.trainerId || '').trim() !== String(activeTrainer.id).trim()) {
+        toast.error(`Access Denied: [${requestedProg.code}] is assigned to another mentor. You can only evaluate programs assigned to you.`);
+        return;
+      }
+    }
+
+    candidatePrograms = allowedPrograms;
+    otherTrainerPrograms = allCandidatePrograms.filter(
+      p => String(p.trainerId || '').trim() !== String(activeTrainer.id).trim()
+    );
+  }
+
   let selectedProgramId = programId || (candidatePrograms[0] ? candidatePrograms[0].id : null);
   
   const getProgramTrainer = (pid) => {
@@ -24,7 +57,10 @@ export function openRecordMeetModal({ candidateId, programId = null, trainerId =
     return prg && prg.trainerId ? state.getTrainerById(prg.trainerId) : null;
   };
 
-  let selectedTrainerId = trainerId || (selectedProgramId ? (getProgramTrainer(selectedProgramId)?.id || null) : null);
+  let selectedTrainerId = isTrainer && activeTrainer 
+    ? activeTrainer.id 
+    : (trainerId || (selectedProgramId ? (getProgramTrainer(selectedProgramId)?.id || null) : null));
+
   if (!selectedTrainerId && state.getTrainers().length > 0) {
     selectedTrainerId = state.getTrainers()[0].id;
   }
@@ -99,6 +135,12 @@ export function openRecordMeetModal({ candidateId, programId = null, trainerId =
                 `;
               }).join('')}
             </select>
+            ${isTrainer && otherTrainerPrograms.length > 0 ? `
+              <div style="font-size: 11px; color: #64748b; margin-top: 4px; display: flex; align-items: center; gap: 4px;">
+                <span>${getIcon('info')}</span>
+                <span>Other programs (${otherTrainerPrograms.map(op => op.code).join(', ')}) are mentored by other trainers (read-only).</span>
+              </div>
+            ` : ''}
           </div>
 
           <div class="smm-select-col">
@@ -106,17 +148,29 @@ export function openRecordMeetModal({ candidateId, programId = null, trainerId =
               ${getIcon('trainers')} Evaluating Trainer
             </label>
             <input type="hidden" id="meetTrainerSelect" value="${selectedTrainerId || ''}" />
-            <button type="button" id="btnChooseMeetTrainer" class="form-trainer-picker-trigger smm-select" title="Click to choose evaluating trainer">
-              <span class="ftpt-icon">${getIcon('trainers')}</span>
-              <span class="ftpt-text" id="lblMeetTrainerText">
-                ${
-                  selectedTrainerId && state.getTrainerById(selectedTrainerId)
-                    ? `${state.getTrainerById(selectedTrainerId).name} (${state.getTrainerById(selectedTrainerId).expertise})`
-                    : '-- Choose Trainer --'
-                }
-              </span>
-              <span class="ftpt-chevron">${getIcon('chevronDown')}</span>
-            </button>
+            ${isTrainer && activeTrainer ? `
+              <button type="button" id="btnChooseMeetTrainer" class="form-trainer-picker-trigger smm-select" style="cursor: not-allowed; background: #f8fafc; border-color: #cbd5e1; opacity: 0.95;" title="Evaluating trainer is locked to your account (${activeTrainer.name})" disabled>
+                <span class="ftpt-icon">${getIcon('trainers')}</span>
+                <span class="ftpt-text" id="lblMeetTrainerText">
+                  <strong>${activeTrainer.name}</strong> (You)
+                </span>
+                <span class="ftpt-badge badge-neutral-xs" style="margin-left: auto; font-size: 10px; font-weight: 700; color: #4338ca; background: #e0e7ff; padding: 2px 7px; border-radius: 99px; display: inline-flex; align-items: center; gap: 3px;">
+                  ${getIcon('lock')} Locked
+                </span>
+              </button>
+            ` : `
+              <button type="button" id="btnChooseMeetTrainer" class="form-trainer-picker-trigger smm-select" title="Click to choose evaluating trainer">
+                <span class="ftpt-icon">${getIcon('trainers')}</span>
+                <span class="ftpt-text" id="lblMeetTrainerText">
+                  ${
+                    selectedTrainerId && state.getTrainerById(selectedTrainerId)
+                      ? `${state.getTrainerById(selectedTrainerId).name} (${state.getTrainerById(selectedTrainerId).expertise})`
+                      : '-- Choose Trainer --'
+                  }
+                </span>
+                <span class="ftpt-chevron">${getIcon('chevronDown')}</span>
+              </button>
+            `}
           </div>
         </div>
 
@@ -304,33 +358,37 @@ export function openRecordMeetModal({ candidateId, programId = null, trainerId =
   progSelect.addEventListener('change', (e) => {
     const pid = e.target.value;
     updateProgramContextMeta(pid);
-    const trn = getProgramTrainer(pid);
-    if (trn) {
-      trnSelect.value = trn.id;
-      if (lblMeetTrainerText) lblMeetTrainerText.textContent = `${trn.name} (${trn.expertise})`;
+    if (!isTrainer) {
+      const trn = getProgramTrainer(pid);
+      if (trn) {
+        trnSelect.value = trn.id;
+        if (lblMeetTrainerText) lblMeetTrainerText.textContent = `${trn.name} (${trn.expertise})`;
+      }
     }
   });
 
   // Initial status sync
   updateProgramContextMeta(selectedProgramId);
 
-  // Searchable Trainer Picker Trigger
-  overlay.querySelector('#btnChooseMeetTrainer')?.addEventListener('click', () => {
-    openTrainerPickerModal({
-      currentTrainerId: trnSelect.value,
-      title: 'Select Evaluating Trainer',
-      subtitle: `Evaluating session for ${candidate.name}`,
-      onSelect: (t) => {
-        if (t) {
-          trnSelect.value = t.id;
-          if (lblMeetTrainerText) lblMeetTrainerText.textContent = `${t.name} (${t.expertise})`;
-        } else {
-          trnSelect.value = '';
-          if (lblMeetTrainerText) lblMeetTrainerText.textContent = '-- Choose Trainer --';
+  // Searchable Trainer Picker Trigger (Only available for Controller accounts)
+  if (!isTrainer) {
+    overlay.querySelector('#btnChooseMeetTrainer')?.addEventListener('click', () => {
+      openTrainerPickerModal({
+        currentTrainerId: trnSelect.value,
+        title: 'Select Evaluating Trainer',
+        subtitle: `Evaluating session for ${candidate.name}`,
+        onSelect: (t) => {
+          if (t) {
+            trnSelect.value = t.id;
+            if (lblMeetTrainerText) lblMeetTrainerText.textContent = `${t.name} (${t.expertise})`;
+          } else {
+            trnSelect.value = '';
+            if (lblMeetTrainerText) lblMeetTrainerText.textContent = '-- Choose Trainer --';
+          }
         }
-      }
+      });
     });
-  });
+  }
 
   // Calculate SVG curve and update visuals based on percentage
   function updateGraphVisuals(pct) {
@@ -464,19 +522,23 @@ export function openRecordMeetModal({ candidateId, programId = null, trainerId =
     }
 
     const finalProgramId = progSelect.value || null;
-    const finalTrainerId = trnSelect.value || null;
+    const finalTrainerId = isTrainer && activeTrainer ? activeTrainer.id : (trnSelect.value || null);
 
-    const recorded = state.recordDailyMeet({
-      candidateId: candidate.id,
-      trainerId: finalTrainerId,
-      programId: finalProgramId,
-      percentage: currentPercentage,
-      remark: remark,
-      dateStr: targetDate
-    });
+    try {
+      const recorded = state.recordDailyMeet({
+        candidateId: candidate.id,
+        trainerId: finalTrainerId,
+        programId: finalProgramId,
+        percentage: currentPercentage,
+        remark: remark,
+        dateStr: targetDate
+      });
 
-    toast.success(`Logged Meet #${recorded.meetNumber} for ${candidate.name}: ${recorded.percentage}% (${recorded.status})`);
-    close();
-    onSave();
+      toast.success(`Logged Meet #${recorded.meetNumber} for ${candidate.name}: ${recorded.percentage}% (${recorded.status})`);
+      close();
+      onSave();
+    } catch (err) {
+      toast.error(err.message || 'Failed to record meet.');
+    }
   });
 }

@@ -27,6 +27,10 @@ export function openCandidateProfileModal({ candidateId, onUpdate = () => {} }) 
   });
   const uniqueTrainers = Array.from(trainersMap.values());
 
+  const session = state.getAuthSession();
+  const isTrainer = session && session.role === 'trainer';
+  const activeTrainer = isTrainer ? session.trainer : null;
+
   const overlay = document.createElement('div');
   overlay.className = 'modal-backdrop';
 
@@ -103,6 +107,9 @@ export function openCandidateProfileModal({ candidateId, onUpdate = () => {} }) 
                       const progMeetsToday = state.getDailyMeets(todayStr).filter(m => m.candidateId === candidate.id && m.programId === prog.id);
                       const isMetToday = progMeetsToday.length > 0;
                       const latestMeetToday = isMetToday ? progMeetsToday[progMeetsToday.length - 1] : null;
+                      const isMyAssignedProgram = isTrainer && activeTrainer
+                        ? (String(prog.trainerId || '').trim() === String(activeTrainer.id).trim())
+                        : true;
 
                       return `
                   <div class="profile-program-card ${isStage ? 'border-stage' : 'border-nonstage'}">
@@ -152,14 +159,26 @@ export function openCandidateProfileModal({ candidateId, onUpdate = () => {} }) 
                       </div>
 
                       <div class="profile-prog-actions-strip" style="display: flex; align-items: center; gap: 6px;">
-                        ${!isMetToday ? `
-                          <button type="button" class="btn btn-outline btn-xs btn-profile-meet-prog" data-pid="${prog.id}" data-tid="${trainer ? trainer.id : ''}" title="Record today's meet for ${prog.code}" style="font-weight: 700;">
-                            ${getIcon('plus')} Meet
-                          </button>
-                        ` : ''}
-                        <button class="btn btn-text btn-xs text-danger btn-unenroll-from-prog" data-pid="${prog.id}" title="Remove candidate from this program">
-                          ${getIcon('trash')} Unenroll
-                        </button>
+                        ${isMyAssignedProgram ? `
+                          ${!isMetToday ? `
+                            <button type="button" class="btn btn-outline btn-xs btn-profile-meet-prog" data-pid="${prog.id}" data-tid="${activeTrainer ? activeTrainer.id : (trainer ? trainer.id : '')}" title="Record today's meet for ${prog.code}" style="font-weight: 700;">
+                              ${getIcon('plus')} Record Meet
+                            </button>
+                          ` : `
+                            <span class="badge badge-stage text-xs font-semibold" style="display: inline-flex; align-items: center; gap: 4px;">
+                              ${getIcon('checkCircle')} Completed
+                            </span>
+                          `}
+                          ${!isTrainer ? `
+                            <button class="btn btn-text btn-xs text-danger btn-unenroll-from-prog" data-pid="${prog.id}" title="Remove candidate from this program">
+                              ${getIcon('trash')} Unenroll
+                            </button>
+                          ` : ''}
+                        ` : `
+                          <span class="badge badge-neutral-xs" style="color: #64748b; font-size: 11px; padding: 4px 8px; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;" title="Mentored by ${trainer ? trainer.name : 'another trainer'}. You do not have evaluation authority for this program.">
+                            ${getIcon('lock')} Mentored by ${trainer ? trainer.name : 'Other Mentor'}
+                          </span>
+                        `}
                       </div>
                     </div>
                   </div>

@@ -24,6 +24,11 @@ export function openTrainerProfileModal({ trainerId, onUpdate = () => {} }) {
     ? getProgressStatus(readiness.percentage)
     : { label: 'Not Evaluated', badgeClass: 'badge-neutral', color: '#64748b' };
 
+  const session = state.getAuthSession();
+  const isTrainer = session && session.role === 'trainer';
+  const activeTrainer = isTrainer ? session.trainer : null;
+  const isOwnProfile = isTrainer && activeTrainer ? (String(trainer.id).trim() === String(activeTrainer.id).trim()) : true;
+
   const overlay = document.createElement('div');
   overlay.className = 'modal-backdrop';
 
@@ -49,9 +54,11 @@ export function openTrainerProfileModal({ trainerId, onUpdate = () => {} }) {
           </div>
         </div>
         <div style="display: flex; gap: 8px; align-items: center;">
-          <button id="btnEditTrainerInProfile" class="btn btn-secondary btn-sm" title="Edit Trainer details">
-            ${getIcon('edit')} <span>Edit</span>
-          </button>
+          ${(!isTrainer || isOwnProfile) ? `
+            <button id="btnEditTrainerInProfile" class="btn btn-secondary btn-sm" title="Edit Trainer details">
+              ${getIcon('edit')} <span>Edit</span>
+            </button>
+          ` : ''}
           <button class="modal-close-btn" aria-label="Close">${getIcon('x')}</button>
         </div>
       </div>
@@ -167,9 +174,11 @@ export function openTrainerProfileModal({ trainerId, onUpdate = () => {} }) {
                                   <span>${status.label}</span>
                                 </div>
 
-                                <button type="button" class="btn btn-secondary btn-xs btn-quick-record-meet" data-cid="${cand.id}" data-pid="${prog.id}" title="Record Evaluation Meet">
-                                  ${getIcon('plus')} <span>Check-in</span>
-                                </button>
+                                ${(!isTrainer || isOwnProfile) ? `
+                                  <button type="button" class="btn btn-secondary btn-xs btn-quick-record-meet" data-cid="${cand.id}" data-pid="${prog.id}" title="Record Evaluation Meet">
+                                    ${getIcon('plus')} <span>Check-in</span>
+                                  </button>
+                                ` : ''}
                               </div>
                             </div>
                           `;

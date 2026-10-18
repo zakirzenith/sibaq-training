@@ -701,6 +701,11 @@ class StateService {
   }
 
   addCandidateToProgram(programId, candidateId) {
+    const session = this.getAuthSession();
+    if (session && session.role === 'trainer') {
+      console.warn('Unauthorized: Trainers cannot modify program enrollments.');
+      return false;
+    }
     if (!programId || !candidateId) return false;
     const cleanPid = String(programId).trim();
     const cleanCid = String(candidateId).trim();
@@ -719,6 +724,11 @@ class StateService {
   }
 
   removeCandidateFromProgram(programId, candidateId) {
+    const session = this.getAuthSession();
+    if (session && session.role === 'trainer') {
+      console.warn('Unauthorized: Trainers cannot unenroll candidates from programs.');
+      return false;
+    }
     if (!programId || !candidateId) return false;
     const cleanPid = String(programId).trim();
     const cleanCid = String(candidateId).trim();
@@ -783,6 +793,13 @@ class StateService {
 
   updateTrainer(id, updateData) {
     const cleanId = String(id).trim();
+    const session = this.getAuthSession();
+    if (session && session.role === 'trainer') {
+      if (!session.trainer || String(session.trainer.id).trim() !== cleanId) {
+        console.warn('Unauthorized: Trainers cannot modify other trainers.');
+        return null;
+      }
+    }
     const index = this.trainers.findIndex(t => String(t.id).trim() === cleanId);
     if (index === -1) return null;
 
@@ -976,6 +993,11 @@ class StateService {
 
   deleteTrainer(id) {
     if (!id) return;
+    const session = this.getAuthSession();
+    if (session && session.role === 'trainer') {
+      console.warn('Unauthorized: Trainers cannot delete trainer accounts.');
+      return;
+    }
     const cleanId = String(id).trim();
     this.trainers = this.trainers.filter(t => String(t.id).trim() !== cleanId);
     
@@ -1208,6 +1230,39 @@ class StateService {
   }
 
   recordDailyMeet({ candidateId, trainerId, programId, percentage, remark, dateStr, timeStr }) {
+    const session = this.getAuthSession();
+    let finalTrainerId = trainerId || null;
+
+    // Strict role-based permission enforcement for trainers
+    if (session && session.role === 'trainer') {
+      const activeTrainer = session.trainer;
+      if (!activeTrainer) {
+        throw new Error('Active trainer session not found. Please log in again.');
+      }
+
+      // 1. Evaluating trainer is strictly locked to the logged-in trainer
+      finalTrainerId = activeTrainer.id;
+
+      // 2. Program selection is mandatory
+      if (!programId) {
+        throw new Error('Please select an assigned program to record this evaluation.');
+      }
+
+      // 3. Program must be assigned to this trainer
+      const prog = this.getProgramById(programId);
+      if (!prog) {
+        throw new Error('Selected program does not exist.');
+      }
+      if (String(prog.trainerId || '').trim() !== String(activeTrainer.id).trim()) {
+        throw new Error(`Unauthorized: Program [${prog.code}] is mentored by another trainer. You only have authority to record meets for programs assigned to you.`);
+      }
+
+      // 4. Candidate must be enrolled in this program
+      if (!(prog.candidateIds || []).map(id => String(id).trim()).includes(String(candidateId).trim())) {
+        throw new Error(`Unauthorized: Candidate is not enrolled in your program [${prog.code}].`);
+      }
+    }
+
     const today = new Date().toISOString().split('T')[0];
     const targetDate = dateStr || today;
 
@@ -1225,7 +1280,7 @@ class StateService {
     const newMeet = {
       id: `meet-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
       candidateId,
-      trainerId: trainerId || null,
+      trainerId: finalTrainerId,
       programId: programId || null,
       date: targetDate,
       meetNumber,

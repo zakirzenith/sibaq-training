@@ -17,20 +17,23 @@ export function openRecordMeetModal({ candidateId, programId = null, trainerId =
   const targetDate = dateStr || todayStr;
 
   const session = state.getAuthSession();
-  const isTrainer = session && session.role === 'trainer';
-  const activeTrainer = isTrainer ? session.trainer : null;
+  const activePortal = localStorage.getItem('mentorflow_active_portal');
+  const loggedInTrainer = state.getActiveTrainer() || (session && session.role === 'trainer' ? session.trainer : null);
+
+  // Strictly trainer mode if logged in as trainer OR currently operating inside the trainer portal
+  const isTrainer = (session && session.role === 'trainer') || (activePortal === 'trainer' && !!loggedInTrainer);
+  const activeTrainer = isTrainer ? loggedInTrainer : null;
 
   const allCandidatePrograms = state.getCandidatePrograms(candidate.id);
   let candidatePrograms = allCandidatePrograms;
-  let otherTrainerPrograms = [];
 
-  // Security check: restrict candidate programs strictly to this trainer's assigned programs
+  // Strict check: if trainer mode, show ONLY programs assigned to this specific trainer for this candidate
   if (isTrainer && activeTrainer) {
-    const allowedPrograms = allCandidatePrograms.filter(
+    candidatePrograms = allCandidatePrograms.filter(
       p => String(p.trainerId || '').trim() === String(activeTrainer.id).trim()
     );
 
-    if (allowedPrograms.length === 0) {
+    if (candidatePrograms.length === 0) {
       toast.error(`You have no assigned programs for ${candidate.name}. Evaluation is restricted to assigned mentors.`);
       return;
     }
@@ -43,14 +46,12 @@ export function openRecordMeetModal({ candidateId, programId = null, trainerId =
         return;
       }
     }
-
-    candidatePrograms = allowedPrograms;
-    otherTrainerPrograms = allCandidatePrograms.filter(
-      p => String(p.trainerId || '').trim() !== String(activeTrainer.id).trim()
-    );
   }
 
-  let selectedProgramId = programId || (candidatePrograms[0] ? candidatePrograms[0].id : null);
+  let selectedProgramId = programId;
+  if (!selectedProgramId || !candidatePrograms.some(p => p.id === selectedProgramId)) {
+    selectedProgramId = candidatePrograms[0] ? candidatePrograms[0].id : null;
+  }
   
   const getProgramTrainer = (pid) => {
     const prg = state.getProgramById(pid);
@@ -114,13 +115,13 @@ export function openRecordMeetModal({ candidateId, programId = null, trainerId =
       <!-- Modal Body -->
       <div class="modal-body record-meet-body" style="padding-top: 14px;">
         <!-- Compact Program & Trainer Context Bar -->
-        <div class="smm-context-bar">
-          <div class="smm-select-col">
+        <div class="smm-context-bar" style="margin-bottom: 12px;">
+          <div class="smm-select-col" style="${isTrainer ? 'flex: 1; width: 100%;' : ''}">
             <label class="smm-select-label" for="meetProgramSelect">
               ${getIcon('programs')} Active Program
             </label>
-            <select id="meetProgramSelect" class="saas-select-pill smm-select">
-              ${candidatePrograms.length === 0 ? `<option value="">No enrolled programs</option>` : ''}
+            <select id="meetProgramSelect" class="saas-select-pill smm-select" style="width: 100%;">
+              ${candidatePrograms.length === 0 ? `<option value="">No assigned programs for you</option>` : ''}
               ${candidatePrograms.map(p => {
                 const pMeetsToday = existingMeetsToday.filter(m => m.programId === p.id);
                 const isProgMetToday = pMeetsToday.length > 0;
@@ -135,30 +136,14 @@ export function openRecordMeetModal({ candidateId, programId = null, trainerId =
                 `;
               }).join('')}
             </select>
-            ${isTrainer && otherTrainerPrograms.length > 0 ? `
-              <div style="font-size: 11px; color: #64748b; margin-top: 4px; display: flex; align-items: center; gap: 4px;">
-                <span>${getIcon('info')}</span>
-                <span>Other programs (${otherTrainerPrograms.map(op => op.code).join(', ')}) are mentored by other trainers (read-only).</span>
-              </div>
-            ` : ''}
           </div>
 
-          <div class="smm-select-col">
-            <label class="smm-select-label" for="btnChooseMeetTrainer">
-              ${getIcon('trainers')} Evaluating Trainer
-            </label>
-            <input type="hidden" id="meetTrainerSelect" value="${selectedTrainerId || ''}" />
-            ${isTrainer && activeTrainer ? `
-              <button type="button" id="btnChooseMeetTrainer" class="form-trainer-picker-trigger smm-select" style="cursor: not-allowed; background: #f8fafc; border-color: #cbd5e1; opacity: 0.95;" title="Evaluating trainer is locked to your account (${activeTrainer.name})" disabled>
-                <span class="ftpt-icon">${getIcon('trainers')}</span>
-                <span class="ftpt-text" id="lblMeetTrainerText">
-                  <strong>${activeTrainer.name}</strong> (You)
-                </span>
-                <span class="ftpt-badge badge-neutral-xs" style="margin-left: auto; font-size: 10px; font-weight: 700; color: #4338ca; background: #e0e7ff; padding: 2px 7px; border-radius: 99px; display: inline-flex; align-items: center; gap: 3px;">
-                  ${getIcon('lock')} Locked
-                </span>
-              </button>
-            ` : `
+          ${!isTrainer ? `
+            <div class="smm-select-col">
+              <label class="smm-select-label" for="btnChooseMeetTrainer">
+                ${getIcon('trainers')} Evaluating Trainer
+              </label>
+              <input type="hidden" id="meetTrainerSelect" value="${selectedTrainerId || ''}" />
               <button type="button" id="btnChooseMeetTrainer" class="form-trainer-picker-trigger smm-select" title="Click to choose evaluating trainer">
                 <span class="ftpt-icon">${getIcon('trainers')}</span>
                 <span class="ftpt-text" id="lblMeetTrainerText">
@@ -170,8 +155,10 @@ export function openRecordMeetModal({ candidateId, programId = null, trainerId =
                 </span>
                 <span class="ftpt-chevron">${getIcon('chevronDown')}</span>
               </button>
-            `}
-          </div>
+            </div>
+          ` : `
+            <input type="hidden" id="meetTrainerSelect" value="${activeTrainer ? activeTrainer.id : ''}" />
+          `}
         </div>
 
         <!-- Interactive Line Graph & Percentage Controller Card -->

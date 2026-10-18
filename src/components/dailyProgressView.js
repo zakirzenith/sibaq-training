@@ -375,17 +375,19 @@ export function renderDailyProgressView(container, navigateTo) {
 
         if (progMeets.length === 0) {
           return `
-            <div class="compact-empty-strip status-red-strip" style="background: #fff5f5; border: 1.5px solid #fecaca; border-radius: 8px; padding: 12px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 8px;">
-              <div style="display: flex; align-items: center; gap: 8px;">
-                <span class="prog-code-rect rect-red" style="pointer-events: none; cursor: default;">${prog ? prog.code : 'PRG'}</span>
-                <span class="ces-text" style="font-size: 12px; color: #991b1b;">
-                  <strong>Pending:</strong> No check-ins recorded today (${selectedDate}) ${prog ? `for <strong>${prog.name}</strong>` : ''}.
+            <div class="compact-empty-strip status-red-strip" style="background: #fff5f5; border: 1.5px solid #fecaca; border-radius: 10px; padding: 14px; display: flex; flex-direction: column; gap: 10px;">
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <span class="prog-code-rect rect-red" style="pointer-events: none; cursor: default; padding: 3px 8px;">${prog ? prog.code : 'PRG'}</span>
+                <span class="ces-text" style="font-size: 12px; color: #991b1b; line-height: 1.4;">
+                  <strong>Pending Check-in:</strong> No check-ins recorded today (${selectedDate}) ${prog ? `for <strong>${prog.name}</strong>` : ''}.
                   ${prog ? (progTrainer ? `<br><span class="text-xs text-muted" style="color: #64748b;">Mentor: <strong>${progTrainer.name}</strong></span>` : '<br><span class="text-xs text-danger">Mentor: <strong>Unassigned</strong></span>') : ''}
                 </span>
               </div>
-              <button type="button" class="btn-compact-add btn-drawer-record-meet btn-saas-primary btn-sm" data-cid="${c.id}" data-pid="${prog ? prog.id : ''}" data-tid="${progTrainer ? progTrainer.id : ''}">
-                ${getIcon('plus')} Record Meet 1 for ${prog ? prog.code : 'Program'}
-              </button>
+              <div class="drawer-bottom-action-wrap" style="display: flex; justify-content: flex-end; margin-top: 4px;">
+                <button type="button" class="btn-compact-add btn-drawer-record-meet btn-saas-primary" data-cid="${c.id}" data-pid="${prog ? prog.id : ''}" data-tid="${progTrainer ? progTrainer.id : ''}" style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; font-size: 12px; font-weight: 700; border-radius: 8px;">
+                  ${getIcon('plus')} Record Meet 1 for ${prog ? prog.code : 'Program'}
+                </button>
+              </div>
             </div>
           `;
         }
@@ -393,16 +395,11 @@ export function renderDailyProgressView(container, navigateTo) {
         return `
           <div class="compact-sessions-scroll">
             ${prog ? `
-              <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; background: #f0fdf4; border: 1.5px solid #bbf7d0; border-radius: 8px; padding: 8px 12px; flex-wrap: wrap; gap: 6px;">
-                <div style="display: flex; align-items: center; gap: 8px;">
-                  <span class="prog-code-rect rect-green" style="pointer-events: none; cursor: default;">${prog.code}</span>
-                  <span style="font-size: 12px; font-weight: 700; color: #166534;">
-                    Completed Today • ${progMeets.length} session(s) recorded for ${prog.name}
-                  </span>
-                </div>
-                <button type="button" class="btn-compact-add btn-drawer-record-meet btn-outline btn-xs" data-cid="${c.id}" data-pid="${prog.id}" data-tid="${progTrainer ? progTrainer.id : ''}" style="font-weight: 700;">
-                  ${getIcon('plus')} Add Another Session
-                </button>
+              <div class="drawer-prog-completed-banner" style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px; padding: 9px 12px;">
+                <span class="prog-code-rect rect-green" style="pointer-events: none; cursor: default; padding: 2px 7px;">${prog.code}</span>
+                <span style="font-size: 12px; font-weight: 700; color: #166534;">
+                  Completed Today • ${progMeets.length} session(s) recorded for ${prog.name}
+                </span>
               </div>
             ` : ''}
 
@@ -413,10 +410,10 @@ export function renderDailyProgressView(container, navigateTo) {
               const progSessionIdx = idx + 1;
 
               return `
-                <div class="compact-session-strip status-border-${mStatus.key}" style="background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 12px; margin-bottom: 8px;">
+                <div class="compact-session-strip status-border-${mStatus.key}" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px 14px; margin-bottom: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.02);">
                   <div class="css-head-row" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; flex-wrap: wrap; gap: 6px;">
                     <div class="css-head-left" style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
-                      <span class="css-meet-pill" style="font-weight: 700; font-size: 11px; background: #eef2ff; color: #4338ca; padding: 2px 6px; border-radius: 4px;">${!isAll && prog ? `Meet #${progSessionIdx}` : `Meet #${m.meetNumber}`}</span>
+                      <span class="css-meet-pill" style="font-weight: 700; font-size: 11px; background: #eef2ff; color: #4338ca; padding: 2px 7px; border-radius: 5px;">${!isAll && prog ? `Meet #${progSessionIdx}` : `Meet #${m.meetNumber}`}</span>
                       <span class="css-time font-mono text-xs text-muted">${m.time || ''}</span>
                       ${isAll && mProg ? `<span class="saas-prog-capsule p-stage font-bold" style="font-size: 10px; padding: 1px 6px;">${mProg.code}</span>` : ''}
                       <span class="css-mentor text-xs text-muted">Mentor: <strong>${mTrn ? mTrn.name : 'Unassigned'}</strong></span>
@@ -435,6 +432,12 @@ export function renderDailyProgressView(container, navigateTo) {
                 </div>
               `;
             }).join('')}
+
+            <div class="drawer-bottom-action-wrap" style="display: flex; justify-content: flex-end; margin-top: 10px;">
+              <button type="button" class="btn-compact-add btn-drawer-record-meet btn-saas-primary" data-cid="${c.id}" data-pid="${prog ? prog.id : (item.programs[0]?.id || '')}" data-tid="${progTrainer ? progTrainer.id : (item.trainers[0]?.id || '')}" style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; font-size: 12px; font-weight: 700; border-radius: 8px;">
+                ${getIcon('plus')} ${prog ? `Add Another Session for ${prog.code}` : 'Record New Session'}
+              </button>
+            </div>
           </div>
         `;
       };
@@ -549,14 +552,6 @@ export function renderDailyProgressView(container, navigateTo) {
                   </button>
                 ` : ''}
               </div>
-
-              ${meets.length > 0 ? `
-                <div class="dcn-action-group">
-                  <button type="button" class="btn-compact-record btn-drawer-record-meet btn-saas-primary btn-xs" data-cid="${c.id}" data-pid="${defaultDrawerPid !== 'ALL' ? defaultDrawerPid : (item.programs[0]?.id || '')}" data-tid="${item.trainers[0]?.id || ''}">
-                    ${getIcon('plus')} Record Meet
-                  </button>
-                </div>
-              ` : ''}
             </div>
 
             <!-- Compact Sessions Content Container -->
@@ -599,16 +594,6 @@ export function renderDailyProgressView(container, navigateTo) {
       // Wire program tab buttons inside drawer
       const tabBtns = drawer.querySelectorAll('.prog-code-rect');
       const drawerContent = drawer.querySelector('.drawer-compact-content');
-      const mainRecordBtn = drawer.querySelector('.dcn-action-group .btn-drawer-record-meet');
-
-      const updateRecordButtonTarget = (pid) => {
-        if (!mainRecordBtn) return;
-        const targetProg = pid !== 'ALL' ? state.getProgramById(pid) : item.programs[0];
-        const targetTrn = targetProg && targetProg.trainerId ? state.getTrainerById(targetProg.trainerId) : null;
-        mainRecordBtn.setAttribute('data-pid', targetProg ? targetProg.id : '');
-        mainRecordBtn.setAttribute('data-tid', targetTrn ? targetTrn.id : '');
-        mainRecordBtn.innerHTML = `${getIcon('plus')} Record Meet ${targetProg ? `for ${targetProg.code}` : ''}`;
-      };
 
       const wireRecordButtons = () => {
         drawer.querySelectorAll('.btn-drawer-record-meet').forEach(btn => {
@@ -628,7 +613,6 @@ export function renderDailyProgressView(container, navigateTo) {
         });
       };
       wireRecordButtons();
-      updateRecordButtonTarget(activeDrawerPid);
 
       tabBtns.forEach(btn => {
         btn.addEventListener('click', (e) => {
@@ -637,7 +621,6 @@ export function renderDailyProgressView(container, navigateTo) {
           btn.classList.add('active-rect');
           const pid = btn.getAttribute('data-pid');
           drawerContent.innerHTML = renderDrawerProgramContent(pid);
-          updateRecordButtonTarget(pid);
           wireRecordButtons();
         });
       });

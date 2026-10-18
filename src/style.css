@@ -4123,35 +4123,42 @@ code,
 }
 
 .saas-table-head {
-  display: flex;
-  align-items: center;
-  padding: 6px 18px;
-  font-size: 11px;
-  font-weight: 700;
-  text-transform: uppercase;
-  color: #94a3b8;
-  letter-spacing: 0.05em;
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  padding: 6px 18px !important;
+  font-size: 11px !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  color: #94a3b8 !important;
+  letter-spacing: 0.05em !important;
+  gap: 14px !important;
+  margin-bottom: 2px !important;
+}
+
+.sth-col {
+  display: block !important;
 }
 
 .sth-candidate {
-  flex: 1.3;
-  min-width: 220px;
+  flex: 1.3 !important;
+  min-width: 220px !important;
 }
 
 .sth-program {
-  flex: 1.5;
-  min-width: 230px;
+  flex: 1.5 !important;
+  min-width: 230px !important;
 }
 
 .sth-status {
-  flex: 1.2;
-  min-width: 180px;
+  flex: 1.2 !important;
+  min-width: 180px !important;
 }
 
 .sth-action {
-  flex: 0.8;
-  min-width: 130px;
-  text-align: right;
+  flex: 0.8 !important;
+  min-width: 130px !important;
+  text-align: right !important;
 }
 
 .saas-roster-list {
@@ -8255,70 +8262,138 @@ code,
 
   /* Compact Dynamic Check-In Command Hub on Phone */
   .daily-checkin-hub {
-    padding: 10px 12px !important;
-    gap: 8px !important;
+    padding: 12px 14px !important;
+    gap: 10px !important;
     border-radius: 14px !important;
     margin-bottom: 8px !important;
     background: #ffffff !important;
     border: 1px solid #e2e8f0 !important;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.03) !important;
   }
 
   .dch-top-row {
+    display: flex !important;
+    flex-direction: column !important;
     gap: 8px !important;
-    align-items: center !important;
+    align-items: stretch !important;
   }
 
   .dch-progress-wrap {
-    flex: 1 1 140px !important;
-    gap: 4px !important;
+    width: 100% !important;
+    gap: 5px !important;
+  }
+
+  .dch-progress-meta {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 8px !important;
+    font-size: 11.5px !important;
   }
 
   .dch-progress-title {
     font-size: 11.5px !important;
+    font-weight: 500 !important;
+    color: #334155 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
   }
 
   .dch-progress-pct {
-    font-size: 11px !important;
+    font-size: 11.5px !important;
+    font-weight: 700 !important;
+    color: #059669 !important;
+    white-space: nowrap !important;
+    font-family: var(--font-mono) !important;
+  }
+
+  .dch-progress-track {
+    height: 5px !important;
+    background: #f1f5f9 !important;
+    border-radius: 999px !important;
+    overflow: hidden !important;
   }
 
   .dch-readiness-wrap {
-    padding: 3px 8px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    width: 100% !important;
+    padding: 5px 10px !important;
     border-radius: 8px !important;
-    gap: 6px !important;
     background: #f8fafc !important;
+    border: 1px solid #f1f5f9 !important;
+    box-sizing: border-box !important;
   }
 
   .dch-readiness-val {
-    font-size: 16px !important;
+    font-size: 15px !important;
+    font-weight: 800 !important;
+    font-family: var(--font-mono) !important;
+  }
+
+  .dch-readiness-info {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 6px !important;
   }
 
   .dch-readiness-label {
-    display: none !important;
+    display: inline-block !important;
+    font-size: 10.5px !important;
+    color: #64748b !important;
+    font-weight: 600 !important;
   }
 
   .dch-readiness-badge {
-    font-size: 10px !important;
-    padding: 1px 6px !important;
+    font-size: 10.5px !important;
+    padding: 1px 7px !important;
+    border-radius: 999px !important;
   }
 
+  /* Horizontal sleek scrollable tabs for phone */
   .dch-filter-tabs {
-    display: grid !important;
-    grid-template-columns: repeat(4, 1fr) !important;
-    gap: 4px !important;
+    display: flex !important;
+    flex-direction: row !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    gap: 6px !important;
+    padding: 3px 1px 6px 1px !important;
+    scrollbar-width: none !important;
     width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  .dch-filter-tabs::-webkit-scrollbar {
+    display: none !important;
   }
 
   .dch-tab-btn {
-    padding: 5px 2px !important;
-    justify-content: center !important;
-    font-size: 11px !important;
-    border-radius: 8px !important;
-    gap: 3px !important;
+    flex: 0 0 auto !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 5px !important;
+    padding: 6px 12px !important;
+    font-size: 11.5px !important;
+    font-weight: 600 !important;
+    border-radius: 999px !important;
+    white-space: nowrap !important;
+    background: #f8fafc !important;
+    border: 1px solid #e2e8f0 !important;
+    color: #475569 !important;
+    cursor: pointer !important;
+    transition: all 0.15s ease !important;
   }
 
   .dch-tab-badge {
-    font-size: 10px !important;
-    padding: 0 4px !important;
+    font-size: 10.5px !important;
+    font-weight: 700 !important;
+    padding: 1px 6px !important;
+    border-radius: 999px !important;
+    background: rgba(0, 0, 0, 0.06) !important;
   }
 
   /* Short minimalist graph line on phone view */
@@ -9290,6 +9365,10 @@ code,
 
 .desktop-table-view {
   display: block;
+}
+
+.saas-table-head.desktop-table-view {
+  display: flex !important;
 }
 
 .mobile-cards-view {

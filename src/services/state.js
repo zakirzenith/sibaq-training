@@ -1,0 +1,927 @@
+import { 
+  INITIAL_CANDIDATES, 
+  INITIAL_PROGRAMS, 
+  INITIAL_TRAINERS, 
+  INITIAL_DAILY_MEETS,
+  SAMPLE_DEMO_CANDIDATES,
+  SAMPLE_DEMO_PROGRAMS,
+  SAMPLE_DEMO_TRAINERS 
+} from '../data/initialData.js';
+import { firebaseService } from './firebase.js';
+
+// Clear legacy demo storage key to wipe default mock records
+try {
+  localStorage.removeItem('mentorflow_controller_db_v1');
+} catch (e) {}
+
+const STORAGE_KEY = 'mentorflow_controller_db_v2';
+
+/**
+ * Maps percentage to defined operational progress status range:
+ * - 90% - 100%: Event Ready
+ * - 75% - 89%:  Proficient
+ * - 60% - 74%:  Progressing
+ * - 40% - 59%:  Need Improvement
+ * - 0% - 39%:   Need Focus
+ */
+export function getProgressStatus(percentage) {
+  const p = Math.max(0, Math.min(100, Math.round(Number(percentage) || 0)));
+  if (p >= 90) {
+    return {
+      label: 'Event Ready',
+      key: 'event-ready',
+      color: '#10b981',
+      bg: '#ecfdf5',
+      border: '#a7f3d0',
+      badgeClass: 'badge-event-ready',
+      desc: 'Stage & performance ready. Peak execution.'
+    };
+  }
+  if (p >= 75) {
+    return {
+      label: 'Proficient',
+      key: 'proficient',
+      color: '#06b6d4',
+      bg: '#ecfeff',
+      border: '#a5f3fc',
+      badgeClass: 'badge-proficient',
+      desc: 'Solid execution, consistent and confident.'
+    };
+  }
+  if (p >= 60) {
+    return {
+      label: 'Progressing',
+      key: 'progressing',
+      color: '#3b82f6',
+      bg: '#eff6ff',
+      border: '#bfdbfe',
+      badgeClass: 'badge-progressing',
+      desc: 'Good pace, developing consistency & skill.'
+    };
+  }
+  if (p >= 40) {
+    return {
+      label: 'Need Improvement',
+      key: 'need-improvement',
+      color: '#f59e0b',
+      bg: '#fffbeb',
+      border: '#fde68a',
+      badgeClass: 'badge-need-improvement',
+      desc: 'Fair attempt, requires regular practice & rhythm.'
+    };
+  }
+  return {
+    label: 'Need Focus',
+    key: 'need-focus',
+    color: '#ef4444',
+    bg: '#fef2f2',
+    border: '#fecaca',
+    badgeClass: 'badge-need-focus',
+    desc: 'Critical trainer guidance & dedicated drills required.'
+  };
+}
+
+class StateService {
+  constructor() {
+    this.subscribers = new Set();
+    this.cloudUnsubscribers = [];
+    this.isCloudSyncActive = false;
+
+    this.loadState();
+    this.initCloudSync();
+  }
+
+  loadState() {
+    try {
+      const stored = localStorage.getItem(STORAGE_KEY);
+      if (stored) {
+        const parsed = JSON.parse(stored);
+        this.candidates = Array.isArray(parsed.candidates) ? parsed.candidates : [];
+        this.programs = Array.isArray(parsed.programs) ? parsed.programs : [];
+        this.trainers = Array.isArray(parsed.trainers) ? parsed.trainers : [];
+        this.dailyMeets = Array.isArray(parsed.dailyMeets) ? parsed.dailyMeets : [];
+        return;
+      }
+    } catch (e) {
+      console.warn('Failed to parse stored state, initializing clean.', e);
+    }
+
+    // Default starting state: completely clean for real data uploads
+    this.candidates = [];
+    this.programs = [];
+    this.trainers = [];
+    this.dailyMeets = [];
+    this.saveState();
+  }
+
+  saveState(triggerNotify = true) {
+    try {
+      localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({
+          candidates: this.candidates,
+          programs: this.programs,
+          trainers: this.trainers,
+          dailyMeets: this.dailyMeets,
+          lastUpdated: new Date().toISOString()
+        })
+      );
+    } catch (e) {
+      console.error('Failed to save state to localStorage:', e);
+    }
+    if (triggerNotify) {
+      this.notify();
+    }
+  }
+
+  subscribe(callback) {
+    this.subscribers.add(callback);
+    return () => this.subscribers.delete(callback);
+  }
+
+  notify() {
+    for (const callback of this.subscribers) {
+      try {
+        callback(this);
+      } catch (err) {
+        console.error('Error in state subscriber:', err);
+      }
+    }
+  }
+
+  // --- CLOUD FIRESTORE SYNCHRONIZATION ---
+  initCloudSync() {
+    // Clean up previous listeners
+    this.cloudUnsubscribers.forEach(unsub => {
+      try { unsub(); } catch (e) {}
+    });
+    this.cloudUnsubscribers = [];
+
+    if (!firebaseService.isInitialized) {
+      // Re-check when connection status changes
+      firebaseService.onStatusChange((status) => {
+        if (status.status === 'connected' && !this.isCloudSyncActive) {
+          this.initCloudSync();
+        } else if (status.status !== 'connected') {
+          this.isCloudSyncActive = false;
+        }
+      });
+      return;
+    }
+
+    this.isCloudSyncActive = true;
+
+    // Real-time snapshot listeners for each collection
+    const unsubCandidates = firebaseService.subscribe('candidates', (items) => {
+      if (items.length > 0 || this.candidates.length === 0) {
+        this.candidates = items;
+        this.saveState();
+      }
+    });
+
+    const unsubPrograms = firebaseService.subscribe('programs', (items) => {
+      if (items.length > 0 || this.programs.length === 0) {
+        this.programs = items;
+        this.saveState();
+      }
+    });
+
+    const unsubTrainers = firebaseService.subscribe('trainers', (items) => {
+      if (items.length > 0 || this.trainers.length === 0) {
+        this.trainers = items;
+        this.saveState();
+      }
+    });
+
+    const unsubMeets = firebaseService.subscribe('dailyMeets', (items) => {
+      if (items.length > 0 || this.dailyMeets.length === 0) {
+        this.dailyMeets = items;
+        this.saveState();
+      }
+    });
+
+    this.cloudUnsubscribers.push(unsubCandidates, unsubPrograms, unsubTrainers, unsubMeets);
+  }
+
+  async syncAllLocalToCloud() {
+    if (!firebaseService.isInitialized) {
+      throw new Error('Firebase Firestore is not connected. Please connect your credentials first.');
+    }
+
+    if (this.candidates.length > 0) {
+      await firebaseService.batchSync('candidates', this.candidates);
+    }
+    if (this.programs.length > 0) {
+      await firebaseService.batchSync('programs', this.programs);
+    }
+    if (this.trainers.length > 0) {
+      await firebaseService.batchSync('trainers', this.trainers);
+    }
+    if (this.dailyMeets.length > 0) {
+      await firebaseService.batchSync('dailyMeets', this.dailyMeets);
+    }
+    return true;
+  }
+
+  async fetchFromCloud() {
+    if (!firebaseService.isInitialized) {
+      throw new Error('Firebase Firestore is not connected.');
+    }
+
+    const [cand, prog, trn, meets] = await Promise.all([
+      firebaseService.fetchAll('candidates'),
+      firebaseService.fetchAll('programs'),
+      firebaseService.fetchAll('trainers'),
+      firebaseService.fetchAll('dailyMeets')
+    ]);
+
+    this.candidates = cand;
+    this.programs = prog;
+    this.trainers = trn;
+    this.dailyMeets = meets;
+    this.saveState();
+    return true;
+  }
+
+  // --- CANDIDATE METHODS ---
+  getCandidates() {
+    return [...this.candidates];
+  }
+
+  getCandidateById(id) {
+    return this.candidates.find(c => c.id === id) || null;
+  }
+
+  getCandidateByAdNo(adNo) {
+    if (!adNo) return null;
+    const cleanAdNo = String(adNo).trim().toLowerCase();
+    return this.candidates.find(c => String(c.adNo).trim().toLowerCase() === cleanAdNo) || null;
+  }
+
+  addCandidate(candidateData) {
+    const newCandidate = {
+      id: candidateData.id || `cnd-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+      adNo: String(candidateData.adNo || '').trim(),
+      name: String(candidateData.name || '').trim(),
+      category: String(candidateData.category || 'General').trim(),
+      class: String(candidateData.class || '').trim(),
+      createdAt: candidateData.createdAt || new Date().toISOString()
+    };
+
+    this.candidates.unshift(newCandidate);
+    this.saveState();
+
+    if (firebaseService.isInitialized) {
+      firebaseService.setDoc('candidates', newCandidate.id, newCandidate).catch(e => console.warn(e));
+    }
+
+    return newCandidate;
+  }
+
+  updateCandidate(id, updateData) {
+    const index = this.candidates.findIndex(c => c.id === id);
+    if (index === -1) return null;
+
+    this.candidates[index] = {
+      ...this.candidates[index],
+      ...updateData,
+      adNo: String(updateData.adNo ?? this.candidates[index].adNo).trim(),
+      name: String(updateData.name ?? this.candidates[index].name).trim(),
+      category: String(updateData.category ?? this.candidates[index].category).trim(),
+      class: String(updateData.class ?? this.candidates[index].class).trim()
+    };
+
+    this.saveState();
+
+    if (firebaseService.isInitialized) {
+      firebaseService.setDoc('candidates', id, this.candidates[index]).catch(e => console.warn(e));
+    }
+
+    return this.candidates[index];
+  }
+
+  deleteCandidate(id) {
+    this.candidates = this.candidates.filter(c => c.id !== id);
+    // Remove candidate from any assigned programs
+    this.programs = this.programs.map(prg => ({
+      ...prg,
+      candidateIds: (prg.candidateIds || []).filter(cId => cId !== id)
+    }));
+    this.saveState();
+
+    if (firebaseService.isInitialized) {
+      firebaseService.deleteDoc('candidates', id).catch(e => console.warn(e));
+    }
+  }
+
+  addCandidatesBulk(list, overwriteExisting = false) {
+    let addedCount = 0;
+    let updatedCount = 0;
+    let skippedCount = 0;
+    const newOrUpdated = [];
+
+    list.forEach(item => {
+      const adNo = String(item.adNo || '').trim();
+      const name = String(item.name || '').trim();
+      if (!adNo || !name) {
+        skippedCount++;
+        return;
+      }
+
+      const existingIndex = this.candidates.findIndex(
+        c => c.adNo.toLowerCase() === adNo.toLowerCase()
+      );
+
+      if (existingIndex >= 0) {
+        if (overwriteExisting) {
+          this.candidates[existingIndex] = {
+            ...this.candidates[existingIndex],
+            name: name,
+            category: String(item.category || this.candidates[existingIndex].category || 'General').trim(),
+            class: String(item.class || this.candidates[existingIndex].class || '').trim()
+          };
+          newOrUpdated.push(this.candidates[existingIndex]);
+          updatedCount++;
+        } else {
+          skippedCount++;
+        }
+      } else {
+        const newObj = {
+          id: `cnd-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
+          adNo,
+          name,
+          category: String(item.category || 'General').trim(),
+          class: String(item.class || '').trim(),
+          createdAt: new Date().toISOString()
+        };
+        this.candidates.push(newObj);
+        newOrUpdated.push(newObj);
+        addedCount++;
+      }
+    });
+
+    this.saveState();
+
+    if (firebaseService.isInitialized && newOrUpdated.length > 0) {
+      firebaseService.batchSync('candidates', newOrUpdated).catch(e => console.warn(e));
+    }
+
+    return { addedCount, updatedCount, skippedCount, totalProcessed: list.length };
+  }
+
+  // --- PROGRAM METHODS ---
+  getPrograms() {
+    return [...this.programs];
+  }
+
+  getProgramById(id) {
+    return this.programs.find(p => p.id === id) || null;
+  }
+
+  getProgramByCode(code) {
+    if (!code) return null;
+    const cleanCode = String(code).trim().toLowerCase();
+    return this.programs.find(p => String(p.code).trim().toLowerCase() === cleanCode) || null;
+  }
+
+  addProgram(programData) {
+    const typeNormalized = String(programData.type || 'Non-Stage').toLowerCase().includes('non')
+      ? 'Non-Stage'
+      : 'Stage';
+
+    const newProgram = {
+      id: programData.id || `prg-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+      code: String(programData.code || '').trim().toUpperCase(),
+      name: String(programData.name || '').trim(),
+      category: String(programData.category || 'General').trim(),
+      type: typeNormalized,
+      trainerId: programData.trainerId || null,
+      candidateIds: Array.isArray(programData.candidateIds) ? programData.candidateIds : [],
+      createdAt: programData.createdAt || new Date().toISOString()
+    };
+
+    this.programs.unshift(newProgram);
+    this.saveState();
+
+    if (firebaseService.isInitialized) {
+      firebaseService.setDoc('programs', newProgram.id, newProgram).catch(e => console.warn(e));
+    }
+
+    return newProgram;
+  }
+
+  updateProgram(id, updateData) {
+    const index = this.programs.findIndex(p => p.id === id);
+    if (index === -1) return null;
+
+    let typeNormalized = this.programs[index].type;
+    if (updateData.type) {
+      typeNormalized = String(updateData.type).toLowerCase().includes('non')
+        ? 'Non-Stage'
+        : 'Stage';
+    }
+
+    this.programs[index] = {
+      ...this.programs[index],
+      ...updateData,
+      type: typeNormalized,
+      code: updateData.code ? String(updateData.code).trim().toUpperCase() : this.programs[index].code,
+      name: updateData.name ? String(updateData.name).trim() : this.programs[index].name,
+      category: updateData.category ? String(updateData.category).trim() : this.programs[index].category
+    };
+
+    this.saveState();
+
+    if (firebaseService.isInitialized) {
+      firebaseService.setDoc('programs', id, this.programs[index]).catch(e => console.warn(e));
+    }
+
+    return this.programs[index];
+  }
+
+  deleteProgram(id) {
+    this.programs = this.programs.filter(p => p.id !== id);
+    this.saveState();
+
+    if (firebaseService.isInitialized) {
+      firebaseService.deleteDoc('programs', id).catch(e => console.warn(e));
+    }
+  }
+
+  addProgramsBulk(list, overwriteExisting = false) {
+    let addedCount = 0;
+    let updatedCount = 0;
+    let skippedCount = 0;
+    const newOrUpdated = [];
+
+    list.forEach(item => {
+      const code = String(item.code || '').trim().toUpperCase();
+      const name = String(item.name || '').trim();
+      if (!code || !name) {
+        skippedCount++;
+        return;
+      }
+
+      const typeNormalized = String(item.type || 'Non-Stage').toLowerCase().includes('non')
+        ? 'Non-Stage'
+        : 'Stage';
+
+      const existingIndex = this.programs.findIndex(
+        p => p.code.toLowerCase() === code.toLowerCase()
+      );
+
+      if (existingIndex >= 0) {
+        if (overwriteExisting) {
+          this.programs[existingIndex] = {
+            ...this.programs[existingIndex],
+            name,
+            category: String(item.category || this.programs[existingIndex].category || 'General').trim(),
+            type: typeNormalized
+          };
+          newOrUpdated.push(this.programs[existingIndex]);
+          updatedCount++;
+        } else {
+          skippedCount++;
+        }
+      } else {
+        const newObj = {
+          id: `prg-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
+          code,
+          name,
+          category: String(item.category || 'General').trim(),
+          type: typeNormalized,
+          trainerId: null,
+          candidateIds: [],
+          createdAt: new Date().toISOString()
+        };
+        this.programs.push(newObj);
+        newOrUpdated.push(newObj);
+        addedCount++;
+      }
+    });
+
+    this.saveState();
+
+    if (firebaseService.isInitialized && newOrUpdated.length > 0) {
+      firebaseService.batchSync('programs', newOrUpdated).catch(e => console.warn(e));
+    }
+
+    return { addedCount, updatedCount, skippedCount, totalProcessed: list.length };
+  }
+
+  assignTrainerToProgram(programId, trainerId) {
+    const program = this.programs.find(p => p.id === programId);
+    if (!program) return false;
+    program.trainerId = trainerId || null;
+    this.saveState();
+
+    if (firebaseService.isInitialized) {
+      firebaseService.setDoc('programs', programId, program).catch(e => console.warn(e));
+    }
+
+    return true;
+  }
+
+  assignCandidatesToProgram(programId, candidateIds) {
+    const program = this.programs.find(p => p.id === programId);
+    if (!program) return false;
+    program.candidateIds = Array.from(new Set(candidateIds));
+    this.saveState();
+
+    if (firebaseService.isInitialized) {
+      firebaseService.setDoc('programs', programId, program).catch(e => console.warn(e));
+    }
+
+    return true;
+  }
+
+  addCandidateToProgram(programId, candidateId) {
+    const program = this.programs.find(p => p.id === programId);
+    if (!program) return false;
+    if (!program.candidateIds.includes(candidateId)) {
+      program.candidateIds.push(candidateId);
+      this.saveState();
+      if (firebaseService.isInitialized) {
+        firebaseService.setDoc('programs', programId, program).catch(e => console.warn(e));
+      }
+    }
+    return true;
+  }
+
+  removeCandidateFromProgram(programId, candidateId) {
+    const program = this.programs.find(p => p.id === programId);
+    if (!program) return false;
+    program.candidateIds = program.candidateIds.filter(id => id !== candidateId);
+    this.saveState();
+
+    if (firebaseService.isInitialized) {
+      firebaseService.setDoc('programs', programId, program).catch(e => console.warn(e));
+    }
+
+    return true;
+  }
+
+  // --- TRAINER METHODS ---
+  getTrainers() {
+    return [...this.trainers];
+  }
+
+  getTrainerById(id) {
+    return this.trainers.find(t => t.id === id) || null;
+  }
+
+  addTrainer(trainerData) {
+    const palette = ['#8b5cf6', '#06b6d4', '#ec4899', '#10b981', '#f59e0b', '#3b82f6'];
+    const randomColor = palette[Math.floor(Math.random() * palette.length)];
+
+    const newTrainer = {
+      id: trainerData.id || `trn-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+      name: String(trainerData.name || '').trim(),
+      expertise: String(trainerData.expertise || 'General Coach').trim(),
+      experience: String(trainerData.experience || '3+ Years').trim(),
+      status: trainerData.status || 'Active',
+      color: trainerData.color || randomColor,
+      createdAt: trainerData.createdAt || new Date().toISOString()
+    };
+
+    this.trainers.unshift(newTrainer);
+    this.saveState();
+
+    if (firebaseService.isInitialized) {
+      firebaseService.setDoc('trainers', newTrainer.id, newTrainer).catch(e => console.warn(e));
+    }
+
+    return newTrainer;
+  }
+
+  updateTrainer(id, updateData) {
+    const index = this.trainers.findIndex(t => t.id === id);
+    if (index === -1) return null;
+
+    this.trainers[index] = {
+      ...this.trainers[index],
+      ...updateData,
+      name: updateData.name ? String(updateData.name).trim() : this.trainers[index].name,
+      expertise: updateData.expertise ? String(updateData.expertise).trim() : this.trainers[index].expertise,
+      experience: updateData.experience ? String(updateData.experience).trim() : this.trainers[index].experience
+    };
+
+    this.saveState();
+
+    if (firebaseService.isInitialized) {
+      firebaseService.setDoc('trainers', id, this.trainers[index]).catch(e => console.warn(e));
+    }
+
+    return this.trainers[index];
+  }
+
+  deleteTrainer(id) {
+    this.trainers = this.trainers.filter(t => t.id !== id);
+    // Unassign trainer from programs
+    this.programs = this.programs.map(p => {
+      if (p.trainerId === id) {
+        return { ...p, trainerId: null };
+      }
+      return p;
+    });
+    this.saveState();
+
+    if (firebaseService.isInitialized) {
+      firebaseService.deleteDoc('trainers', id).catch(e => console.warn(e));
+    }
+  }
+
+  // --- COMPUTED & RELATIONSHIPS ---
+  getProgramCandidates(programId) {
+    const program = this.getProgramById(programId);
+    if (!program || !program.candidateIds) return [];
+    return program.candidateIds
+      .map(id => this.getCandidateById(id))
+      .filter(Boolean);
+  }
+
+  getCandidatePrograms(candidateId) {
+    return this.programs.filter(
+      p => Array.isArray(p.candidateIds) && p.candidateIds.includes(candidateId)
+    );
+  }
+
+  getTrainerPrograms(trainerId) {
+    return this.programs.filter(p => p.trainerId === trainerId);
+  }
+
+  getTrainerMentees(trainerId) {
+    const programs = this.getTrainerPrograms(trainerId);
+    const candidateIdSet = new Set();
+    programs.forEach(prg => {
+      (prg.candidateIds || []).forEach(id => candidateIdSet.add(id));
+    });
+
+    return Array.from(candidateIdSet)
+      .map(id => this.getCandidateById(id))
+      .filter(Boolean);
+  }
+
+  getMetrics() {
+    const totalCandidates = this.candidates.length;
+    const totalPrograms = this.programs.length;
+    const totalTrainers = this.trainers.length;
+
+    const stagePrograms = this.programs.filter(p => p.type === 'Stage').length;
+    const nonStagePrograms = this.programs.filter(p => p.type === 'Non-Stage').length;
+
+    const assignedProgramCount = this.programs.filter(p => p.trainerId !== null).length;
+    const unassignedProgramCount = totalPrograms - assignedProgramCount;
+
+    const totalEnrollments = this.programs.reduce(
+      (sum, p) => sum + (p.candidateIds ? p.candidateIds.length : 0),
+      0
+    );
+
+    const enrolledCandidatesSet = new Set();
+    this.programs.forEach(p => {
+      (p.candidateIds || []).forEach(id => enrolledCandidatesSet.add(id));
+    });
+    const uniqueEnrolledCandidates = enrolledCandidatesSet.size;
+
+    const categoriesMap = {};
+    this.candidates.forEach(c => {
+      categoriesMap[c.category] = (categoriesMap[c.category] || 0) + 1;
+    });
+
+    return {
+      totalCandidates,
+      totalPrograms,
+      totalTrainers,
+      stagePrograms,
+      nonStagePrograms,
+      assignedProgramCount,
+      unassignedProgramCount,
+      totalEnrollments,
+      uniqueEnrolledCandidates,
+      categoriesMap
+    };
+  }
+
+  // --- DAILY MEET & PROGRESS METHODS ---
+  getDailyMeets(dateStr = null) {
+    if (!dateStr) return [...this.dailyMeets];
+    return this.dailyMeets.filter(m => m.date === dateStr);
+  }
+
+  getCandidateMeets(candidateId, dateStr = null) {
+    let list = this.dailyMeets.filter(m => m.candidateId === candidateId);
+    if (dateStr) {
+      list = list.filter(m => m.date === dateStr);
+    }
+    return list.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+  }
+
+  recordDailyMeet({ candidateId, trainerId, programId, percentage, remark, dateStr, timeStr }) {
+    const today = new Date().toISOString().split('T')[0];
+    const targetDate = dateStr || today;
+
+    const existing = this.dailyMeets.filter(
+      m => m.candidateId === candidateId && m.date === targetDate
+    );
+    const meetNumber = existing.length + 1;
+
+    const p = Math.max(0, Math.min(100, Math.round(Number(percentage) || 0)));
+    const statusObj = getProgressStatus(p);
+
+    const now = new Date();
+    const formattedTime = timeStr || now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+    const newMeet = {
+      id: `meet-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+      candidateId,
+      trainerId: trainerId || null,
+      programId: programId || null,
+      date: targetDate,
+      meetNumber,
+      time: formattedTime,
+      timestamp: now.toISOString(),
+      percentage: p,
+      status: statusObj.label,
+      statusKey: statusObj.key,
+      remark: String(remark || '').trim()
+    };
+
+    this.dailyMeets.unshift(newMeet);
+    this.saveState();
+
+    if (firebaseService.isInitialized) {
+      firebaseService.setDoc('dailyMeets', newMeet.id, newMeet).catch(e => console.warn(e));
+    }
+
+    return newMeet;
+  }
+
+  deleteDailyMeet(id) {
+    console.warn(`[Audit Protection] Meeting report ${id} is locked.`);
+    return false;
+  }
+
+  getCandidateDailyStatus(candidateId, dateStr = null) {
+    const candidate = this.getCandidateById(candidateId);
+    if (!candidate) return null;
+
+    const todayStr = new Date().toISOString().split('T')[0];
+    const targetDate = dateStr || todayStr;
+
+    const programs = this.getCandidatePrograms(candidateId);
+    const trainerIds = Array.from(new Set(programs.map(p => p.trainerId).filter(Boolean)));
+    const trainers = trainerIds.map(tId => this.getTrainerById(tId)).filter(Boolean);
+
+    const meets = this.dailyMeets
+      .filter(m => m.candidateId === candidateId && m.date === targetDate)
+      .sort((a, b) => a.meetNumber - b.meetNumber);
+
+    const meetCount = meets.length;
+    const isMet = meetCount > 0;
+    const latestMeet = isMet ? meets[meets.length - 1] : null;
+
+    let overallStatus = 'PENDING';
+    let statusLabel = 'Pending (Needs Meet #1)';
+    let statusClass = 'badge-warning';
+
+    if (isMet) {
+      overallStatus = 'MET';
+      statusLabel = meetCount === 1 ? 'Met (Meet #1)' : `Met (Meet #${meetCount})`;
+      statusClass = meetCount === 1 ? 'badge-stage' : 'badge-primary';
+    } else {
+      if (targetDate < todayStr) {
+        overallStatus = 'MISSED';
+        statusLabel = 'Missed';
+        statusClass = 'badge-danger';
+      } else if (targetDate === todayStr) {
+        overallStatus = 'PENDING';
+        statusLabel = 'Pending Meet Today';
+        statusClass = 'badge-warning';
+      } else {
+        overallStatus = 'UPCOMING';
+        statusLabel = 'Upcoming';
+        statusClass = 'badge-neutral';
+      }
+    }
+
+    return {
+      candidate,
+      programs,
+      trainers,
+      meets,
+      meetCount,
+      isMet,
+      isMissed: overallStatus === 'MISSED',
+      isPending: overallStatus === 'PENDING',
+      overallStatus,
+      statusLabel,
+      statusClass,
+      latestMeet,
+      targetDate
+    };
+  }
+
+  getDailySummary(dateStr = null) {
+    const todayStr = new Date().toISOString().split('T')[0];
+    const targetDate = dateStr || todayStr;
+
+    const enrolledSet = new Set();
+    this.programs.forEach(p => {
+      (p.candidateIds || []).forEach(id => enrolledSet.add(id));
+    });
+    const enrolledCandidates = Array.from(enrolledSet)
+      .map(id => this.getCandidateById(id))
+      .filter(Boolean);
+
+    const candidateStatuses = enrolledCandidates.map(c => this.getCandidateDailyStatus(c.id, targetDate));
+
+    const totalScheduled = enrolledCandidates.length;
+    const metCandidates = candidateStatuses.filter(s => s && s.isMet);
+    const pendingCandidates = candidateStatuses.filter(s => s && s.isPending);
+    const missedCandidates = candidateStatuses.filter(s => s && s.isMissed);
+
+    const multiMeetCandidates = candidateStatuses.filter(s => s && s.meetCount > 1);
+    const allMeetsForDate = this.getDailyMeets(targetDate);
+
+    const avgScore = allMeetsForDate.length > 0
+      ? Math.round(allMeetsForDate.reduce((sum, m) => sum + (Number(m.percentage) || 0), 0) / allMeetsForDate.length)
+      : 0;
+
+    return {
+      targetDate,
+      totalScheduled,
+      metCount: metCandidates.length,
+      pendingCount: pendingCandidates.length,
+      missedCount: missedCandidates.length,
+      multiMeetCount: multiMeetCandidates.length,
+      totalMeetsLogged: allMeetsForDate.length,
+      avgScore,
+      candidateStatuses
+    };
+  }
+
+  // --- BACKUP & RESTORE ---
+  loadSampleDemoData() {
+    this.candidates = [...SAMPLE_DEMO_CANDIDATES];
+    this.programs = [...SAMPLE_DEMO_PROGRAMS];
+    this.trainers = [...SAMPLE_DEMO_TRAINERS];
+    this.dailyMeets = [];
+    this.saveState();
+  }
+
+  resetToDefaults() {
+    this.candidates = [];
+    this.programs = [];
+    this.trainers = [];
+    this.dailyMeets = [];
+    this.saveState();
+  }
+
+  clearAll() {
+    this.candidates = [];
+    this.programs = [];
+    this.trainers = [];
+    this.dailyMeets = [];
+    this.saveState();
+  }
+
+  exportDataJson() {
+    return JSON.stringify(
+      {
+        candidates: this.candidates,
+        programs: this.programs,
+        trainers: this.trainers,
+        dailyMeets: this.dailyMeets,
+        exportDate: new Date().toISOString(),
+        version: '2.0'
+      },
+      null,
+      2
+    );
+  }
+
+  importDataJson(jsonStr) {
+    try {
+      const data = JSON.parse(jsonStr);
+      if (!Array.isArray(data.candidates) || !Array.isArray(data.programs) || !Array.isArray(data.trainers)) {
+        throw new Error('Invalid schema: Missing candidates, programs, or trainers arrays.');
+      }
+      this.candidates = data.candidates;
+      this.programs = data.programs;
+      this.trainers = data.trainers;
+      this.dailyMeets = Array.isArray(data.dailyMeets) ? data.dailyMeets : [];
+      this.saveState();
+
+      if (firebaseService.isInitialized) {
+        this.syncAllLocalToCloud().catch(e => console.warn(e));
+      }
+
+      return { success: true };
+    } catch (e) {
+      return { success: false, error: e.message };
+    }
+  }
+}
+
+export const state = new StateService();

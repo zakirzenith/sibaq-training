@@ -49,10 +49,11 @@ export function openCandidateFormModal({ candidate = null, onSave = () => {} }) 
           <div class="form-group flex-1">
             <label class="form-label" for="selCategory">Category *</label>
             <select id="selCategory" class="form-select">
-              <option value="Senior" ${candidate && candidate.category === 'Senior' ? 'selected' : ''}>Senior</option>
-              <option value="Junior" ${candidate && candidate.category === 'Junior' ? 'selected' : ''}>Junior</option>
-              <option value="Sub-Junior" ${candidate && candidate.category === 'Sub-Junior' ? 'selected' : ''}>Sub-Junior</option>
-              <option value="General" ${!candidate || candidate.category === 'General' ? 'selected' : ''}>General</option>
+              ${state.getAvailableCategories().map(cat => `
+                <option value="${cat}" ${candidate && candidate.category === cat ? 'selected' : (!candidate && cat === 'BIDĀYAH' ? 'selected' : '')}>
+                  ${cat}
+                </option>
+              `).join('')}
             </select>
           </div>
 

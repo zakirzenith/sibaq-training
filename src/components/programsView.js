@@ -421,21 +421,22 @@ export function renderProgramsView(container, navigateTo) {
     const allTrainers = state.getTrainers();
 
     programDetailContainer.innerHTML = `
-      <!-- Single Unified Top Row for Back & Action Buttons -->
-      <div class="program-detail-top-bar">
-        <button type="button" class="pdt-back-btn" id="btnMobileBackToPrograms" title="Back to programs list">
-          ${getIcon('chevronLeft')} <span>Back</span>
-        </button>
+      <!-- Single Unified Top Header Bar for Program Metadata, Title & Actions -->
+      <div class="program-detail-top-bar" style="display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 10px 16px; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 12px; margin-bottom: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
+        <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; flex: 1; min-width: 0;">
+          <button type="button" class="pdt-back-btn" id="btnMobileBackToPrograms" title="Back to programs list">
+            ${getIcon('chevronLeft')} <span>Back</span>
+          </button>
 
-        <div class="pdt-badges">
           <span class="program-code-pill">${program.code}</span>
           <span class="badge ${isStage ? 'badge-stage' : 'badge-nonstage'}">
             ${isStage ? getIcon('stage') : getIcon('nonStage')} ${program.type}
           </span>
-          <span class="badge badge-neutral-xs desktop-only-inline">${program.category}</span>
+          <span class="badge badge-neutral-xs">${program.category}</span>
+          <span class="pdt-inline-title" style="font-size: 14.5px; font-weight: 800; color: #0f172a; margin-left: 2px;">${program.name}</span>
         </div>
 
-        <div class="pdt-actions">
+        <div class="pdt-actions" style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
           <button type="button" id="btnExportThisProg" class="saas-pill-btn-sm desktop-only-btn" title="Export this roster to Excel">
             ${getIcon('download')} <span>Export</span>
           </button>
@@ -446,11 +447,6 @@ export function renderProgramsView(container, navigateTo) {
             ${getIcon('trash')}
           </button>
         </div>
-      </div>
-
-      <!-- Program Title Banner -->
-      <div class="program-detail-title-card">
-        <h2 class="sdb-title">${program.name}</h2>
       </div>
 
       <!-- 1. DEDICATED TRAINER & MENTOR PANEL -->

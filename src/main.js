@@ -445,7 +445,7 @@ class App {
         `;
       }
 
-      // Mobile Nav for Trainer Portal
+      // Mobile Nav for Trainer Portal (Sign Out is accessed inside Profile)
       if (mobileNav) {
         mobileNav.innerHTML = `
           <button class="mobile-nav-btn ${this.currentView === 'trainer-dashboard' ? 'active' : ''}" data-view="trainer-dashboard">
@@ -461,10 +461,6 @@ class App {
               ${activeTrainer.name.split(' ').map(n => n[0]).slice(0, 2).join('')}
             </span>
             <span>Profile</span>
-          </button>
-          <button class="mobile-nav-btn" data-action="logout">
-            ${getIcon('logout')}
-            <span>Sign Out</span>
           </button>
         `;
       }

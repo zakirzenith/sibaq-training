@@ -274,10 +274,25 @@ class StateService {
     ) || null;
   }
 
-  getCandidateByAdNo(adNo) {
-    if (!adNo) return null;
-    const cleanAdNo = String(adNo).trim().toLowerCase();
-    return this.candidates.find(c => String(c.adNo).trim().toLowerCase() === cleanAdNo) || null;
+  getAvailableCategories() {
+    const defaultCategories = ['BIDĀYAH', 'ŪLĀ', 'THĀNAWIYYAH', '‘ĀLIYAH', 'KULLIYYAH', 'BIDĀYAH & ŪLĀ'];
+    const existing = new Set(defaultCategories);
+
+    (this.programs || []).forEach(p => {
+      const cat = String(p.category || '').trim();
+      if (cat && !['Senior', 'Junior', 'Sub-Junior', 'General'].includes(cat)) {
+        existing.add(cat);
+      }
+    });
+
+    (this.candidates || []).forEach(c => {
+      const cat = String(c.category || '').trim();
+      if (cat && !['Senior', 'Junior', 'Sub-Junior', 'General'].includes(cat)) {
+        existing.add(cat);
+      }
+    });
+
+    return Array.from(existing);
   }
 
   addCandidate(candidateData) {

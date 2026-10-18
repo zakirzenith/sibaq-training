@@ -9681,16 +9681,27 @@ body.auth-mode .main-view-container {
     border: none !important;
   }
 
-  /* Daily Progress Phone Overrides */
-  .trainer-date-row {
-    flex-direction: column !important;
-    align-items: stretch !important;
-    gap: 8px !important;
+  /* Trainer Portal & Daily Progress Phone View Styles */
+  .trainer-date-row-unified {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 6px !important;
+    width: 100% !important;
   }
 
-  .trainer-date-row > div {
+  .trainer-search-filter-row {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    gap: 6px !important;
     width: 100% !important;
-    min-width: 100% !important;
+  }
+
+  .trainer-stats-grid {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 10px !important;
   }
 
   .saas-status-capsule {
@@ -9698,5 +9709,13 @@ body.auth-mode .main-view-container {
     max-width: 100% !important;
     justify-content: flex-start !important;
     box-sizing: border-box !important;
+  }
+}
+
+@media (min-width: 769px) {
+  .trainer-stats-grid {
+    display: grid !important;
+    grid-template-columns: repeat(4, 1fr) !important;
+    gap: 12px !important;
   }
 }

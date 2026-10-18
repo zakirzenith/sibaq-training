@@ -325,34 +325,34 @@ export const excelService = {
   downloadCandidatesTemplate() {
     const sampleData = [
       {
-        'Admission No': 'AD-2026-101',
-        'Candidate Name': 'Liam Vance',
-        'Category': 'Senior',
-        'Class': 'Grade 11-A'
+        'Admission No': '1081',
+        'Candidate Name': 'Golam Ahmad SK',
+        'Category': 'BIDĀYAH',
+        'Class': '1'
       },
       {
-        'Admission No': 'AD-2026-102',
-        'Candidate Name': 'Sarah Connor',
-        'Category': 'Senior',
-        'Class': 'Grade 12-B'
+        'Admission No': '1082',
+        'Candidate Name': 'Tohid Reza Mondal',
+        'Category': 'BIDĀYAH',
+        'Class': '2'
       },
       {
-        'Admission No': 'AD-2026-103',
-        'Candidate Name': 'Devin Patel',
-        'Category': 'Junior',
-        'Class': 'Grade 9-C'
+        'Admission No': '1083',
+        'Candidate Name': 'Muslim Reza',
+        'Category': 'ŪLĀ',
+        'Class': '3'
       },
       {
-        'Admission No': 'AD-2026-104',
-        'Candidate Name': 'Maya Rodriguez',
-        'Category': 'Sub-Junior',
-        'Class': 'Grade 7-A'
+        'Admission No': '1084',
+        'Candidate Name': 'Amanullah Khan',
+        'Category': 'THĀNAWIYYAH',
+        'Class': '5'
       },
       {
-        'Admission No': 'AD-2026-105',
-        'Candidate Name': 'Kenji Sato',
-        'Category': 'General',
-        'Class': 'Grade 10-B'
+        'Admission No': '1085',
+        'Candidate Name': 'Rafiul Islam',
+        'Category': '‘ĀLIYAH',
+        'Class': '7'
       }
     ];
 
@@ -377,39 +377,39 @@ export const excelService = {
   downloadProgramsTemplate() {
     const sampleData = [
       {
-        'Program Code': 'STG-101',
-        'Program Name': 'Classical Solo Dance',
-        'Category': 'Senior',
+        'Program Code': 'BS01',
+        'Program Name': 'Qur\'an Thilawath',
+        'Category': 'BIDĀYAH',
         'Type (Stage or Non Stage)': 'Stage'
       },
       {
-        'Program Code': 'NST-201',
-        'Program Name': 'Extempore Public Speech',
-        'Category': 'Senior',
+        'Program Code': 'BNN02',
+        'Program Name': 'Pencil Drawing',
+        'Category': 'BIDĀYAH',
         'Type (Stage or Non Stage)': 'Non-Stage'
       },
       {
-        'Program Code': 'STG-102',
-        'Program Name': 'Symphony Choir & Vocals',
-        'Category': 'Junior',
+        'Program Code': 'US05',
+        'Program Name': 'Elocution Arabic',
+        'Category': 'ŪLĀ',
         'Type (Stage or Non Stage)': 'Stage'
       },
       {
-        'Program Code': 'NST-202',
-        'Program Name': 'Creative Script & Story Writing',
-        'Category': 'Junior',
+        'Program Code': 'UNN10',
+        'Program Name': 'Essay Writing Arabic',
+        'Category': 'ŪLĀ',
         'Type (Stage or Non Stage)': 'Non-Stage'
       },
       {
-        'Program Code': 'STG-103',
-        'Program Name': 'Theatrical Skit & Pantomime',
-        'Category': 'Sub-Junior',
+        'Program Code': 'TS08',
+        'Program Name': 'Public Address Urdu',
+        'Category': 'THĀNAWIYYAH',
         'Type (Stage or Non Stage)': 'Stage'
       },
       {
-        'Program Code': 'NST-203',
-        'Program Name': 'Inter-House General Quiz',
-        'Category': 'General',
+        'Program Code': 'ANN14',
+        'Program Name': 'Calligraphy English',
+        'Category': '‘ĀLIYAH',
         'Type (Stage or Non Stage)': 'Non-Stage'
       }
     ];

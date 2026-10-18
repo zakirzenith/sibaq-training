@@ -102,66 +102,52 @@ export function renderTrainerDailyProgressView(container, navigateTo) {
           </div>
         </div>
 
-        <!-- 2. DATE & SUMMARY BAR (Phone & Desktop Optimized) -->
-        <div class="tdp-summary-card" style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 14px; padding: 12px 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.03); margin-bottom: 14px;">
-          <!-- Date Selection Row -->
-          <div class="trainer-date-row" style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 10px;">
-            <div style="display: flex; gap: 6px; flex: 1; min-width: 150px;">
-              <button type="button" class="btn-trainer-date ${selectedDate === todayStr ? 'active' : ''}" id="btnDateToday" style="flex: 1; height: 36px; border-radius: 8px; font-size: 12px; font-weight: 700; border: 1px solid #cbd5e1; background: ${selectedDate === todayStr ? '#4f46e5' : '#ffffff'}; color: ${selectedDate === todayStr ? '#ffffff' : '#334155'}; cursor: pointer;">
-                Today
-              </button>
-              <button type="button" class="btn-trainer-date ${selectedDate === new Date(Date.now() - 86400000).toISOString().split('T')[0] ? 'active' : ''}" id="btnDateYesterday" style="flex: 1; height: 36px; border-radius: 8px; font-size: 12px; font-weight: 700; border: 1px solid #cbd5e1; background: ${selectedDate === new Date(Date.now() - 86400000).toISOString().split('T')[0] ? '#4f46e5' : '#ffffff'}; color: ${selectedDate === new Date(Date.now() - 86400000).toISOString().split('T')[0] ? '#ffffff' : '#334155'}; cursor: pointer;">
-                Yesterday
-              </button>
-            </div>
-            <div style="flex: 1; min-width: 140px;">
-              <input 
-                type="date" 
-                id="inpProgressDate" 
-                value="${selectedDate}"
-                style="width: 100%; height: 36px; padding: 0 8px; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 12px; font-weight: 600; background: #ffffff; box-sizing: border-box;"
-              />
-            </div>
-          </div>
-
-          <!-- Stats Chips Row -->
-          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 12px; border-top: 1px dashed #e2e8f0; padding-top: 8px; flex-wrap: wrap;">
-            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-              <span style="color: #059669; font-weight: 700;">🟢 Met: ${metCount}</span>
-              <span style="color: #d97706; font-weight: 700;">🟡 Pending: ${pendingCount}</span>
-              ${missedCount > 0 ? `<span style="color: #dc2626; font-weight: 700;">🔴 Missed: ${missedCount}</span>` : ''}
-            </div>
-            <span style="font-weight: 700; color: #475569;">Total: ${rosterItems.length}</span>
+        <!-- 2. DATE ROW (Today, Yesterday, Date Input in a Single Row) -->
+        <div class="trainer-date-row-unified" style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px;">
+          <button type="button" class="btn-trainer-date ${selectedDate === todayStr ? 'active' : ''}" id="btnDateToday" style="padding: 0 12px; height: 38px; border-radius: 9px; font-size: 12px; font-weight: 700; border: 1px solid ${selectedDate === todayStr ? '#4f46e5' : '#cbd5e1'}; background: ${selectedDate === todayStr ? '#4f46e5' : '#ffffff'}; color: ${selectedDate === todayStr ? '#ffffff' : '#334155'}; cursor: pointer; flex-shrink: 0; box-shadow: ${selectedDate === todayStr ? '0 2px 6px rgba(79, 70, 229, 0.25)' : 'none'};">
+            Today
+          </button>
+          <button type="button" class="btn-trainer-date ${selectedDate === new Date(Date.now() - 86400000).toISOString().split('T')[0] ? 'active' : ''}" id="btnDateYesterday" style="padding: 0 12px; height: 38px; border-radius: 9px; font-size: 12px; font-weight: 700; border: 1px solid ${selectedDate === new Date(Date.now() - 86400000).toISOString().split('T')[0] ? '#4f46e5' : '#cbd5e1'}; background: ${selectedDate === new Date(Date.now() - 86400000).toISOString().split('T')[0] ? '#4f46e5' : '#ffffff'}; color: ${selectedDate === new Date(Date.now() - 86400000).toISOString().split('T')[0] ? '#ffffff' : '#334155'}; cursor: pointer; flex-shrink: 0; box-shadow: ${selectedDate === new Date(Date.now() - 86400000).toISOString().split('T')[0] ? '0 2px 6px rgba(79, 70, 229, 0.25)' : 'none'};">
+            Yesterday
+          </button>
+          <div style="flex: 1; min-width: 0;">
+            <input 
+              type="date" 
+              id="inpProgressDate" 
+              value="${selectedDate}"
+              style="width: 100%; height: 38px; padding: 0 8px; border-radius: 9px; border: 1px solid #cbd5e1; font-size: 12px; font-weight: 700; background: #ffffff; color: #1e293b; box-sizing: border-box;"
+            />
           </div>
         </div>
 
-        <!-- 3. SEARCH & FILTER STRIP -->
-        <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 14px; flex-wrap: wrap;">
-          <div class="sfe-search-box" style="flex: 1; min-width: 200px; height: 38px;">
+        <!-- 3. SEARCH & STATUS FILTER STRIP (In a Single Row, with Met, Pending, Missed in Filter) -->
+        <div class="trainer-search-filter-row" style="display: flex; align-items: center; gap: 8px; margin-bottom: 12px;">
+          <div class="sfe-search-box" style="flex: 1; min-width: 0; height: 38px;">
             <span class="sfe-search-icon">${getIcon('search')}</span>
             <input 
               type="text" 
               id="txtProgressSearch" 
               class="sfe-search-input" 
-              placeholder="Search candidate by name, ad no..." 
+              placeholder="Search candidate..." 
               value="${searchQuery}"
+              style="font-size: 12px;"
             />
           </div>
 
           ${assignedPrograms.length > 1 ? `
-            <select id="selProgFilter" class="form-select" style="height: 38px; font-size: 12.5px; width: auto; min-width: 150px;">
-              <option value="ALL">All My Programs</option>
+            <select id="selProgFilter" class="form-select" style="height: 38px; font-size: 11.5px; width: auto; max-width: 105px; padding: 0 6px; flex-shrink: 0; font-weight: 600;">
+              <option value="ALL">Programs</option>
               ${assignedPrograms.map(p => `
-                <option value="${p.id}" ${activeProgramFilter === p.id ? 'selected' : ''}>${p.code} • ${p.name}</option>
+                <option value="${p.id}" ${activeProgramFilter === p.id ? 'selected' : ''}>${p.code}</option>
               `).join('')}
             </select>
           ` : ''}
 
-          <select id="selStatusFilter" class="form-select" style="height: 38px; font-size: 12.5px; width: auto; min-width: 130px;">
-            <option value="ALL" ${activeStatusFilter === 'ALL' ? 'selected' : ''}>All Statuses</option>
-            <option value="MET" ${activeStatusFilter === 'MET' ? 'selected' : ''}>Met</option>
-            <option value="PENDING" ${activeStatusFilter === 'PENDING' ? 'selected' : ''}>Pending</option>
-            <option value="MISSED" ${activeStatusFilter === 'MISSED' ? 'selected' : ''}>Missed</option>
+          <select id="selStatusFilter" class="form-select" style="height: 38px; font-size: 11.5px; width: auto; max-width: 145px; padding: 0 8px; flex-shrink: 0; font-weight: 700; color: #1e293b; border-color: #cbd5e1;">
+            <option value="ALL" ${activeStatusFilter === 'ALL' ? 'selected' : ''}>All (${rosterItems.length})</option>
+            <option value="MET" ${activeStatusFilter === 'MET' ? 'selected' : ''}>🟢 Met (${metCount})</option>
+            <option value="PENDING" ${activeStatusFilter === 'PENDING' ? 'selected' : ''}>🟡 Pending (${pendingCount})</option>
+            ${missedCount > 0 ? `<option value="MISSED" ${activeStatusFilter === 'MISSED' ? 'selected' : ''}>🔴 Missed (${missedCount})</option>` : ''}
           </select>
         </div>
 

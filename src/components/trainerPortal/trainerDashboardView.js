@@ -70,85 +70,94 @@ export function renderTrainerDashboardView(container, navigateTo) {
 
     container.innerHTML = `
       <div class="trainer-portal-container">
-        <!-- 1. TRAINER IDENTITY & PROFILE HERO BANNER -->
-        <div class="trainer-hero-card" style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 16px; padding: 18px 20px; box-shadow: 0 1px 3px rgba(0,0,0,0.04); margin-bottom: 16px;">
-          <div class="thc-top-row" style="display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap;">
-            <div class="thc-identity" style="display: flex; align-items: center; gap: 14px;">
-              <div class="thc-avatar" style="width: 52px; height: 52px; border-radius: 50%; background: ${currentTrainer.color || '#6366f1'}; color: #ffffff; font-weight: 800; font-size: 18px; display: flex; align-items: center; justify-content: center; box-shadow: 0 4px 10px rgba(0,0,0,0.12); flex-shrink: 0;">
+        <!-- 1. TRAINER IDENTITY & PROFILE HERO BANNER (Vibrant, Colorful & Professional) -->
+        <div class="trainer-hero-card" style="background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #4338ca 100%); border-radius: 18px; padding: 20px 22px; box-shadow: 0 8px 24px rgba(49, 46, 129, 0.25); margin-bottom: 16px; position: relative; overflow: hidden; color: #ffffff;">
+          <!-- Ambient gradient glow circles in background -->
+          <div style="position: absolute; right: -20px; top: -20px; width: 140px; height: 140px; border-radius: 50%; background: radial-gradient(circle, rgba(99, 102, 241, 0.35) 0%, transparent 70%); pointer-events: none;"></div>
+          <div style="position: absolute; left: 30%; bottom: -30px; width: 160px; height: 160px; border-radius: 50%; background: radial-gradient(circle, rgba(16, 185, 129, 0.2) 0%, transparent 70%); pointer-events: none;"></div>
+
+          <div class="thc-top-row" style="position: relative; z-index: 1; display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap;">
+            <div class="thc-identity" style="display: flex; align-items: center; gap: 14px; flex: 1; min-width: 220px;">
+              <div class="thc-avatar" style="width: 58px; height: 58px; border-radius: 50%; background: ${currentTrainer.color || '#6366f1'}; color: #ffffff; font-weight: 800; font-size: 20px; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 0 3px rgba(255,255,255,0.25), 0 4px 14px rgba(0,0,0,0.3); flex-shrink: 0;">
                 ${currentTrainer.name.split(' ').map(n => n[0]).slice(0, 2).join('')}
               </div>
-              <div class="thc-info">
-                <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                  <h1 style="font-size: 20px; font-weight: 800; color: #0f172a; margin: 0;">${currentTrainer.name}</h1>
-                  <span class="saas-tag-pill p-stage">${currentTrainer.expertise}</span>
+              <div class="thc-info" style="flex: 1; min-width: 0;">
+                <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 4px;">
+                  <h1 style="font-size: 20px; font-weight: 800; color: #ffffff; margin: 0; letter-spacing: -0.01em;">${currentTrainer.name}</h1>
+                  <span style="display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 999px; background: rgba(255, 255, 255, 0.18); backdrop-filter: blur(8px); border: 1px solid rgba(255, 255, 255, 0.25); color: #e0e7ff; font-size: 11px; font-weight: 700;">
+                    ${currentTrainer.expertise || 'Mentor & Trainer'}
+                  </span>
                 </div>
-                <div style="display: flex; align-items: center; gap: 10px; font-size: 12px; color: #64748b; margin-top: 4px; flex-wrap: wrap;">
-                  <span>Username: <strong>@${currentTrainer.username || currentTrainer.name.toLowerCase().replace(/[^a-z0-9]/g, '')}</strong></span>
+                <div style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: #cbd5e1; flex-wrap: wrap;">
+                  <span style="background: rgba(0,0,0,0.25); padding: 2px 8px; border-radius: 6px; font-family: monospace;">@${currentTrainer.username || currentTrainer.name.toLowerCase().replace(/[^a-z0-9]/g, '')}</span>
                   ${currentTrainer.phone ? `<span>• Tel: <strong>${currentTrainer.phone}</strong></span>` : ''}
-                  <span>• Status: <strong style="color: #10b981;">Active Trainer</strong></span>
+                  <span style="display: inline-flex; align-items: center; gap: 5px; color: #34d399; font-weight: 700;">
+                    <span style="width: 7px; height: 7px; border-radius: 50%; background: #34d399; box-shadow: 0 0 8px #34d399;"></span>
+                    Active Trainer
+                  </span>
                 </div>
               </div>
             </div>
 
-            <div class="thc-actions" style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-              <button type="button" id="btnGoToTrainerProgress" class="btn btn-primary btn-sm" style="height: 38px; border-radius: 10px; font-weight: 700;">
+            <div class="thc-actions" style="display: flex; align-items: center; gap: 8px; flex-shrink: 0; width: 100%; max-width: 220px;">
+              <button type="button" id="btnGoToTrainerProgress" class="btn btn-sm" style="width: 100%; height: 40px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); border: none; color: #ffffff; border-radius: 10px; font-weight: 800; font-size: 12.5px; box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: transform 0.15s ease;">
                 ${getIcon('calendar')} Daily Progress Tracker &rarr;
               </button>
             </div>
           </div>
         </div>
 
-        <!-- 2. QUICK STATS ROW -->
-        <div class="trainer-stats-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 12px; margin-bottom: 20px;">
+        <!-- 2. QUICK STATS ROW (2 Boxes Per Row, Compact & Beautiful) -->
+        <div class="trainer-stats-grid" style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 18px;">
           <!-- Card 1: Assigned Programs -->
-          <div class="t-stat-card" style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 14px; padding: 14px 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
-            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
-              <span style="font-size: 11.5px; font-weight: 700; color: #64748b; text-transform: uppercase;">Assigned Programs</span>
-              <span style="color: #6366f1;">${getIcon('programs')}</span>
+          <div class="t-stat-card" style="background: linear-gradient(135deg, #ffffff 0%, #fbfbfe 100%); border: 1px solid #e0e7ff; border-radius: 14px; padding: 12px 14px; box-shadow: 0 1px 4px rgba(99, 102, 241, 0.04); display: flex; flex-direction: column; justify-content: space-between;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
+              <span style="font-size: 10.5px; font-weight: 800; color: #6366f1; text-transform: uppercase; letter-spacing: 0.02em;">Programs</span>
+              <span style="display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 8px; background: #eef2ff; color: #6366f1;">${getIcon('programs')}</span>
             </div>
-            <div style="font-size: 24px; font-weight: 800; color: #0f172a;">${assignedPrograms.length}</div>
-            <div style="font-size: 11.5px; color: #64748b; margin-top: 2px;">
-              ${assignedPrograms.length > 0 ? assignedPrograms.map(p => p.code).slice(0, 3).join(', ') + (assignedPrograms.length > 3 ? '...' : '') : 'None assigned'}
+            <div style="font-size: 22px; font-weight: 800; color: #0f172a; line-height: 1.2;">${assignedPrograms.length}</div>
+            <div style="font-size: 11px; color: #64748b; margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+              ${assignedPrograms.length > 0 ? assignedPrograms.map(p => p.code).slice(0, 2).join(', ') : 'None assigned'}
             </div>
           </div>
 
           <!-- Card 2: Candidates / Mentees -->
-          <div class="t-stat-card" style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 14px; padding: 14px 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
-            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
-              <span style="font-size: 11.5px; font-weight: 700; color: #64748b; text-transform: uppercase;">Total Mentees</span>
-              <span style="color: #06b6d4;">${getIcon('candidates')}</span>
+          <div class="t-stat-card" style="background: linear-gradient(135deg, #ffffff 0%, #f8fcfe 100%); border: 1px solid #cffafe; border-radius: 14px; padding: 12px 14px; box-shadow: 0 1px 4px rgba(6, 182, 212, 0.04); display: flex; flex-direction: column; justify-content: space-between;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
+              <span style="font-size: 10.5px; font-weight: 800; color: #0891b2; text-transform: uppercase; letter-spacing: 0.02em;">Mentees</span>
+              <span style="display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 8px; background: #ecfeff; color: #0891b2;">${getIcon('candidates')}</span>
             </div>
-            <div style="font-size: 24px; font-weight: 800; color: #0f172a;">${rawRoster.length}</div>
-            <div style="font-size: 11.5px; color: #64748b; margin-top: 2px;">Candidates under your coaching</div>
+            <div style="font-size: 22px; font-weight: 800; color: #0f172a; line-height: 1.2;">${rawRoster.length}</div>
+            <div style="font-size: 11px; color: #64748b; margin-top: 2px;">Assigned candidates</div>
           </div>
 
           <!-- Card 3: Overall Readiness -->
-          <div class="t-stat-card" style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 14px; padding: 14px 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
-            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
-              <span style="font-size: 11.5px; font-weight: 700; color: #64748b; text-transform: uppercase;">Overall Readiness</span>
-              <span class="badge ${readinessStatus.badgeClass}" style="font-size: 10px;">${readinessStatus.label}</span>
+          <div class="t-stat-card" style="background: linear-gradient(135deg, #ffffff 0%, #fefdf8 100%); border: 1px solid #fde68a; border-radius: 14px; padding: 12px 14px; box-shadow: 0 1px 4px rgba(245, 158, 11, 0.04); display: flex; flex-direction: column; justify-content: space-between;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
+              <span style="font-size: 10.5px; font-weight: 800; color: #d97706; text-transform: uppercase; letter-spacing: 0.02em;">Readiness</span>
+              <span class="badge ${readinessStatus.badgeClass}" style="font-size: 9.5px; padding: 2px 6px;">${readinessStatus.label}</span>
             </div>
-            <div style="display: flex; align-items: baseline; gap: 6px;">
-              <span style="font-size: 24px; font-weight: 800; color: ${trainerReadiness.hasData ? readinessStatus.color : '#0f172a'};">
+            <div style="display: flex; align-items: baseline; gap: 4px;">
+              <span style="font-size: 22px; font-weight: 800; color: ${trainerReadiness.hasData ? readinessStatus.color : '#0f172a'}; line-height: 1.2;">
                 ${trainerReadiness.hasData ? `${trainerReadiness.percentage}%` : '0%'}
               </span>
-              <span style="font-size: 11.5px; color: #64748b;">(${trainerReadiness.evaluatedCount}/${rawRoster.length} evaluated)</span>
+              <span style="font-size: 10.5px; color: #64748b;">(${trainerReadiness.evaluatedCount}/${rawRoster.length})</span>
             </div>
-            <div style="width: 100%; height: 5px; background: #f1f5f9; border-radius: 99px; margin-top: 8px; overflow: hidden;">
+            <div style="width: 100%; height: 4px; background: #f1f5f9; border-radius: 99px; margin-top: 6px; overflow: hidden;">
               <div style="height: 100%; width: ${trainerReadiness.hasData ? trainerReadiness.percentage : 0}%; background: ${readinessStatus.color}; border-radius: 99px;"></div>
             </div>
           </div>
 
           <!-- Card 4: Meets Recorded Today -->
-          <div class="t-stat-card" style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 14px; padding: 14px 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
-            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
-              <span style="font-size: 11.5px; font-weight: 700; color: #64748b; text-transform: uppercase;">Today's Check-ins</span>
-              <span style="color: #10b981;">${getIcon('check')}</span>
+          <div class="t-stat-card" style="background: linear-gradient(135deg, #ffffff 0%, #f7fdfa 100%); border: 1px solid #bbf7d0; border-radius: 14px; padding: 12px 14px; box-shadow: 0 1px 4px rgba(16, 185, 129, 0.04); display: flex; flex-direction: column; justify-content: space-between;">
+            <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
+              <span style="font-size: 10.5px; font-weight: 800; color: #059669; text-transform: uppercase; letter-spacing: 0.02em;">Today's Log</span>
+              <span style="display: inline-flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 8px; background: #dcfce7; color: #059669;">${getIcon('check')}</span>
             </div>
-            <div style="font-size: 24px; font-weight: 800; color: #0f172a;">
+            <div style="font-size: 22px; font-weight: 800; color: #0f172a; line-height: 1.2;">
               ${state.getDailyMeets(new Date().toISOString().split('T')[0]).filter(m => String(m.trainerId || '').trim() === currentTrainer.id).length}
             </div>
-            <div style="font-size: 11.5px; color: #64748b; margin-top: 2px;">Sessions logged today</div>
+            <div style="font-size: 11px; color: #64748b; margin-top: 2px;">Sessions logged</div>
           </div>
         </div>
 

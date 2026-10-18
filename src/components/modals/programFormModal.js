@@ -61,10 +61,11 @@ export function openProgramFormModal({ program = null, onSave = () => {} }) {
           <div class="form-group flex-1">
             <label class="form-label" for="selProgCategory">Category *</label>
             <select id="selProgCategory" class="form-select">
-              <option value="Senior" ${program && program.category === 'Senior' ? 'selected' : ''}>Senior</option>
-              <option value="Junior" ${program && program.category === 'Junior' ? 'selected' : ''}>Junior</option>
-              <option value="Sub-Junior" ${program && program.category === 'Sub-Junior' ? 'selected' : ''}>Sub-Junior</option>
-              <option value="General" ${!program || program.category === 'General' ? 'selected' : ''}>General</option>
+              ${state.getAvailableCategories().map(cat => `
+                <option value="${cat}" ${program && program.category === cat ? 'selected' : (!program && cat === 'BIDĀYAH' ? 'selected' : '')}>
+                  ${cat}
+                </option>
+              `).join('')}
             </select>
           </div>
 

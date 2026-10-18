@@ -69,24 +69,19 @@ export function openProgramFormModal({ program = null, onSave = () => {} }) {
           </div>
 
           <div class="form-group flex-1">
-            <label class="form-label" for="selProgTrainer">Assign Trainer</label>
-            <div style="display: flex; gap: 6px; align-items: center;">
-              <select id="selProgTrainer" class="form-select" style="flex: 1; min-width: 0;">
-                <option value="">-- Unassigned --</option>
-                ${trainers
-                  .map(
-                    t => `
-                  <option value="${t.id}" ${program && String(program.trainerId || '').trim() === String(t.id).trim() ? 'selected' : ''}>
-                    ${t.name} (${t.expertise})
-                  </option>
-                `
-                  )
-                  .join('')}
-              </select>
-              <button type="button" id="btnSearchTrainerInForm" class="btn btn-secondary btn-sm" title="Search faculty list" style="height: 38px; padding: 0 10px; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; border-radius: 8px;">
-                ${getIcon('search')}
-              </button>
-            </div>
+            <label class="form-label" for="btnChooseTrainerInForm">Assign Trainer</label>
+            <input type="hidden" id="selProgTrainer" value="${program && program.trainerId ? program.trainerId : ''}" />
+            <button type="button" id="btnChooseTrainerInForm" class="form-trainer-picker-trigger" title="Click to search and choose trainer">
+              <span class="ftpt-icon">${getIcon('trainers')}</span>
+              <span class="ftpt-text" id="lblFormTrainerText">
+                ${
+                  program && program.trainerId && state.getTrainerById(program.trainerId)
+                    ? `${state.getTrainerById(program.trainerId).name} (${state.getTrainerById(program.trainerId).expertise})`
+                    : '-- Choose Trainer --'
+                }
+              </span>
+              <span class="ftpt-chevron">${getIcon('chevronDown')}</span>
+            </button>
           </div>
         </div>
       </form>
@@ -118,17 +113,19 @@ export function openProgramFormModal({ program = null, onSave = () => {} }) {
   const txtProgName = overlay.querySelector('#txtProgName');
   const selProgCategory = overlay.querySelector('#selProgCategory');
   const selProgTrainer = overlay.querySelector('#selProgTrainer');
-  const btnSearchTrainer = overlay.querySelector('#btnSearchTrainerInForm');
+  const btnChooseTrainer = overlay.querySelector('#btnChooseTrainerInForm');
+  const lblFormTrainerText = overlay.querySelector('#lblFormTrainerText');
   const btnSubmit = overlay.querySelector('#btnSubmitProgram');
 
-  if (btnSearchTrainer) {
-    btnSearchTrainer.addEventListener('click', () => {
+  if (btnChooseTrainer) {
+    btnChooseTrainer.addEventListener('click', () => {
       openTrainerPickerModal({
         currentTrainerId: selProgTrainer.value,
         title: 'Select Program Trainer',
         subtitle: 'Search faculty directory by name or domain expertise',
         onSelect: (t) => {
           selProgTrainer.value = t ? t.id : '';
+          lblFormTrainerText.textContent = t ? `${t.name} (${t.expertise})` : '-- Choose Trainer --';
         }
       });
     });

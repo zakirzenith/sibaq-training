@@ -94,21 +94,21 @@ export function openRecordMeetModal({ candidateId, programId = null, trainerId =
           </div>
 
           <div class="smm-select-col">
-            <label class="smm-select-label" for="meetTrainerSelect">
+            <label class="smm-select-label" for="btnChooseMeetTrainer">
               ${getIcon('trainers')} Evaluating Trainer
             </label>
-            <div style="display: flex; gap: 6px; align-items: center;">
-              <select id="meetTrainerSelect" class="saas-select-pill smm-select" style="flex: 1; min-width: 0;">
-                ${state.getTrainers().map(t => `
-                  <option value="${t.id}" ${t.id === selectedTrainerId ? 'selected' : ''}>
-                    ${t.name} (${t.expertise})
-                  </option>
-                `).join('')}
-              </select>
-              <button type="button" id="btnSearchMeetTrainer" class="btn btn-secondary btn-sm" title="Search trainer" style="height: 38px; padding: 0 10px; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; border-radius: 999px;">
-                ${getIcon('search')}
-              </button>
-            </div>
+            <input type="hidden" id="meetTrainerSelect" value="${selectedTrainerId || ''}" />
+            <button type="button" id="btnChooseMeetTrainer" class="form-trainer-picker-trigger smm-select" title="Click to choose evaluating trainer">
+              <span class="ftpt-icon">${getIcon('trainers')}</span>
+              <span class="ftpt-text" id="lblMeetTrainerText">
+                ${
+                  selectedTrainerId && state.getTrainerById(selectedTrainerId)
+                    ? `${state.getTrainerById(selectedTrainerId).name} (${state.getTrainerById(selectedTrainerId).expertise})`
+                    : '-- Choose Trainer --'
+                }
+              </span>
+              <span class="ftpt-chevron">${getIcon('chevronDown')}</span>
+            </button>
           </div>
         </div>
 
@@ -273,16 +273,19 @@ export function openRecordMeetModal({ candidateId, programId = null, trainerId =
   const progSelect = overlay.querySelector('#meetProgramSelect');
   const trnSelect = overlay.querySelector('#meetTrainerSelect');
 
+  const lblMeetTrainerText = overlay.querySelector('#lblMeetTrainerText');
+
   // When program changes, sync default assigned trainer
   progSelect.addEventListener('change', (e) => {
     const trn = getProgramTrainer(e.target.value);
     if (trn) {
       trnSelect.value = trn.id;
+      if (lblMeetTrainerText) lblMeetTrainerText.textContent = `${trn.name} (${trn.expertise})`;
     }
   });
 
-  // Searchable Trainer Picker Modal
-  overlay.querySelector('#btnSearchMeetTrainer')?.addEventListener('click', () => {
+  // Searchable Trainer Picker Trigger
+  overlay.querySelector('#btnChooseMeetTrainer')?.addEventListener('click', () => {
     openTrainerPickerModal({
       currentTrainerId: trnSelect.value,
       title: 'Select Evaluating Trainer',
@@ -290,6 +293,10 @@ export function openRecordMeetModal({ candidateId, programId = null, trainerId =
       onSelect: (t) => {
         if (t) {
           trnSelect.value = t.id;
+          if (lblMeetTrainerText) lblMeetTrainerText.textContent = `${t.name} (${t.expertise})`;
+        } else {
+          trnSelect.value = '';
+          if (lblMeetTrainerText) lblMeetTrainerText.textContent = '-- Choose Trainer --';
         }
       }
     });

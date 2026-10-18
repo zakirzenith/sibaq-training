@@ -43,15 +43,19 @@ export function openAssignCandidatesModal({ programId, onSave = () => {} }) {
             <div class="ssc-head-title mb-2">
               <span>${getIcon('trainers')} Designated Trainer</span>
             </div>
-            <div class="trainer-select-row" style="display: flex; flex-direction: column; gap: 10px;">
-              <div style="display: flex; gap: 6px; align-items: center;">
-                <select id="modalTrainerSelect" class="saas-select-pill" style="flex: 1; min-width: 0;">
-                  <option value="">-- No Trainer Assigned --</option>
-                </select>
-                <button type="button" id="btnSearchAssignTrainer" class="saas-pill-btn" title="Search faculty list" style="padding: 6px 12px; display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0;">
-                  ${getIcon('search')} Search
-                </button>
-              </div>
+            <div class="trainer-select-row" style="display: flex; flex-direction: column; gap: 8px;">
+              <input type="hidden" id="modalTrainerSelect" value="${selectedTrainerId || ''}" />
+              <button type="button" id="btnChooseAssignTrainer" class="form-trainer-picker-trigger" title="Click to search and choose designated trainer">
+                <span class="ftpt-icon">${getIcon('trainers')}</span>
+                <span class="ftpt-text" id="lblAssignTrainerText">
+                  ${
+                    selectedTrainerId && state.getTrainerById(selectedTrainerId)
+                      ? `${state.getTrainerById(selectedTrainerId).name} (${state.getTrainerById(selectedTrainerId).expertise})`
+                      : '-- Choose Trainer --'
+                  }
+                </span>
+                <span class="ftpt-chevron">${getIcon('chevronDown')}</span>
+              </button>
               <div id="trainerDetailsPreview" class="trainer-details-preview"></div>
             </div>
           </div>
@@ -182,19 +186,12 @@ export function openAssignCandidatesModal({ programId, onSave = () => {} }) {
   const btnSaveAssignments = overlay.querySelector('#btnSaveAssignments');
   const btnExportRosterExcel = overlay.querySelector('#btnExportRosterExcel');
 
-  // Populate Trainers Select
-  const allTrainers = state.getTrainers();
-  allTrainers.forEach(t => {
-    const opt = document.createElement('option');
-    opt.value = t.id;
-    opt.textContent = `${t.name} • ${t.expertise}`;
-    if (String(t.id).trim() === String(selectedTrainerId || '').trim()) opt.selected = true;
-    modalTrainerSelect.appendChild(opt);
-  });
+  const lblAssignTrainerText = overlay.querySelector('#lblAssignTrainerText');
 
   function updateTrainerPreview() {
     const trn = state.getTrainerById(modalTrainerSelect.value);
     if (trn) {
+      if (lblAssignTrainerText) lblAssignTrainerText.textContent = `${trn.name} (${trn.expertise})`;
       trainerDetailsPreview.innerHTML = `
         <div class="saas-trainer-mini-card">
           <div class="stc-avatar" style="background: ${trn.color || '#6366f1'}">
@@ -207,6 +204,7 @@ export function openAssignCandidatesModal({ programId, onSave = () => {} }) {
         </div>
       `;
     } else {
+      if (lblAssignTrainerText) lblAssignTrainerText.textContent = '-- Choose Trainer --';
       trainerDetailsPreview.innerHTML = `
         <div class="saas-empty-trainer-placeholder" style="padding: 8px;">
           <span class="text-muted text-xs">No trainer assigned to this program</span>
@@ -215,14 +213,10 @@ export function openAssignCandidatesModal({ programId, onSave = () => {} }) {
     }
   }
 
-  modalTrainerSelect.addEventListener('change', e => {
-    selectedTrainerId = e.target.value;
-    updateTrainerPreview();
-  });
   updateTrainerPreview();
 
   // Searchable Trainer Picker Trigger
-  overlay.querySelector('#btnSearchAssignTrainer')?.addEventListener('click', () => {
+  overlay.querySelector('#btnChooseAssignTrainer')?.addEventListener('click', () => {
     openTrainerPickerModal({
       currentTrainerId: modalTrainerSelect.value,
       title: 'Select Designated Trainer',

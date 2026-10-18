@@ -56,7 +56,7 @@ export function renderTrainersView(container, navigateTo) {
       {
         key: 'expertise',
         label: 'Domain / Expertise',
-        icon: '🎯',
+        icon: 'target',
         getOptions: () => {
           const trainers = state.getTrainers();
           const counts = {};
@@ -74,7 +74,7 @@ export function renderTrainersView(container, navigateTo) {
       {
         key: 'programs',
         label: 'Program Assignment',
-        icon: '🎭',
+        icon: 'programs',
         getOptions: () => {
           const trainers = state.getTrainers();
           const withProgs = trainers.filter(t => state.getTrainerPrograms(t.id).length > 0).length;
@@ -88,7 +88,7 @@ export function renderTrainersView(container, navigateTo) {
       {
         key: 'mentees',
         label: 'Mentee Roster',
-        icon: '👥',
+        icon: 'users',
         getOptions: () => {
           const trainers = state.getTrainers();
           const withMentees = trainers.filter(t => state.getTrainerMentees(t.id).length > 0).length;

@@ -92,7 +92,7 @@ export function renderCandidatesView(container, navigateTo) {
       {
         key: 'category',
         label: 'Category',
-        icon: '🏷️',
+        icon: 'tag',
         getOptions: () => {
           const cands = state.getCandidates();
           const counts = {};
@@ -110,7 +110,7 @@ export function renderCandidatesView(container, navigateTo) {
       {
         key: 'class',
         label: 'Class / Grade',
-        icon: '🎓',
+        icon: 'graduationCap',
         getOptions: () => {
           const cands = state.getCandidates();
           const counts = {};
@@ -133,7 +133,7 @@ export function renderCandidatesView(container, navigateTo) {
       {
         key: 'enrollment',
         label: 'Enrollment Status',
-        icon: '⚡',
+        icon: 'zap',
         getOptions: () => {
           const cands = state.getCandidates();
           const enrolled = cands.filter(c => state.getCandidatePrograms(c.id).length > 0).length;

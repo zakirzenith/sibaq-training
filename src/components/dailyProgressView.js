@@ -89,7 +89,7 @@ export function renderDailyProgressView(container, navigateTo) {
       {
         key: 'status',
         label: 'Evaluation Status',
-        icon: '📊',
+        icon: 'chart',
         getOptions: () => {
           const summary = state.getDailySummary(selectedDate);
           return [
@@ -102,7 +102,7 @@ export function renderDailyProgressView(container, navigateTo) {
       {
         key: 'program',
         label: 'Program',
-        icon: '🎭',
+        icon: 'programs',
         getOptions: () => {
           const progs = state.getPrograms();
           return progs.map(p => ({
@@ -115,7 +115,7 @@ export function renderDailyProgressView(container, navigateTo) {
       {
         key: 'trainer',
         label: 'Trainer',
-        icon: '👨‍🏫',
+        icon: 'trainers',
         getOptions: () => {
           const trainers = state.getTrainers();
           return trainers.map(t => ({
@@ -128,7 +128,7 @@ export function renderDailyProgressView(container, navigateTo) {
       {
         key: 'category',
         label: 'Category',
-        icon: '🏷️',
+        icon: 'tag',
         getOptions: () => {
           const cands = state.getCandidates();
           const counts = {};

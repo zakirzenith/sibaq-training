@@ -480,14 +480,61 @@ class StateService {
   }
 
   deleteProgram(id) {
-    if (!id) return;
-    const cleanId = String(id).trim();
-    this.programs = this.programs.filter(p => String(p.id).trim() !== cleanId);
+    if (!id) return 0;
+    return this.deleteProgramsBulk([id]);
+  }
+
+  deleteProgramsBulk(ids) {
+    if (!Array.isArray(ids) || ids.length === 0) return 0;
+    const cleanIdSet = new Set(ids.map(id => String(id).trim()).filter(Boolean));
+    if (cleanIdSet.size === 0) return 0;
+
+    const initialCount = this.programs.length;
+    
+    // Find codes of deleting programs for candidate program cleanup
+    const deletingCodes = new Set(
+      this.programs
+        .filter(p => cleanIdSet.has(String(p.id).trim()))
+        .map(p => String(p.code || '').trim().toLowerCase())
+        .filter(Boolean)
+    );
+
+    // Filter out programs
+    this.programs = this.programs.filter(p => !cleanIdSet.has(String(p.id).trim()));
+
+    // Clean up candidates
+    this.candidates.forEach(c => {
+      if (Array.isArray(c.programs)) {
+        c.programs = c.programs.filter(pRef => {
+          const cleanRef = String(pRef || '').trim().toLowerCase();
+          return !cleanIdSet.has(pRef) && !deletingCodes.has(cleanRef);
+        });
+      }
+    });
+
+    // Clean up trainers
+    this.trainers.forEach(t => {
+      if (Array.isArray(t.assignedProgramIds)) {
+        t.assignedProgramIds = t.assignedProgramIds.filter(pid => !cleanIdSet.has(String(pid).trim()));
+      }
+    });
+
     this.saveState();
 
     if (firebaseService.isInitialized) {
-      firebaseService.deleteDoc('programs', cleanId).catch(e => console.warn(e));
+      cleanIdSet.forEach(cleanId => {
+        firebaseService.deleteDoc('programs', cleanId).catch(e => console.warn(e));
+      });
+      this.candidates.forEach(c => {
+        firebaseService.setDoc('candidates', c.id, c).catch(() => {});
+      });
+      this.trainers.forEach(t => {
+        firebaseService.setDoc('trainers', t.id, t).catch(() => {});
+      });
     }
+
+    this.notifyListeners('programs_deleted', { deletedIds: Array.from(cleanIdSet) });
+    return initialCount - this.programs.length;
   }
 
   addProgramsBulk(list, overwriteExisting = false) {

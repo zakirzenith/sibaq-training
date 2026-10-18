@@ -156,10 +156,11 @@ export function createFilterBar({
           ${filterConfig
             .map(f => {
               const isApplied = activeFilters[f.key] !== undefined && activeFilters[f.key] !== null && activeFilters[f.key] !== 'ALL' && activeFilters[f.key] !== '';
+              const iconSvg = f.icon ? (f.icon.startsWith('<svg') ? f.icon : (getIcon(f.icon) || getIcon('tag'))) : getIcon('tag');
               return `
                 <button type="button" class="sfe-field-item ${isApplied ? 'is-active' : ''}" data-key="${f.key}">
                   <div class="sfe-fi-left">
-                    <span class="sfe-fi-icon">${f.icon || '🏷️'}</span>
+                    <span class="sfe-fi-icon">${iconSvg}</span>
                     <span class="sfe-fi-label">${f.label}</span>
                   </div>
                   <div class="sfe-fi-right">

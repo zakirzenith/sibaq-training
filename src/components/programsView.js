@@ -12,6 +12,8 @@ export function renderProgramsView(container, navigateTo) {
   let activeFilters = {};
   let currentSearchQuery = '';
   let selectedProgramId = null;
+  let isSelectionMode = false;
+  const selectedProgramIds = new Set();
 
   function getProgramsList() {
     const programs = state.getPrograms();
@@ -57,8 +59,7 @@ export function renderProgramsView(container, navigateTo) {
   container.innerHTML = `
     <div class="saas-view-header">
       <div class="svh-title-block">
-        <h1 class="svh-title">Programs, Candidates & Trainers</h1>
-        <p class="svh-desc">Select a program to assign candidates, assign trainers, and view candidate profiles.</p>
+        <h1 class="svh-title">Programs & Assignments</h1>
       </div>
 
       <div class="saas-header-actions">
@@ -84,14 +85,45 @@ export function renderProgramsView(container, navigateTo) {
     <div class="programs-split-layout" id="programsSplitLayout">
       <!-- LEFT SIDE: All Programs List with Filter Engine -->
       <div class="programs-left-col">
-        <div class="left-col-header" style="padding-bottom: 8px;">
+        <div class="left-col-header" style="padding-bottom: 6px;">
           <!-- Modern Notion/Linear Filter Engine -->
           <div id="programsFilterBarContainer"></div>
+
+          <!-- Selection & Count Sub-bar -->
+          <div class="programs-selection-bar" id="programsSelectionBar">
+            <div class="psb-left">
+              <span class="programs-count-pill" id="progCountDisplay">-- Programs</span>
+            </div>
+            <div class="psb-right">
+              <button type="button" id="btnToggleProgramSelectMode" class="btn-select-toggle" title="Select programs for bulk actions">
+                ${getIcon('checkSquare')} <span>Select</span>
+              </button>
+              <button type="button" id="btnSelectAllPrograms" class="btn-select-all" style="display: none;">
+                Select All
+              </button>
+            </div>
+          </div>
         </div>
 
         <!-- Scrollable Cards List -->
         <div id="programsListContainer" class="programs-scroll-list">
           <!-- Dynamically populated -->
+        </div>
+
+        <!-- Floating Bulk Action Bar (Visible when 1+ programs selected) -->
+        <div class="programs-bulk-actions-bar" id="progBulkBar" style="display: none;">
+          <div class="pba-info">
+            <span class="pba-count-badge" id="pbaCountBadge">0</span>
+            <span class="pba-text">selected</span>
+          </div>
+          <div class="pba-buttons">
+            <button type="button" class="btn-pba-delete" id="btnBulkDeletePrograms">
+              ${getIcon('trash')} <span>Delete Selected</span>
+            </button>
+            <button type="button" class="btn-pba-cancel" id="btnCancelBulkSelect">
+              Cancel
+            </button>
+          </div>
         </div>
       </div>
 
@@ -106,6 +138,13 @@ export function renderProgramsView(container, navigateTo) {
   const programsListContainer = container.querySelector('#programsListContainer');
   const programDetailContainer = container.querySelector('#programDetailContainer');
   const filterBarContainer = container.querySelector('#programsFilterBarContainer');
+  const progCountDisplay = container.querySelector('#progCountDisplay');
+  const btnToggleProgramSelectMode = container.querySelector('#btnToggleProgramSelectMode');
+  const btnSelectAllPrograms = container.querySelector('#btnSelectAllPrograms');
+  const progBulkBar = container.querySelector('#progBulkBar');
+  const pbaCountBadge = container.querySelector('#pbaCountBadge');
+  const btnBulkDeletePrograms = container.querySelector('#btnBulkDeletePrograms');
+  const btnCancelBulkSelect = container.querySelector('#btnCancelBulkSelect');
 
   // Modern Notion/Linear Filter Engine for Programs
   createFilterBar({
@@ -115,7 +154,7 @@ export function renderProgramsView(container, navigateTo) {
       {
         key: 'type',
         label: 'Type',
-        icon: '🎭',
+        icon: 'stage',
         getOptions: () => {
           const progs = state.getPrograms();
           const stageCount = progs.filter(p => p.type === 'Stage').length;
@@ -129,7 +168,7 @@ export function renderProgramsView(container, navigateTo) {
       {
         key: 'category',
         label: 'Category',
-        icon: '🏷️',
+        icon: 'tag',
         getOptions: () => {
           const progs = state.getPrograms();
           const counts = {};
@@ -147,7 +186,7 @@ export function renderProgramsView(container, navigateTo) {
       {
         key: 'trainer',
         label: 'Trainer Assignment',
-        icon: '👨‍🏫',
+        icon: 'trainers',
         getOptions: () => {
           const progs = state.getPrograms();
           const assigned = progs.filter(p => p.trainerId && state.getTrainerById(p.trainerId)).length;
@@ -161,7 +200,7 @@ export function renderProgramsView(container, navigateTo) {
       {
         key: 'enrollment',
         label: 'Candidate Roster',
-        icon: '👥',
+        icon: 'users',
         getOptions: () => {
           const progs = state.getPrograms();
           const withCands = progs.filter(p => p.candidateIds && p.candidateIds.length > 0).length;
@@ -180,9 +219,87 @@ export function renderProgramsView(container, navigateTo) {
     }
   });
 
+  function updateBulkBar() {
+    const count = selectedProgramIds.size;
+    if (count > 0) {
+      progBulkBar.style.display = 'flex';
+      pbaCountBadge.textContent = count;
+      const delBtnText = btnBulkDeletePrograms.querySelector('span');
+      if (delBtnText) delBtnText.textContent = `Delete (${count})`;
+    } else {
+      progBulkBar.style.display = 'none';
+    }
+
+    const currentList = getProgramsList();
+    if (isSelectionMode && currentList.length > 0) {
+      btnSelectAllPrograms.textContent = selectedProgramIds.size === currentList.length ? 'Deselect All' : 'Select All';
+    }
+  }
+
+  // Toggle selection mode
+  btnToggleProgramSelectMode.addEventListener('click', () => {
+    isSelectionMode = !isSelectionMode;
+    if (!isSelectionMode) {
+      selectedProgramIds.clear();
+      btnToggleProgramSelectMode.classList.remove('active');
+      btnToggleProgramSelectMode.innerHTML = `${getIcon('checkSquare')} <span>Select</span>`;
+      btnSelectAllPrograms.style.display = 'none';
+    } else {
+      btnToggleProgramSelectMode.classList.add('active');
+      btnToggleProgramSelectMode.innerHTML = `${getIcon('x')} <span>Done</span>`;
+      btnSelectAllPrograms.style.display = 'inline-flex';
+    }
+    updateBulkBar();
+    renderLeftList();
+  });
+
+  // Select all / Deselect all
+  btnSelectAllPrograms.addEventListener('click', () => {
+    const currentList = getProgramsList();
+    if (selectedProgramIds.size === currentList.length) {
+      selectedProgramIds.clear();
+    } else {
+      currentList.forEach(p => selectedProgramIds.add(p.id));
+    }
+    updateBulkBar();
+    renderLeftList();
+  });
+
+  // Cancel bulk selection
+  btnCancelBulkSelect.addEventListener('click', () => {
+    selectedProgramIds.clear();
+    isSelectionMode = false;
+    btnToggleProgramSelectMode.classList.remove('active');
+    btnToggleProgramSelectMode.innerHTML = `${getIcon('checkSquare')} <span>Select</span>`;
+    btnSelectAllPrograms.style.display = 'none';
+    updateBulkBar();
+    renderLeftList();
+  });
+
+  // Execute bulk deletion
+  btnBulkDeletePrograms.addEventListener('click', () => {
+    const count = selectedProgramIds.size;
+    if (count === 0) return;
+
+    if (confirm(`Are you sure you want to delete ${count} program${count > 1 ? 's' : ''}? This will also unassign enrolled candidates and mentors.`)) {
+      const deletedCount = state.deleteProgramsBulk(Array.from(selectedProgramIds));
+      toast.success(`Successfully deleted ${deletedCount} program${deletedCount > 1 ? 's' : ''}.`);
+      selectedProgramIds.clear();
+      isSelectionMode = false;
+      btnToggleProgramSelectMode.classList.remove('active');
+      btnToggleProgramSelectMode.innerHTML = `${getIcon('checkSquare')} <span>Select</span>`;
+      btnSelectAllPrograms.style.display = 'none';
+      updateBulkBar();
+
+      splitLayout.classList.remove('mobile-show-detail');
+      renderLeftList();
+    }
+  });
+
   function renderLeftList() {
     const list = getProgramsList();
     programsListContainer.innerHTML = '';
+    progCountDisplay.textContent = `${list.length} Program${list.length === 1 ? '' : 's'}`;
 
     if (list.length === 0) {
       programsListContainer.innerHTML = `
@@ -202,6 +319,7 @@ export function renderProgramsView(container, navigateTo) {
 
     list.forEach(p => {
       const isSelected = p.id === selectedProgramId;
+      const isChecked = selectedProgramIds.has(p.id);
       const isStage = p.type === 'Stage';
       const trainer = p.trainerId ? state.getTrainerById(p.trainerId) : null;
       const candidatesCount = p.candidateIds ? p.candidateIds.length : 0;
@@ -209,15 +327,22 @@ export function renderProgramsView(container, navigateTo) {
       const item = document.createElement('div');
       item.className = `prog-sidebar-card ${isSelected ? 'active-program' : ''} ${
         isStage ? 'prog-card-stage' : 'prog-card-nonstage'
-      }`;
+      } ${isChecked ? 'is-bulk-checked' : ''}`;
       item.setAttribute('data-id', p.id);
 
       item.innerHTML = `
         <div class="prog-side-header">
-          <span class="program-code-pill">${p.code}</span>
-          <span class="badge ${isStage ? 'badge-stage' : 'badge-nonstage'}">
-            ${isStage ? getIcon('stage') : getIcon('nonStage')} ${p.type}
-          </span>
+          <div class="prog-side-header-left">
+            ${isSelectionMode ? `
+              <div class="prog-card-select-box ${isChecked ? 'checked' : ''}" data-action="toggle-select">
+                ${isChecked ? getIcon('check') : ''}
+              </div>
+            ` : ''}
+            <span class="program-code-pill">${p.code}</span>
+            <span class="badge ${isStage ? 'badge-stage' : 'badge-nonstage'}">
+              ${isStage ? getIcon('stage') : getIcon('nonStage')} ${p.type}
+            </span>
+          </div>
           <span class="badge badge-neutral-xs">${p.category}</span>
         </div>
 
@@ -240,7 +365,20 @@ export function renderProgramsView(container, navigateTo) {
         </div>
       `;
 
-      item.addEventListener('click', () => {
+      item.addEventListener('click', (e) => {
+        // If clicking on select box or if in selection mode:
+        if (isSelectionMode || e.target.closest('[data-action="toggle-select"]')) {
+          e.stopPropagation();
+          if (selectedProgramIds.has(p.id)) {
+            selectedProgramIds.delete(p.id);
+          } else {
+            selectedProgramIds.add(p.id);
+          }
+          updateBulkBar();
+          renderLeftList();
+          return;
+        }
+
         selectedProgramId = p.id;
         // On phone view, switch to detail view and scroll to top
         splitLayout.classList.add('mobile-show-detail');
@@ -264,7 +402,6 @@ export function renderProgramsView(container, navigateTo) {
         <div class="empty-state-box py-5 text-center" style="padding: 40px 16px;">
           <div class="empty-icon">${getIcon('programs')}</div>
           <h3>Select a program from the list</h3>
-          <p class="text-muted text-xs">You will be able to assign candidates, assign trainers, and view candidate profiles.</p>
         </div>
       `;
       return;
@@ -276,40 +413,41 @@ export function renderProgramsView(container, navigateTo) {
     const allTrainers = state.getTrainers();
 
     programDetailContainer.innerHTML = `
-      <!-- Mobile Only Back Button to Return to Program List -->
-      <div class="mobile-programs-back-bar" id="btnMobileBackToPrograms">
-        ${getIcon('chevronLeft')} <span>Back to All Programs</span>
-      </div>
+      <!-- Single Unified Top Row for Back & Action Buttons -->
+      <div class="program-detail-top-bar">
+        <button type="button" class="pdt-back-btn" id="btnMobileBackToPrograms" title="Back to programs list">
+          ${getIcon('chevronLeft')} <span>Back</span>
+        </button>
 
-      <!-- Program Header Strip -->
-      <div class="saas-detail-banner">
-        <div class="sdb-main">
-          <div class="sdb-badges-row">
-            <span class="saas-prog-capsule ${isStage ? 'p-stage' : 'p-nonstage'}">${program.code}</span>
-            <span class="saas-tag-pill ${isStage ? 'p-stage' : 'p-nonstage'}">
-              ${isStage ? getIcon('stage') : getIcon('nonStage')} ${program.type}
-            </span>
-            <span class="saas-tag-pill p-neutral">${program.category}</span>
-          </div>
-          <h2 class="sdb-title">${program.name}</h2>
+        <div class="pdt-badges">
+          <span class="program-code-pill">${program.code}</span>
+          <span class="badge ${isStage ? 'badge-stage' : 'badge-nonstage'}">
+            ${isStage ? getIcon('stage') : getIcon('nonStage')} ${program.type}
+          </span>
+          <span class="badge badge-neutral-xs">${program.category}</span>
         </div>
 
-        <div class="sdb-actions">
-          <button id="btnExportThisProg" class="saas-pill-btn desktop-only-btn" title="Export this roster to Excel">
-            ${getIcon('download')} Export Roster
+        <div class="pdt-actions">
+          <button type="button" id="btnExportThisProg" class="saas-pill-btn-sm desktop-only-btn" title="Export this roster to Excel">
+            ${getIcon('download')} <span>Export</span>
           </button>
-          <button id="btnEditThisProg" class="saas-pill-btn" title="Edit Program">
-            ${getIcon('edit')} Edit
+          <button type="button" id="btnEditThisProg" class="saas-pill-btn-sm" title="Edit Program">
+            ${getIcon('edit')} <span>Edit</span>
           </button>
-          <button id="btnDeleteThisProg" class="saas-circle-btn text-danger" title="Delete Program">
+          <button type="button" id="btnDeleteThisProg" class="saas-circle-btn-sm text-danger" title="Delete Program">
             ${getIcon('trash')}
           </button>
         </div>
       </div>
 
+      <!-- Program Title Banner -->
+      <div class="program-detail-title-card">
+        <h2 class="sdb-title">${program.name}</h2>
+      </div>
+
       <!-- 1. DEDICATED TRAINER & MENTOR PANEL -->
-      <div class="saas-section-card trainer-management-panel" style="margin-bottom: 16px;">
-        <div class="ssc-head" style="margin-bottom: 12px; border-bottom: 1px solid #f1f5f9; padding-bottom: 10px;">
+      <div class="saas-section-card trainer-management-panel" style="margin-bottom: 14px;">
+        <div class="ssc-head" style="margin-bottom: 10px; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px;">
           <div class="ssc-head-title">
             <span>${getIcon('trainers')} Program Trainer & Mentor</span>
             ${
@@ -347,7 +485,6 @@ export function renderProgramsView(container, navigateTo) {
                 <div class="empty-icon-sm" style="color: #f59e0b; flex-shrink: 0;">${getIcon('info')}</div>
                 <div>
                   <strong class="text-xs text-main" style="display: block;">No trainer assigned yet</strong>
-                  <span class="text-muted text-xs">Assign a trainer below to mentor candidates in this program.</span>
                 </div>
               </div>
             `
@@ -400,7 +537,6 @@ export function renderProgramsView(container, navigateTo) {
               <div class="no-assigned-placeholder text-center py-5 text-muted">
                 <div class="empty-icon-sm mb-2">${getIcon('candidates')}</div>
                 <strong class="text-main" style="font-size: 14px;">No candidates assigned yet</strong>
-                <p class="text-xs mt-1">Tap "Add Candidates" above to select candidates from the directory.</p>
               </div>
             `
               : `
@@ -449,14 +585,13 @@ export function renderProgramsView(container, navigateTo) {
         </div>
 
         <!-- Mobile Touch List (< 769px) - Zero Scrolling, Nothing Hidden -->
-        <div class="mobile-assigned-candidates-list mobile-cards-view" style="margin-top: 12px; gap: 8px;">
+        <div class="mobile-assigned-candidates-list mobile-cards-view" style="margin-top: 10px; gap: 8px;">
           ${
             assignedCandidates.length === 0
               ? `
               <div class="no-assigned-placeholder text-center py-4 text-muted">
                 <div class="empty-icon-sm mb-1">${getIcon('candidates')}</div>
                 <strong class="text-xs text-main">No candidates assigned yet</strong>
-                <p class="text-xs mt-1">Tap "+ Add Candidates" above to enroll students.</p>
               </div>
             `
               : assignedCandidates

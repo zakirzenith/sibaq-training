@@ -231,12 +231,29 @@ export function openAssignCandidatesModal({ programId, onSave = () => {} }) {
   const categories = Array.from(new Set(allCandidates.map(c => c.category).filter(Boolean))).sort();
   const classes = Array.from(new Set(allCandidates.map(c => c.class).filter(Boolean))).sort();
 
+  const progCategory = (program.category || '').trim();
+  const matchedCategory = categories.find(cat => cat.trim().toLowerCase() === progCategory.toLowerCase());
+  const defaultCategory = matchedCategory || (progCategory || 'ALL');
+
+  filterCategorySelect.innerHTML = `<option value="ALL">All Categories</option>`;
   categories.forEach(cat => {
     const opt = document.createElement('option');
     opt.value = cat;
     opt.textContent = cat;
+    if (defaultCategory && cat.toLowerCase() === defaultCategory.toLowerCase()) {
+      opt.selected = true;
+    }
     filterCategorySelect.appendChild(opt);
   });
+
+  if (progCategory && !categories.some(c => c.toLowerCase() === progCategory.toLowerCase())) {
+    const opt = document.createElement('option');
+    opt.value = progCategory;
+    opt.textContent = `${progCategory} (This Program)`;
+    opt.selected = true;
+    filterCategorySelect.appendChild(opt);
+  }
+  filterCategorySelect.value = defaultCategory;
 
   classes.forEach(cls => {
     const opt = document.createElement('option');
@@ -296,7 +313,7 @@ export function openAssignCandidatesModal({ programId, onSave = () => {} }) {
   // Filter candidates logic
   function getFilteredCandidates() {
     const query = searchCandidateInput.value.toLowerCase().trim();
-    const selCat = filterCategorySelect.value;
+    const selCat = (filterCategorySelect.value || 'ALL').trim();
     const selCls = filterClassSelect.value;
 
     return allCandidates.filter(c => {
@@ -306,7 +323,9 @@ export function openAssignCandidatesModal({ programId, onSave = () => {} }) {
         c.adNo.toLowerCase().includes(query) ||
         (c.class && c.class.toLowerCase().includes(query));
 
-      const matchesCat = selCat === 'ALL' || c.category === selCat;
+      const matchesCat =
+        selCat === 'ALL' ||
+        (c.category && c.category.trim().toLowerCase() === selCat.toLowerCase());
       const matchesCls = selCls === 'ALL' || c.class === selCls;
 
       return matchesSearch && matchesCat && matchesCls;

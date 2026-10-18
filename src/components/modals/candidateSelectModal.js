@@ -6,12 +6,21 @@ import { openCandidateProfileModal } from './candidateProfileModal.js';
 /**
  * Candidate Select Modal (Popup Box)
  * Appears when clicking "Add Candidates" in the Programs view.
+ * Automatically filters to candidates matching the program's category.
  */
 export function openCandidateSelectModal({ program, onAdd = () => {} }) {
   const currentAssignedIds = new Set(program.candidateIds || []);
   let selectedIdsToAdd = new Set();
   let searchQuery = '';
-  let selectedCategory = 'ALL';
+
+  const allCandidates = state.getCandidates();
+  const categories = Array.from(new Set(allCandidates.map(c => c.category).filter(Boolean))).sort();
+  const classes = Array.from(new Set(allCandidates.map(c => c.class).filter(Boolean))).sort();
+
+  // Automatically filter to this program's category if available
+  const progCategory = (program.category || '').trim();
+  const matchedCategory = categories.find(cat => cat.trim().toLowerCase() === progCategory.toLowerCase());
+  let selectedCategory = matchedCategory || (progCategory || 'ALL');
   let selectedClass = 'ALL';
 
   const overlay = document.createElement('div');
@@ -37,8 +46,8 @@ export function openCandidateSelectModal({ program, onAdd = () => {} }) {
       <!-- Modal Body -->
       <div class="modal-body select-candidates-body" style="padding: 20px;">
         <!-- Toolbar & Quick Filters -->
-        <div class="saas-command-bar" style="margin-bottom: 12px;">
-          <div class="scb-search-wrap flex-1">
+        <div class="saas-command-bar" style="margin-bottom: 10px; display: flex; flex-wrap: wrap; gap: 8px;">
+          <div class="scb-search-wrap flex-1" style="min-width: 200px;">
             <span class="scb-search-icon">${getIcon('search')}</span>
             <input 
               type="text" 
@@ -48,7 +57,7 @@ export function openCandidateSelectModal({ program, onAdd = () => {} }) {
             />
           </div>
 
-          <div class="scb-filters-group">
+          <div class="scb-filters-group" style="display: flex; gap: 6px; flex-wrap: wrap;">
             <select id="modalFilterCat" class="saas-select-pill">
               <option value="ALL">All Categories</option>
             </select>
@@ -57,6 +66,9 @@ export function openCandidateSelectModal({ program, onAdd = () => {} }) {
             </select>
           </div>
         </div>
+
+        <!-- Category Auto-Filter Indicator Banner -->
+        <div id="modalCategoryFilterBanner" class="category-match-banner" style="margin-bottom: 12px; display: none;"></div>
 
         <!-- Quick Selection Bar -->
         <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; padding: 0 4px;">
@@ -125,17 +137,26 @@ export function openCandidateSelectModal({ program, onAdd = () => {} }) {
   const btnConfirm = overlay.querySelector('#btnConfirmCandidateSelect');
   const btnSelectedCount = overlay.querySelector('#btnSelectedCount');
 
-  // Populate Categories & Classes
-  const allCandidates = state.getCandidates();
-  const categories = Array.from(new Set(allCandidates.map(c => c.category).filter(Boolean))).sort();
-  const classes = Array.from(new Set(allCandidates.map(c => c.class).filter(Boolean))).sort();
-
+  // Populate Categories & Classes with program category pre-selected
+  catSelect.innerHTML = `<option value="ALL">All Categories</option>`;
   categories.forEach(cat => {
     const opt = document.createElement('option');
     opt.value = cat;
     opt.textContent = cat;
+    if (selectedCategory && cat.toLowerCase() === selectedCategory.toLowerCase()) {
+      opt.selected = true;
+    }
     catSelect.appendChild(opt);
   });
+
+  if (progCategory && !categories.some(c => c.toLowerCase() === progCategory.toLowerCase())) {
+    const opt = document.createElement('option');
+    opt.value = progCategory;
+    opt.textContent = `${progCategory} (This Program)`;
+    opt.selected = true;
+    catSelect.appendChild(opt);
+  }
+  catSelect.value = selectedCategory;
 
   classes.forEach(cls => {
     const opt = document.createElement('option');
@@ -143,6 +164,47 @@ export function openCandidateSelectModal({ program, onAdd = () => {} }) {
     opt.textContent = cls;
     clsSelect.appendChild(opt);
   });
+
+  function updateFilterBanner() {
+    const banner = overlay.querySelector('#modalCategoryFilterBanner');
+    if (!banner) return;
+    if (selectedCategory !== 'ALL') {
+      banner.style.display = 'flex';
+      banner.className = 'category-match-banner is-filtered';
+      banner.innerHTML = `
+        <div class="cmb-left">
+          <span class="cmb-icon">${getIcon('check')}</span>
+          <span>Showing <strong>${selectedCategory}</strong> candidates for this program</span>
+        </div>
+        <button type="button" id="btnBannerShowAll" class="cmb-btn-text">Show All Categories</button>
+      `;
+      banner.querySelector('#btnBannerShowAll')?.addEventListener('click', () => {
+        selectedCategory = 'ALL';
+        catSelect.value = 'ALL';
+        updateFilterBanner();
+        renderTable();
+      });
+    } else if (progCategory) {
+      banner.style.display = 'flex';
+      banner.className = 'category-match-banner is-all';
+      banner.innerHTML = `
+        <div class="cmb-left">
+          <span class="text-muted">Viewing all categories</span>
+        </div>
+        <button type="button" id="btnBannerFilterProgCat" class="cmb-btn-text">
+          Filter to ${progCategory}
+        </button>
+      `;
+      banner.querySelector('#btnBannerFilterProgCat')?.addEventListener('click', () => {
+        selectedCategory = matchedCategory || progCategory;
+        catSelect.value = selectedCategory;
+        updateFilterBanner();
+        renderTable();
+      });
+    } else {
+      banner.style.display = 'none';
+    }
+  }
 
   function getAvailableCandidates() {
     const q = searchQuery.toLowerCase().trim();
@@ -156,7 +218,9 @@ export function openCandidateSelectModal({ program, onAdd = () => {} }) {
         c.adNo.toLowerCase().includes(q) ||
         (c.class && c.class.toLowerCase().includes(q));
 
-      const matchesCat = selectedCategory === 'ALL' || c.category === selectedCategory;
+      const matchesCat =
+        selectedCategory === 'ALL' ||
+        (c.category && c.category.trim().toLowerCase() === selectedCategory.trim().toLowerCase());
       const matchesCls = selectedClass === 'ALL' || c.class === selectedClass;
 
       return matchesSearch && matchesCat && matchesCls;
@@ -164,6 +228,7 @@ export function openCandidateSelectModal({ program, onAdd = () => {} }) {
   }
 
   function renderTable() {
+    updateFilterBanner();
     const list = getAvailableCandidates();
     tableBody.innerHTML = '';
 
@@ -174,11 +239,31 @@ export function openCandidateSelectModal({ program, onAdd = () => {} }) {
     if (list.length === 0) {
       tableBody.innerHTML = `
         <tr>
-          <td colspan="6" class="text-center py-4 text-muted text-xs">
-            No candidates available matching search filters (or all matching candidates are already enrolled).
+          <td colspan="6" class="text-center py-5 text-muted">
+            <div style="font-size: 13.5px; font-weight: 700; color: #1e293b; margin-bottom: 4px;">
+              No candidates available ${selectedCategory !== 'ALL' ? `in "${selectedCategory}" category` : 'matching your search'}.
+            </div>
+            ${
+              selectedCategory !== 'ALL'
+                ? `
+              <div style="font-size: 12px; color: #64748b; margin-bottom: 12px;">
+                All candidates in "${selectedCategory}" may already be assigned, or none are enrolled yet.
+              </div>
+              <button type="button" id="btnEmptyResetCategory" class="saas-pill-btn" style="font-weight: 700; color: #4338ca;">
+                Show All Categories
+              </button>
+            `
+                : ''
+            }
           </td>
         </tr>
       `;
+      tableBody.querySelector('#btnEmptyResetCategory')?.addEventListener('click', () => {
+        selectedCategory = 'ALL';
+        catSelect.value = 'ALL';
+        updateFilterBanner();
+        renderTable();
+      });
       masterCheckbox.checked = false;
       return;
     }
@@ -207,7 +292,7 @@ export function openCandidateSelectModal({ program, onAdd = () => {} }) {
         </td>
         <td>
           <span class="badge ${
-            c.category.toLowerCase() === program.category.toLowerCase()
+            c.category && program.category && c.category.toLowerCase() === program.category.toLowerCase()
               ? 'badge-primary-subtle'
               : 'badge-neutral-xs'
           }">
@@ -261,6 +346,7 @@ export function openCandidateSelectModal({ program, onAdd = () => {} }) {
 
   catSelect.addEventListener('change', e => {
     selectedCategory = e.target.value;
+    updateFilterBanner();
     renderTable();
   });
 

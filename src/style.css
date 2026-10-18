@@ -5305,6 +5305,67 @@ code, .ad-badge, .program-code-pill, .program-code-badge {
   width: 100%;
 }
 
+.category-match-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  font-size: 12px;
+  box-sizing: border-box;
+  width: 100%;
+}
+
+.category-match-banner.is-filtered {
+  background: #f0fdf4;
+  border: 1px solid #bbf7d0;
+  color: #166534;
+}
+
+.category-match-banner.is-all {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  color: #475569;
+}
+
+.cmb-left {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  font-weight: 600;
+}
+
+.cmb-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #dcfce7;
+  color: #16a34a;
+  font-size: 11px;
+  flex-shrink: 0;
+}
+
+.cmb-btn-text {
+  background: none;
+  border: none;
+  color: #4f46e5;
+  font-size: 11.5px;
+  font-weight: 700;
+  cursor: pointer;
+  text-decoration: underline;
+  padding: 2px 4px;
+  flex-shrink: 0;
+}
+
+.cmb-btn-text:hover {
+  color: #3730a3;
+}
+
 /* ========================================================
    CLOUD DATABASE & SYNC (FIREBASE FIRESTORE)
    ======================================================== */

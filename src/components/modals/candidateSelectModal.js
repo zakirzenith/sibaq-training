@@ -49,9 +49,6 @@ export function openCandidateSelectModal({ program, onAdd = () => {} }) {
           </div>
 
           <div class="scb-filters-group">
-            <button id="btnModalMatchCat" class="saas-pill-btn" style="border: 1px solid #c7d2fe; background: #eef2ff; color: #4338ca;">
-              ${getIcon('sparkles')} Match (${program.category})
-            </button>
             <select id="modalFilterCat" class="saas-select-pill">
               <option value="ALL">All Categories</option>
             </select>
@@ -120,7 +117,6 @@ export function openCandidateSelectModal({ program, onAdd = () => {} }) {
   const searchInput = overlay.querySelector('#modalCandidateSearch');
   const catSelect = overlay.querySelector('#modalFilterCat');
   const clsSelect = overlay.querySelector('#modalFilterCls');
-  const btnMatchCat = overlay.querySelector('#btnModalMatchCat');
   const btnSelectAll = overlay.querySelector('#btnModalSelectAll');
   const btnDeselectAll = overlay.querySelector('#btnModalDeselectAll');
   const masterCheckbox = overlay.querySelector('#masterSelectCheckbox');
@@ -270,12 +266,6 @@ export function openCandidateSelectModal({ program, onAdd = () => {} }) {
 
   clsSelect.addEventListener('change', e => {
     selectedClass = e.target.value;
-    renderTable();
-  });
-
-  btnMatchCat.addEventListener('click', () => {
-    selectedCategory = program.category;
-    catSelect.value = program.category;
     renderTable();
   });
 

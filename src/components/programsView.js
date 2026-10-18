@@ -1,4 +1,4 @@
-import { state } from '../services/state.js';
+import { state, getProgressStatus } from '../services/state.js';
 import { excelService } from '../services/excelService.js';
 import { toast } from './toast.js';
 import { getIcon } from './icons.js';
@@ -7,6 +7,7 @@ import { openProgramFormModal } from './modals/programFormModal.js';
 import { openCandidateProfileModal } from './modals/candidateProfileModal.js';
 import { openCandidateSelectModal } from './modals/candidateSelectModal.js';
 import { openTrainerPickerModal } from './modals/trainerPickerModal.js';
+import { openTrainerProfileModal } from './modals/trainerProfileModal.js';
 import { createFilterBar } from './filterEngine.js';
 
 export function renderProgramsView(container, navigateTo) {
@@ -74,9 +75,6 @@ export function renderProgramsView(container, navigateTo) {
           <button id="btnBulkUploadPrograms" class="saas-pill-btn" title="Bulk upload programs from Excel">
             ${getIcon('upload')} Bulk Upload
           </button>
-          <button id="btnAutoFixStageTypes" class="saas-pill-btn" title="Auto-detect Stage vs Non-Stage items based on Sibaq codes and titles">
-            ${getIcon('refresh')} Fix Stage Types
-          </button>
         </div>
 
         <button id="btnAddProgram" class="btn-saas-primary">
@@ -99,9 +97,6 @@ export function renderProgramsView(container, navigateTo) {
               <span class="programs-count-pill" id="progCountDisplay">-- Programs</span>
             </div>
             <div class="psb-right">
-              <button type="button" id="btnAutoFixStageTypesMobile" class="btn-select-toggle" title="Auto-correct Stage vs Non-Stage based on codes and names">
-                ${getIcon('refresh')} <span>Fix Stage</span>
-              </button>
               <button type="button" id="btnToggleProgramSelectMode" class="btn-select-toggle" title="Multi-select programs for bulk actions">
                 ${getIcon('checkSquare')} <span>Multi-Select</span>
               </button>
@@ -418,6 +413,10 @@ export function renderProgramsView(container, navigateTo) {
 
     const isStage = program.type === 'Stage';
     const assignedTrainer = program.trainerId ? state.getTrainerById(program.trainerId) : null;
+    const trainerReadiness = assignedTrainer ? state.getTrainerReadiness(assignedTrainer.id) : null;
+    const trnStatus = trainerReadiness && trainerReadiness.hasData
+      ? getProgressStatus(trainerReadiness.percentage)
+      : { label: 'Not Evaluated', badgeClass: 'badge-neutral', color: '#64748b' };
     const assignedCandidates = state.getProgramCandidates(program.id);
     const allTrainers = state.getTrainers();
 
@@ -472,14 +471,17 @@ export function renderProgramsView(container, navigateTo) {
             assignedTrainer
               ? `
             <div class="assigned-trainer-profile-card">
-              <div class="atpc-avatar" style="background: ${assignedTrainer.color || '#6366f1'}">
+              <div class="atpc-avatar" style="background: ${assignedTrainer.color || '#6366f1'}; cursor: pointer;" title="Click to view trainer profile">
                 ${(assignedTrainer.name || 'T').split(' ').map(n => n[0]).slice(0, 2).join('')}
               </div>
               <div class="atpc-info">
-                <strong class="atpc-name">${assignedTrainer.name}</strong>
+                <strong class="atpc-name" style="cursor: pointer;" title="Click to view trainer profile">${assignedTrainer.name}</strong>
                 <div class="atpc-meta">
                   <span class="saas-tag-pill p-stage">${assignedTrainer.expertise}</span>
-                  <span class="atpc-mentees">${state.getTrainerMentees(assignedTrainer.id).length} Mentees Coached</span>
+                  <span class="atpc-mentees">${state.getTrainerMentees(assignedTrainer.id).length} Mentees</span>
+                  <span class="badge ${trainerReadiness && trainerReadiness.hasData ? trnStatus.badgeClass : 'badge-neutral'} text-xs font-semibold">
+                    ${trainerReadiness && trainerReadiness.hasData ? `${trainerReadiness.percentage}% Readiness` : '0% Readiness'}
+                  </span>
                 </div>
               </div>
               <div class="atpc-actions">
@@ -729,6 +731,18 @@ export function renderProgramsView(container, navigateTo) {
     programDetailContainer.querySelector('#btnChooseTrainerTrigger')?.addEventListener('click', openTrainerPicker);
     programDetailContainer.querySelector('#btnChangeTrainer')?.addEventListener('click', openTrainerPicker);
 
+    // Click trainer name or avatar to open trainer profile modal
+    if (assignedTrainer) {
+      const openTrnProfile = () => {
+        openTrainerProfileModal({
+          trainerId: assignedTrainer.id,
+          onUpdate: () => renderRightDetail(program.id)
+        });
+      };
+      programDetailContainer.querySelector('.atpc-avatar')?.addEventListener('click', openTrnProfile);
+      programDetailContainer.querySelector('.atpc-name')?.addEventListener('click', openTrnProfile);
+    }
+
     // 9. Unassign Trainer button
     const btnUnassignTrainer = programDetailContainer.querySelector('#btnUnassignTrainer');
     if (btnUnassignTrainer) {
@@ -777,27 +791,6 @@ export function renderProgramsView(container, navigateTo) {
       }
     });
   });
-
-  const handleAutoFix = () => {
-    const { reclassifiedCount, total } = state.reclassifyProgramsStageType(true);
-    if (reclassifiedCount > 0) {
-      toast.success(`Auto-corrected ${reclassifiedCount} of ${total} programs to their proper Stage / Non-Stage classification!`);
-      renderLeftList();
-      if (selectedProgramId) renderRightDetail(selectedProgramId);
-    } else {
-      toast.info(`All ${total} programs are already accurately classified based on codes and keywords.`);
-    }
-  };
-
-  const btnAutoFixStageTypes = container.querySelector('#btnAutoFixStageTypes');
-  if (btnAutoFixStageTypes) {
-    btnAutoFixStageTypes.addEventListener('click', handleAutoFix);
-  }
-
-  const btnAutoFixStageTypesMobile = container.querySelector('#btnAutoFixStageTypesMobile');
-  if (btnAutoFixStageTypesMobile) {
-    btnAutoFixStageTypesMobile.addEventListener('click', handleAutoFix);
-  }
 
   // Initial render
   renderLeftList();

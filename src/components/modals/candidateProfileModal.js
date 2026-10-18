@@ -2,6 +2,7 @@ import { state, getProgressStatus } from '../../services/state.js';
 import { getIcon } from '../icons.js';
 import { toast } from '../toast.js';
 import { openRecordMeetModal } from './recordMeetModal.js';
+import { openTrainerProfileModal } from './trainerProfileModal.js';
 
 /**
  * Candidate Profile Modal
@@ -119,7 +120,7 @@ export function openCandidateProfileModal({ candidateId, onUpdate = () => {} }) 
                         ${
                           trainer
                             ? `
-                          <div class="trainer-chip-full">
+                          <div class="trainer-chip-full clickable-trainer-profile" data-tid="${trainer.id}" style="cursor: pointer;" title="Click to view ${trainer.name}'s profile">
                             <div class="trainer-avatar-mini" style="background: ${trainer.color || '#6366f1'}">
                               ${trainer.name.split(' ').map(n => n[0]).slice(0, 2).join('')}
                             </div>
@@ -160,17 +161,20 @@ export function openCandidateProfileModal({ candidateId, onUpdate = () => {} }) 
             <div class="mentors-summary-grid">
               ${uniqueTrainers
                 .map(
-                  trn => `
-                <div class="mentor-summary-pill">
+                  trn => {
+                    const r = state.getTrainerReadiness(trn.id);
+                    return `
+                <div class="mentor-summary-pill clickable-trainer-profile" data-tid="${trn.id}" style="cursor: pointer;" title="Click to view ${trn.name}'s profile">
                   <div class="trainer-avatar-mini" style="background: ${trn.color || '#6366f1'}">
                     ${trn.name.split(' ').map(n => n[0]).slice(0, 2).join('')}
                   </div>
                   <div>
                     <strong>${trn.name}</strong>
-                    <div class="text-xs text-muted">${trn.expertise} (${trn.experience || '5+ Yrs'})</div>
+                    <div class="text-xs text-muted">${trn.expertise} • ${r.hasData ? `${r.percentage}% Readiness` : '0% Readiness'}</div>
                   </div>
                 </div>
-              `
+              `;
+                  }
                 )
                 .join('')}
             </div>
@@ -278,6 +282,16 @@ export function openCandidateProfileModal({ candidateId, onUpdate = () => {} }) 
         toast.info(`Removed ${candidate.name} from ${prog?.name}`);
         close();
         onUpdate();
+      }
+    });
+  });
+
+  // Click on trainer to open Trainer Profile
+  overlay.querySelectorAll('.clickable-trainer-profile').forEach(el => {
+    el.addEventListener('click', () => {
+      const tid = el.getAttribute('data-tid');
+      if (tid) {
+        openTrainerProfileModal({ trainerId: tid });
       }
     });
   });

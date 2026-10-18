@@ -16,35 +16,42 @@ function cleanKey(str) {
 export function inferProgramType(rawType = '', code = '', name = '') {
   const cleanVal = String(rawType || '').trim().toLowerCase();
 
-  // 1. Explicit cell value matched
-  if (['stage', 'on stage', 'on-stage', 'onstage', 's', 'yes', 'true', '1', 'stg'].includes(cleanVal)) {
-    return 'Stage';
-  }
-  if (cleanVal.includes('non') || cleanVal.includes('off') || ['no', 'false', '0', 'ns', 'nn'].includes(cleanVal)) {
+  // 1. Explicit cell value matched (Priority #1)
+  if (
+    cleanVal.includes('non') ||
+    cleanVal.includes('off') ||
+    ['ns', 'nn', 'no', 'false', '0', 'off-stage', 'off stage', 'non stage', 'non-stage'].includes(cleanVal)
+  ) {
     return 'Non-Stage';
   }
-  if (cleanVal === 'stage' || (cleanVal.includes('stage') && !cleanVal.includes('non') && !cleanVal.includes('off'))) {
+  if (
+    cleanVal.includes('stage') ||
+    ['stage', 'on stage', 'on-stage', 'onstage', 's', 'yes', 'true', '1', 'stg'].includes(cleanVal)
+  ) {
     return 'Stage';
   }
 
   // 2. Sibaq Code Prefix Heuristic
   const c = String(code || '').trim().toUpperCase();
   // Bidaya Stage: BS, BST; Ula Stage: US, UST; Thanawiyyah Stage: TS, TST; Aliyah Stage: AS, AST
-  if (/^(BS|UST|US|TST|TS|AST|AS|BST)\d+/i.test(c) || c.includes('STG') || c.includes('STAGE') || c.includes('ONSTAGE')) {
+  if (/^(BS|BST|UST|US|TST|TS|AST|AS)\d+/i.test(c) || c.includes('STG') || c.includes('STAGE') || c.includes('ONSTAGE')) {
     return 'Stage';
   }
-  // Bidaya Non-Stage: BNN, BN; Ula Non-Stage: UNN, UN; etc.
-  if (/^(BNN|UNN|TNN|ANN|BN|UN|TN|AN|NST)\d+/i.test(c) || c.includes('NON') || c.includes('OFF') || c.includes('NN')) {
+  // Bidaya Non-Stage: BNN; Ula Non-Stage: UNN; Thanawiyyah Non-Stage: TNN; Aliyah Non-Stage: ANN
+  if (/^(BNN|UNN|TNN|ANN|NST)\d+/i.test(c) || c.includes('NON') || c.includes('OFF')) {
     return 'Non-Stage';
   }
 
-  // 3. Program Title / Name Heuristics
+  // 3. Program Title / Name Heuristics (Expanded for Sibaq Arts & Islamic competitions)
   const n = String(name || '').trim().toLowerCase();
   const stageKeywords = [
     'speech', 'elocution', 'debate', 'qira', 'qirat', 'qur\'an', 'quran', 'hifz', 'hifdh',
     'nasheed', 'song', 'duff', 'quiz', 'extempore', 'public address', 'mono act', 'mime',
     'choral', 'ghazal', 'gazal', 'recitation', 'anchor', 'anchoring', 'mushaira', 'drama',
-    'skit', 'talk', 'presentation', 'story telling', 'story-telling', 'vocal', 'anthem'
+    'skit', 'talk', 'presentation', 'story telling', 'story-telling', 'vocal', 'anthem',
+    'adhan', 'azan', 'kadhaprasangam', 'mappilappattu', 'mappila pattu', 'arabana', 'burdah',
+    'mouleed', 'madh geetham', 'thilawath', 'thilawat', 'tarteel', 'haddad', 'lecture',
+    'announcement', 'reading', 'reciting'
   ];
   if (stageKeywords.some(kw => n.includes(kw))) {
     return 'Stage';
@@ -53,7 +60,8 @@ export function inferProgramType(rawType = '', code = '', name = '') {
   const nonStageKeywords = [
     'writing', 'essay', 'story writing', 'paragraph', 'diary', 'drawing', 'pencil', 'painting',
     'calligraphy', 'poster', 'versification', 'translation', 'review', 'caption', 'water color',
-    'watercolour', 'embroidery', 'origami', 'collage', 'scrap book'
+    'watercolour', 'embroidery', 'origami', 'collage', 'scrap book', 'caption writing',
+    'calligraphic', 'doodle', 'cartoon', 'illustration'
   ];
   if (nonStageKeywords.some(kw => n.includes(kw))) {
     return 'Non-Stage';
@@ -141,7 +149,24 @@ export const excelService = {
     const firstSheetName = workbook.SheetNames[0];
     const worksheet = workbook.Sheets[firstSheetName];
 
-    const rawRows = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
+    // Intelligently scan first 10 rows to detect the true header row
+    const rawMatrix = XLSX.utils.sheet_to_json(worksheet, { header: 1, defval: '' });
+    let headerRowIdx = 0;
+    if (rawMatrix && rawMatrix.length > 0) {
+      for (let r = 0; r < Math.min(rawMatrix.length, 10); r++) {
+        const rowArr = rawMatrix[r] || [];
+        const joined = rowArr.map(c => cleanKey(c)).join(' ');
+        if (
+          (joined.includes('code') || joined.includes('item') || joined.includes('prog') || joined.includes('slno')) &&
+          (joined.includes('name') || joined.includes('title') || joined.includes('stage') || joined.includes('cat'))
+        ) {
+          headerRowIdx = r;
+          break;
+        }
+      }
+    }
+
+    const rawRows = XLSX.utils.sheet_to_json(worksheet, { range: headerRowIdx, defval: '' });
 
     if (!rawRows || rawRows.length === 0) {
       throw new Error('The uploaded spreadsheet appears to be empty.');
@@ -151,7 +176,8 @@ export const excelService = {
       'type', 'programtype', 'stageornonstage', 'stagenonstage', 'stageornonstageitem',
       'stage', 'stagetype', 'itemtype', 'eventtype', 'nature', 'venue', 'mode',
       'stageoffstage', 'stageoroffstage', 'stageitem', 'isstage', 'stagecategory',
-      'type(stageornonstage)', 'typestageornonstage', 'typestagenonstage'
+      'type(stageornonstage)', 'typestageornonstage', 'typestagenonstage', 'format',
+      'itemnature', 'eventnature', 'programmode', 'eventmode'
     ];
 
     const parsedList = rawRows.map((row, index) => {
@@ -165,23 +191,35 @@ export const excelService = {
         const cleaned = cleanKey(key);
         const strVal = String(val).trim();
 
-        if (['code', 'programcode', 'prgcode', 'progcode', 'itemcode', 'eventcode', 'id'].includes(cleaned)) {
-          code = strVal.toUpperCase();
-        } else if (['programname', 'programprogramname', 'name', 'program', 'event', 'title', 'eventname'].includes(cleaned)) {
-          name = strVal;
-        } else if (['category', 'cat', 'group', 'division'].includes(cleaned)) {
-          category = strVal || 'General';
-        } else if (allowedStageHeaders.includes(cleaned) || cleaned.includes('stage')) {
+        if (['code', 'programcode', 'prgcode', 'progcode', 'itemcode', 'eventcode', 'id', 'slno', 'itemno'].includes(cleaned)) {
+          if (!code && strVal) code = strVal.toUpperCase();
+        } else if (['programname', 'programprogramname', 'name', 'program', 'event', 'title', 'eventname', 'itemname'].includes(cleaned)) {
+          if (!name && strVal) name = strVal;
+        } else if (['category', 'cat', 'group', 'division', 'section'].includes(cleaned)) {
+          if (strVal) category = strVal;
+        } else if (
+          (allowedStageHeaders.includes(cleaned) ||
+            cleaned.endsWith('stage') ||
+            cleaned.includes('stagenonstage') ||
+            cleaned.includes('stageor') ||
+            cleaned.includes('offstage')) &&
+          strVal
+        ) {
+          // Only assign if strVal is not empty so subsequent empty columns don't wipe it out!
           rawType = strVal;
         }
       }
 
-      // Check all cell values in row if rawType not identified yet
+      // Check all cell values in row if rawType not identified yet or if it was ambiguous
       if (!rawType) {
         for (const val of Object.values(row)) {
           const s = String(val).trim().toLowerCase();
-          if (['stage', 'non-stage', 'non stage', 'off-stage', 'off stage', 'on stage'].includes(s)) {
-            rawType = s;
+          if (['stage', 'on stage', 'on-stage', 'onstage', 'stage item', 'stage program'].includes(s)) {
+            rawType = 'Stage';
+            break;
+          }
+          if (['non-stage', 'non stage', 'off-stage', 'off stage', 'nonstage', 'non-stage item', 'offstage'].includes(s)) {
+            rawType = 'Non-Stage';
             break;
           }
         }
@@ -189,12 +227,13 @@ export const excelService = {
 
       // Fallback by index if row keys were unusual
       if (!code && !name) {
-        const values = Object.values(row);
+        const values = Object.values(row).map(v => String(v || '').trim());
         if (values.length >= 2) {
-          code = String(values[0] || '').trim().toUpperCase();
-          name = String(values[1] || '').trim();
-          if (values[2]) category = String(values[2]).trim();
-          if (values[3]) rawType = String(values[3]).trim();
+          code = (values[0] || '').toUpperCase();
+          name = values[1] || '';
+          if (values[2]) category = values[2];
+          if (values[3] && !rawType) rawType = values[3];
+          if (values[4] && !rawType) rawType = values[4];
         }
       }
 
@@ -207,7 +246,7 @@ export const excelService = {
       if (!name) errors.push('Missing Program Name');
 
       return {
-        rowNumber: index + 2,
+        rowNumber: headerRowIdx + index + 2,
         code,
         name,
         category: category || 'General',

@@ -1,4 +1,4 @@
-import { state } from '../../services/state.js';
+import { state, getProgressStatus } from '../../services/state.js';
 import { getIcon } from '../icons.js';
 
 /**
@@ -121,6 +121,10 @@ export function openTrainerPickerModal({
       const isCurrent = String(t.id).trim() === String(currentTrainerId || '').trim();
       const assignedProgs = state.getTrainerPrograms(t.id);
       const mentees = state.getTrainerMentees(t.id);
+      const readiness = state.getTrainerReadiness(t.id);
+      const readinessStatus = readiness.hasData
+        ? getProgressStatus(readiness.percentage)
+        : { label: 'Not Evaluated', badgeClass: 'badge-neutral', color: '#64748b' };
 
       const item = document.createElement('div');
       item.className = `tpm-trainer-item ${isCurrent ? 'is-current' : ''}`;
@@ -135,7 +139,9 @@ export function openTrainerPickerModal({
           </div>
           <div class="tpm-tags-row">
             <span class="badge badge-primary-subtle text-xs">${t.expertise}</span>
-            <span class="text-xs text-muted font-medium">${t.experience || '3+ Yrs'}</span>
+            <span class="badge ${readiness.hasData ? readinessStatus.badgeClass : 'badge-neutral'} text-xs font-semibold">
+              ${readiness.hasData ? `${readiness.percentage}% Readiness` : '0% Readiness'}
+            </span>
             <span class="text-xs text-muted">•</span>
             <span class="text-xs text-muted">${assignedProgs.length} Programs</span>
             <span class="text-xs text-muted">•</span>

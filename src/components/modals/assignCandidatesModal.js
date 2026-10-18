@@ -83,9 +83,6 @@ export function openAssignCandidatesModal({ programId, onSave = () => {} }) {
               <div class="text-xs text-muted">Select and link candidates into this program.</div>
             </div>
             <div class="picker-quick-actions" style="display: flex; gap: 6px;">
-              <button id="btnFilterMatchingCat" class="saas-pill-btn" style="border: 1px solid #c7d2fe; background: #eef2ff; color: #4338ca;">
-                ${getIcon('sparkles')} Match (${program.category})
-              </button>
               <button id="btnSelectAllFiltered" class="saas-pill-btn">
                 Select All Shown
               </button>
@@ -178,7 +175,6 @@ export function openAssignCandidatesModal({ programId, onSave = () => {} }) {
   const searchCandidateInput = overlay.querySelector('#searchCandidateInput');
   const filterCategorySelect = overlay.querySelector('#filterCategorySelect');
   const filterClassSelect = overlay.querySelector('#filterClassSelect');
-  const btnFilterMatchingCat = overlay.querySelector('#btnFilterMatchingCat');
   const btnSelectAllFiltered = overlay.querySelector('#btnSelectAllFiltered');
   const btnDeselectAllFiltered = overlay.querySelector('#btnDeselectAllFiltered');
   const thMasterCheckbox = overlay.querySelector('#thMasterCheckbox');
@@ -413,11 +409,6 @@ export function openAssignCandidatesModal({ programId, onSave = () => {} }) {
   searchCandidateInput.addEventListener('input', renderCandidatesTable);
   filterCategorySelect.addEventListener('change', renderCandidatesTable);
   filterClassSelect.addEventListener('change', renderCandidatesTable);
-
-  btnFilterMatchingCat.addEventListener('click', () => {
-    filterCategorySelect.value = program.category;
-    renderCandidatesTable();
-  });
 
   btnSelectAllFiltered.addEventListener('click', () => {
     const list = getFilteredCandidates();

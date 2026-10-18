@@ -107,8 +107,8 @@ class StateService {
         this.trainers = Array.isArray(parsed.trainers) ? parsed.trainers : [];
         this.dailyMeets = Array.isArray(parsed.dailyMeets) ? parsed.dailyMeets : [];
 
-        // Auto-fix if all programs are currently marked Non-Stage
-        if (this.programs.length > 0 && this.programs.every(p => p.type === 'Non-Stage')) {
+        // Ensure accurate Stage vs Non-Stage classification on startup
+        if (this.programs.length > 0) {
           this.reclassifyProgramsStageType(false);
         }
         return;
@@ -914,6 +914,49 @@ class StateService {
     return Array.from(candidateMatches)
       .map(id => this.getCandidateById(id))
       .filter(Boolean);
+  }
+
+  getTrainerReadiness(trainerId) {
+    if (!trainerId) return { percentage: 0, evaluatedCount: 0, totalCount: 0, hasData: false };
+    const cleanTid = String(trainerId).trim();
+    const mentees = this.getTrainerMentees(cleanTid);
+
+    // If no mentees, check if trainer logged any meets directly
+    if (!mentees || mentees.length === 0) {
+      const directMeets = this.dailyMeets.filter(m => String(m.trainerId || '').trim() === cleanTid);
+      if (directMeets.length === 0) {
+        return { percentage: 0, evaluatedCount: 0, totalCount: 0, hasData: false };
+      }
+      const avg = Math.round(directMeets.reduce((sum, m) => sum + (Number(m.percentage) || 0), 0) / directMeets.length);
+      return { percentage: avg, evaluatedCount: directMeets.length, totalCount: directMeets.length, hasData: true };
+    }
+
+    // For each candidate in mentees, find their latest meet score
+    let totalScore = 0;
+    let evaluatedCount = 0;
+
+    mentees.forEach(cand => {
+      const meets = this.getCandidateMeets(cand.id);
+      if (meets && meets.length > 0) {
+        // Find latest meet with this trainer if possible, otherwise latest meet
+        const trainerMeet = meets.slice().reverse().find(m => String(m.trainerId || '').trim() === cleanTid);
+        const latestMeet = trainerMeet || meets[meets.length - 1];
+        totalScore += Number(latestMeet.percentage) || 0;
+        evaluatedCount++;
+      }
+    });
+
+    if (evaluatedCount === 0) {
+      return { percentage: 0, evaluatedCount: 0, totalCount: mentees.length, hasData: false };
+    }
+
+    const percentage = Math.round(totalScore / evaluatedCount);
+    return {
+      percentage,
+      evaluatedCount,
+      totalCount: mentees.length,
+      hasData: true
+    };
   }
 
   getMetrics() {

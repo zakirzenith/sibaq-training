@@ -1,7 +1,8 @@
-import { state } from '../services/state.js';
+import { state, getProgressStatus } from '../services/state.js';
 import { toast } from './toast.js';
 import { getIcon } from './icons.js';
 import { openTrainerFormModal } from './modals/trainerFormModal.js';
+import { openTrainerProfileModal } from './modals/trainerProfileModal.js';
 import { openAssignCandidatesModal } from './modals/assignCandidatesModal.js';
 import { openExcelUploadModal } from './modals/excelUploadModal.js';
 import { excelService } from '../services/excelService.js';
@@ -175,20 +176,27 @@ export function renderTrainersView(container, navigateTo) {
     filtered.forEach(t => {
       const assignedPrograms = state.getTrainerPrograms(t.id);
       const mentees = state.getTrainerMentees(t.id);
+      const readiness = state.getTrainerReadiness(t.id);
+      const readinessStatus = readiness.hasData
+        ? getProgressStatus(readiness.percentage)
+        : { label: 'Not Evaluated', badgeClass: 'badge-neutral', color: '#64748b' };
 
       const card = document.createElement('div');
       card.className = 'saas-trainer-card';
 
       card.innerHTML = `
         <div class="stc-top">
-          <div class="stc-avatar-wrap" style="background: ${t.color || '#6366f1'}">
+          <div class="stc-avatar-wrap" style="background: ${t.color || '#6366f1'}; cursor: pointer;" title="Click to view ${t.name}'s profile">
             ${t.name.split(' ').map(n => n[0]).slice(0, 2).join('')}
           </div>
           <div class="stc-meta">
-            <h3 class="stc-title">${t.name}</h3>
+            <h3 class="stc-title" style="cursor: pointer;" title="Click to view ${t.name}'s profile">${t.name}</h3>
             <span class="saas-tag-pill p-stage">${t.expertise}</span>
           </div>
           <div class="stc-actions">
+            <button class="saas-circle-btn btn-view-trainer-profile" title="View Trainer Profile & Candidates">
+              ${getIcon('user')}
+            </button>
             <button class="saas-circle-btn btn-edit-trainer" title="Edit Trainer">
               ${getIcon('edit')}
             </button>
@@ -209,9 +217,11 @@ export function renderTrainersView(container, navigateTo) {
               <span class="stc-val">${mentees.length}</span>
               <span class="stc-lbl">Mentees</span>
             </div>
-            <div class="stc-stat-pill">
-              <span class="stc-val">${String(t.experience || '5+ Yrs').replace(/Years?/i, 'Yrs')}</span>
-              <span class="stc-lbl">Exp</span>
+            <div class="stc-stat-pill" style="border-bottom: 2px solid ${readinessStatus.color};">
+              <span class="stc-val" style="color: ${readiness.hasData ? readinessStatus.color : 'inherit'};">
+                ${readiness.hasData ? `${readiness.percentage}%` : '0%'}
+              </span>
+              <span class="stc-lbl">Readiness</span>
             </div>
           </div>
 
@@ -236,6 +246,17 @@ export function renderTrainersView(container, navigateTo) {
           </div>
         </div>
       `;
+
+      // Open Trainer Profile
+      const openProfile = () => {
+        openTrainerProfileModal({
+          trainerId: t.id,
+          onUpdate: renderGrid
+        });
+      };
+      card.querySelector('.stc-avatar-wrap').addEventListener('click', openProfile);
+      card.querySelector('.stc-title').addEventListener('click', openProfile);
+      card.querySelector('.btn-view-trainer-profile').addEventListener('click', openProfile);
 
       // Edit trainer
       card.querySelector('.btn-edit-trainer').addEventListener('click', () => {

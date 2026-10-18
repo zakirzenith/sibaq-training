@@ -41,28 +41,8 @@ class App {
   }
 
   initTheme() {
-    const savedTheme = localStorage.getItem('mentorflow_theme') || 'light';
-    if (savedTheme !== 'dark') {
-      document.body.classList.add('light-theme');
-      localStorage.setItem('mentorflow_theme', 'light');
-    }
-
-    const btnThemeToggle = document.getElementById('btnThemeToggle');
-    const themeIcon = document.getElementById('themeIcon');
-
-    const updateIcon = () => {
-      const isLight = document.body.classList.contains('light-theme');
-      themeIcon.innerHTML = isLight ? getIcon('moon') : getIcon('sun');
-    };
-
-    updateIcon();
-
-    btnThemeToggle.addEventListener('click', () => {
-      const isLight = document.body.classList.toggle('light-theme');
-      localStorage.setItem('mentorflow_theme', isLight ? 'light' : 'dark');
-      updateIcon();
-      toast.info(`Switched to ${isLight ? 'Light' : 'Dark'} theme`);
-    });
+    document.body.classList.add('light-theme');
+    localStorage.setItem('mentorflow_theme', 'light');
   }
 
   initNavigation() {

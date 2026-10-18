@@ -43,17 +43,6 @@ export function openTrainerFormModal({ trainer = null, onSave = () => {} }) {
             value="${trainer ? trainer.expertise : ''}"
           />
         </div>
-
-        <div class="form-group">
-          <label class="form-label" for="txtTrainerExperience">Experience / Level</label>
-          <input 
-            type="text" 
-            id="txtTrainerExperience" 
-            class="form-input" 
-            placeholder="e.g. 8+ Years"
-            value="${trainer ? trainer.experience : '5+ Years'}"
-          />
-        </div>
       </form>
 
       <div class="modal-footer">
@@ -80,7 +69,6 @@ export function openTrainerFormModal({ trainer = null, onSave = () => {} }) {
 
   const txtName = overlay.querySelector('#txtTrainerName');
   const txtExpertise = overlay.querySelector('#txtTrainerExpertise');
-  const txtExperience = overlay.querySelector('#txtTrainerExperience');
   const btnSubmit = overlay.querySelector('#btnSubmitTrainer');
 
   btnSubmit.addEventListener('click', e => {
@@ -88,7 +76,6 @@ export function openTrainerFormModal({ trainer = null, onSave = () => {} }) {
 
     const name = txtName.value.trim();
     const expertise = txtExpertise.value.trim();
-    const experience = txtExperience.value.trim();
 
     if (!name || !expertise) {
       toast.error('Trainer name and field of expertise are required.');
@@ -96,10 +83,10 @@ export function openTrainerFormModal({ trainer = null, onSave = () => {} }) {
     }
 
     if (!isEdit) {
-      state.addTrainer({ name, expertise, experience });
+      state.addTrainer({ name, expertise });
       toast.success(`Trainer "${name}" added!`);
     } else {
-      state.updateTrainer(trainer.id, { name, expertise, experience });
+      state.updateTrainer(trainer.id, { name, expertise });
       toast.success(`Trainer "${name}" updated!`);
     }
 

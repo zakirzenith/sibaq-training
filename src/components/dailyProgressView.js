@@ -19,7 +19,7 @@ export function renderDailyProgressView(container, navigateTo) {
 
   container.innerHTML = `
     <!-- Top Hero / Header Area -->
-    <div class="saas-view-header">
+    <div class="saas-view-header daily-progress-header">
       <div class="svh-title-block">
         <h1 class="svh-title">Daily Mentorship & Progress</h1>
         <p class="svh-desc">

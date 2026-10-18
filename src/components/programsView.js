@@ -95,8 +95,8 @@ export function renderProgramsView(container, navigateTo) {
               <span class="programs-count-pill" id="progCountDisplay">-- Programs</span>
             </div>
             <div class="psb-right">
-              <button type="button" id="btnToggleProgramSelectMode" class="btn-select-toggle" title="Select programs for bulk actions">
-                ${getIcon('checkSquare')} <span>Select</span>
+              <button type="button" id="btnToggleProgramSelectMode" class="btn-select-toggle" title="Multi-select programs for bulk actions">
+                ${getIcon('checkSquare')} <span>Multi-Select</span>
               </button>
               <button type="button" id="btnSelectAllPrograms" class="btn-select-all" style="display: none;">
                 Select All
@@ -110,7 +110,7 @@ export function renderProgramsView(container, navigateTo) {
           <!-- Dynamically populated -->
         </div>
 
-        <!-- Floating Bulk Action Bar (Visible when 1+ programs selected) -->
+        <!-- Floating Bulk Action Bar (Visible ONLY when 1+ programs selected) -->
         <div class="programs-bulk-actions-bar" id="progBulkBar" style="display: none;">
           <div class="pba-info">
             <span class="pba-count-badge" id="pbaCountBadge">0</span>
@@ -221,12 +221,14 @@ export function renderProgramsView(container, navigateTo) {
 
   function updateBulkBar() {
     const count = selectedProgramIds.size;
-    if (count > 0) {
+    if (count > 0 && isSelectionMode) {
+      progBulkBar.classList.add('is-visible');
       progBulkBar.style.display = 'flex';
       pbaCountBadge.textContent = count;
       const delBtnText = btnBulkDeletePrograms.querySelector('span');
       if (delBtnText) delBtnText.textContent = `Delete (${count})`;
     } else {
+      progBulkBar.classList.remove('is-visible');
       progBulkBar.style.display = 'none';
     }
 
@@ -242,11 +244,11 @@ export function renderProgramsView(container, navigateTo) {
     if (!isSelectionMode) {
       selectedProgramIds.clear();
       btnToggleProgramSelectMode.classList.remove('active');
-      btnToggleProgramSelectMode.innerHTML = `${getIcon('checkSquare')} <span>Select</span>`;
+      btnToggleProgramSelectMode.innerHTML = `${getIcon('checkSquare')} <span>Multi-Select</span>`;
       btnSelectAllPrograms.style.display = 'none';
     } else {
       btnToggleProgramSelectMode.classList.add('active');
-      btnToggleProgramSelectMode.innerHTML = `${getIcon('x')} <span>Done</span>`;
+      btnToggleProgramSelectMode.innerHTML = `${getIcon('x')} <span>Exit Select</span>`;
       btnSelectAllPrograms.style.display = 'inline-flex';
     }
     updateBulkBar();
@@ -424,7 +426,7 @@ export function renderProgramsView(container, navigateTo) {
           <span class="badge ${isStage ? 'badge-stage' : 'badge-nonstage'}">
             ${isStage ? getIcon('stage') : getIcon('nonStage')} ${program.type}
           </span>
-          <span class="badge badge-neutral-xs">${program.category}</span>
+          <span class="badge badge-neutral-xs desktop-only-inline">${program.category}</span>
         </div>
 
         <div class="pdt-actions">
@@ -432,7 +434,7 @@ export function renderProgramsView(container, navigateTo) {
             ${getIcon('download')} <span>Export</span>
           </button>
           <button type="button" id="btnEditThisProg" class="saas-pill-btn-sm" title="Edit Program">
-            ${getIcon('edit')} <span>Edit</span>
+            ${getIcon('edit')} <span class="desktop-only-inline">Edit</span>
           </button>
           <button type="button" id="btnDeleteThisProg" class="saas-circle-btn-sm text-danger" title="Delete Program">
             ${getIcon('trash')}
@@ -628,8 +630,15 @@ export function renderProgramsView(container, navigateTo) {
     const btnMobileBack = programDetailContainer.querySelector('#btnMobileBackToPrograms');
     if (btnMobileBack) {
       btnMobileBack.addEventListener('click', () => {
+        selectedProgramIds.clear();
+        isSelectionMode = false;
+        btnToggleProgramSelectMode.classList.remove('active');
+        btnToggleProgramSelectMode.innerHTML = `${getIcon('checkSquare')} <span>Multi-Select</span>`;
+        btnSelectAllPrograms.style.display = 'none';
+        updateBulkBar();
         splitLayout.classList.remove('mobile-show-detail');
         window.scrollTo({ top: 0, behavior: 'smooth' });
+        renderLeftList();
       });
     }
 

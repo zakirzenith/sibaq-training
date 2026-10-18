@@ -180,11 +180,11 @@ export function openRecordMeetModal({ candidateId, programId = null, trainerId =
               value="${currentPercentage}"
             />
             <div class="slider-ticks-row">
-              <span class="tick-label text-danger">0% (Focus)</span>
-              <span class="tick-label text-amber">40% (Improvement)</span>
-              <span class="tick-label text-blue">60% (Progressing)</span>
-              <span class="tick-label text-cyan">75% (Proficient)</span>
-              <span class="tick-label text-emerald">90%+ (Event Ready)</span>
+              <span class="tick-label text-danger">0%<span class="desktop-only-inline"> (Focus)</span></span>
+              <span class="tick-label text-amber">40%<span class="desktop-only-inline"> (Improvement)</span></span>
+              <span class="tick-label text-blue">60%<span class="desktop-only-inline"> (Progressing)</span></span>
+              <span class="tick-label text-cyan">75%<span class="desktop-only-inline"> (Proficient)</span></span>
+              <span class="tick-label text-emerald">90%+<span class="desktop-only-inline"> (Event Ready)</span></span>
             </div>
           </div>
 

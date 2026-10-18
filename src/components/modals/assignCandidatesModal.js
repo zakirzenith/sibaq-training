@@ -36,7 +36,7 @@ export function openAssignCandidatesModal({ programId, onSave = () => {} }) {
 
       <div class="modal-body assign-modal-body" style="padding: 20px;">
         <!-- Top Section: Trainer Assignment & Assigned Candidates Pills -->
-        <div class="assign-top-grid" style="display: grid; grid-template-columns: 1fr 1.4fr; gap: 16px; margin-bottom: 20px;">
+        <div class="assign-top-grid">
           <!-- Trainer Assignment Card -->
           <div class="saas-section-card">
             <div class="ssc-head-title mb-2">

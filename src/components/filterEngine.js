@@ -41,6 +41,11 @@ export function createFilterBar({
             <span class="btn-text">Add Filter</span>
             <span class="sfe-badge" id="sfeBadge" style="display: none;">0</span>
           </button>
+
+          <!-- Floating Popover / Mobile Bottom Sheet -->
+          <div class="sfe-popover-dropdown" id="sfePopover" style="display: none;">
+            <!-- Injected dynamically -->
+          </div>
         </div>
       </div>
 
@@ -53,11 +58,6 @@ export function createFilterBar({
 
       <!-- Modal Backdrop for Mobile & Desktop Popover Dismissal -->
       <div class="sfe-backdrop" id="sfeBackdrop" style="display: none;"></div>
-
-      <!-- Floating Popover / Mobile Bottom Sheet -->
-      <div class="sfe-popover-dropdown" id="sfePopover" style="display: none;">
-        <!-- Injected dynamically -->
-      </div>
     </div>
   `;
 

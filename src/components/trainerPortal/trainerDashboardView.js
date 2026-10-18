@@ -202,12 +202,12 @@ export function renderTrainerDashboardView(container, navigateTo) {
             <!-- Readiness Status Filter -->
             <select id="selRosterStatus" class="form-select" style="height: 38px; font-size: 12.5px; width: auto; min-width: 160px;">
               <option value="ALL" ${activeStatusFilter === 'ALL' ? 'selected' : ''}>All Readiness Levels</option>
-              <option value="event-ready" ${activeStatusFilter === 'event-ready' ? 'selected' : ''}>🟢 Event Ready (90-100%)</option>
-              <option value="proficient" ${activeStatusFilter === 'proficient' ? 'selected' : ''}>🔵 Proficient (75-89%)</option>
-              <option value="progressing" ${activeStatusFilter === 'progressing' ? 'selected' : ''}>🔷 Progressing (60-74%)</option>
-              <option value="need-improvement" ${activeStatusFilter === 'need-improvement' ? 'selected' : ''}>🟡 Need Improvement (40-59%)</option>
-              <option value="need-focus" ${activeStatusFilter === 'need-focus' ? 'selected' : ''}>🔴 Need Focus (0-39%)</option>
-              <option value="not-evaluated" ${activeStatusFilter === 'not-evaluated' ? 'selected' : ''}>⚪ Not Evaluated Yet</option>
+              <option value="event-ready" ${activeStatusFilter === 'event-ready' ? 'selected' : ''}>Event Ready (90-100%)</option>
+              <option value="proficient" ${activeStatusFilter === 'proficient' ? 'selected' : ''}>Proficient (75-89%)</option>
+              <option value="progressing" ${activeStatusFilter === 'progressing' ? 'selected' : ''}>Progressing (60-74%)</option>
+              <option value="need-improvement" ${activeStatusFilter === 'need-improvement' ? 'selected' : ''}>Need Improvement (40-59%)</option>
+              <option value="need-focus" ${activeStatusFilter === 'need-focus' ? 'selected' : ''}>Need Focus (0-39%)</option>
+              <option value="not-evaluated" ${activeStatusFilter === 'not-evaluated' ? 'selected' : ''}>Not Evaluated Yet</option>
             </select>
           </div>
 

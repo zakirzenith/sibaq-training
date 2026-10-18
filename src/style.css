@@ -4406,6 +4406,64 @@ code,
   color: #991b1b;
 }
 
+/* Color and icon utility classes */
+.text-emerald { color: #10b981 !important; }
+.text-amber { color: #f59e0b !important; }
+.text-orange { color: #f97316 !important; }
+.text-danger { color: #ef4444 !important; }
+.text-blue { color: #3b82f6 !important; }
+.text-cyan { color: #06b6d4 !important; }
+
+.badge-emerald { background: #d1fae5; color: #065f46; border: 1px solid #a7f3d0; }
+.badge-orange { background: #ffedd5; color: #9a3412; border: 1px solid #fed7aa; }
+.badge-amber { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+.badge-danger { background: #fee2e2; color: #991b1b; border: 1px solid #fecaca; }
+
+.saas-status-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+}
+
+.saas-status-icon svg {
+  width: 14px;
+  height: 14px;
+  display: block;
+}
+
+.dch-tab-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 14px;
+  height: 14px;
+}
+
+.dch-tab-icon svg {
+  width: 14px;
+  height: 14px;
+  display: block;
+}
+
+.pcr-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 13px;
+  height: 13px;
+  flex-shrink: 0;
+}
+
+.pcr-icon svg {
+  width: 13px;
+  height: 13px;
+  display: block;
+}
+
 /* Program Code Rectangles in Expanded Drawer (Green = Complete, Red = Incomplete) */
 .dcn-rects-group {
   display: flex;

@@ -199,22 +199,22 @@ export function renderDailyProgressView(container, navigateTo) {
           <span class="dch-tab-badge">${total}</span>
         </button>
         <button type="button" class="dch-tab-btn dch-tab-met ${statusTabFilter === 'MET' ? 'active' : ''}" data-status="MET">
-          <span class="saas-dot dot-emerald"></span>
+          <span class="dch-tab-icon text-emerald">${getIcon('checkCircle')}</span>
           <span>Fully Met</span>
           <span class="dch-tab-badge badge-emerald">${met}</span>
         </button>
         <button type="button" class="dch-tab-btn dch-tab-partial ${statusTabFilter === 'PARTIAL' ? 'active' : ''}" data-status="PARTIAL">
-          <span class="saas-dot dot-orange"></span>
+          <span class="dch-tab-icon text-orange">${getIcon('halfCircle')}</span>
           <span>Partially Met</span>
           <span class="dch-tab-badge badge-orange">${partial}</span>
         </button>
         <button type="button" class="dch-tab-btn dch-tab-pending ${statusTabFilter === 'PENDING' ? 'active' : ''}" data-status="PENDING">
-          <span class="saas-dot dot-amber"></span>
+          <span class="dch-tab-icon text-amber">${getIcon('clock')}</span>
           <span>Pending</span>
           <span class="dch-tab-badge badge-amber">${pending}</span>
         </button>
         <button type="button" class="dch-tab-btn dch-tab-missed ${statusTabFilter === 'MISSED' ? 'active' : ''}" data-status="MISSED">
-          <span class="saas-dot dot-danger"></span>
+          <span class="dch-tab-icon text-danger">${getIcon('xCircle')}</span>
           <span>Missed</span>
           <span class="dch-tab-badge badge-danger">${missed}</span>
         </button>
@@ -326,7 +326,7 @@ export function renderDailyProgressView(container, navigateTo) {
         const pStatus = latestMeet ? getProgressStatus(latestMeet.percentage) : { label: 'Met' };
         statusCapsuleHtml = `
           <div class="saas-status-capsule saas-status-met">
-            <span class="saas-dot dot-emerald"></span>
+            <span class="saas-status-icon text-emerald">${getIcon('checkCircle')}</span>
             <span class="saas-meet-pill">${item.totalPrograms > 0 ? `All Meet (${item.metProgramsCount}/${item.totalPrograms})` : `Meet #${meets.length}`}</span>
             ${latestMeet ? `<span class="saas-score-num"><strong>${latestMeet.percentage}%</strong></span>` : ''}
             <span class="saas-score-label">${pStatus.label}</span>
@@ -335,7 +335,7 @@ export function renderDailyProgressView(container, navigateTo) {
       } else if (item.isPartiallyMet) {
         statusCapsuleHtml = `
           <div class="saas-status-capsule saas-status-partial">
-            <span class="saas-dot dot-orange"></span>
+            <span class="saas-status-icon text-orange">${getIcon('halfCircle')}</span>
             <span class="saas-meet-pill" style="color: #c2410c; background: #fff; font-weight: 700;">Partial Meet (${item.metProgramsCount}/${item.totalPrograms})</span>
             ${latestMeet ? `<span class="saas-score-num"><strong>${latestMeet.percentage}%</strong></span>` : ''}
           </div>
@@ -343,7 +343,7 @@ export function renderDailyProgressView(container, navigateTo) {
       } else if (item.isMissed) {
         statusCapsuleHtml = `
           <div class="saas-status-capsule saas-status-missed">
-            <span class="saas-dot dot-danger"></span>
+            <span class="saas-status-icon text-danger">${getIcon('xCircle')}</span>
             <span class="saas-score-label">Missed</span>
             <span class="text-muted text-xs desktop-only-btn">${item.totalPrograms > 0 ? `(0/${item.totalPrograms})` : '(Cutoff)'}</span>
           </div>
@@ -351,7 +351,7 @@ export function renderDailyProgressView(container, navigateTo) {
       } else {
         statusCapsuleHtml = `
           <div class="saas-status-capsule saas-status-pending">
-            <span class="saas-dot dot-amber"></span>
+            <span class="saas-status-icon text-amber">${getIcon('clock')}</span>
             <span class="saas-score-label">${item.totalPrograms > 1 ? `Pending (0/${item.totalPrograms})` : 'Pending'}</span>
             <span class="text-muted text-xs desktop-only-btn">Due today</span>
           </div>
@@ -536,7 +536,8 @@ export function renderDailyProgressView(container, navigateTo) {
                       title="${p.name} • ${isComplete ? `Complete (${pb.meetCount} meet today)` : 'Pending / Not met today'}"
                     >
                       <span class="pcr-code">${p.code}</span>
-                      <span class="pcr-status">${isComplete ? '✓ Complete' : '✕ Pending'}</span>
+                      <span class="pcr-icon">${isComplete ? getIcon('checkCircle') : getIcon('clock')}</span>
+                      <span class="pcr-status">${isComplete ? 'Complete' : 'Pending'}</span>
                     </button>
                   `;
                 }).join('')}

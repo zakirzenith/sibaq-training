@@ -90,8 +90,8 @@ export function openRecordMeetModal({ candidateId, programId = null, trainerId =
                 const isProgMetToday = pMeetsToday.length > 0;
                 const latestPMeet = isProgMetToday ? pMeetsToday[pMeetsToday.length - 1] : null;
                 const statusPrefix = isProgMetToday 
-                  ? `🟢 [Met • ${latestPMeet.percentage}%]` 
-                  : `🟡 [Pending Today]`;
+                  ? `[Met • ${latestPMeet.percentage}%]` 
+                  : `[Pending Today]`;
                 return `
                   <option value="${p.id}" ${p.id === selectedProgramId ? 'selected' : ''}>
                     ${statusPrefix} [${p.code}] ${p.name} (${p.type})
@@ -290,9 +290,9 @@ export function openRecordMeetModal({ candidateId, programId = null, trainerId =
     const progMeets = existingMeetsToday.filter(m => m.programId === pid);
     if (smmProgramMetaStatus) {
       if (progMeets.length > 0) {
-        smmProgramMetaStatus.innerHTML = `<span class="text-emerald font-semibold">🟢 ${prog ? `[${prog.code}]` : 'Program'}: Completed ${progMeets.length} meet(s) today</span>`;
+        smmProgramMetaStatus.innerHTML = `<span class="text-emerald font-semibold" style="display: inline-flex; align-items: center; gap: 5px;">${getIcon('checkCircle')} ${prog ? `[${prog.code}]` : 'Program'}: Completed ${progMeets.length} meet(s) today</span>`;
       } else {
-        smmProgramMetaStatus.innerHTML = `<span class="text-warning font-semibold">🟡 ${prog ? `[${prog.code}]` : 'Program'}: Pending check-in today</span>`;
+        smmProgramMetaStatus.innerHTML = `<span class="text-warning font-semibold" style="display: inline-flex; align-items: center; gap: 5px;">${getIcon('clock')} ${prog ? `[${prog.code}]` : 'Program'}: Pending check-in today</span>`;
       }
     }
     if (smmMeetBadge) {

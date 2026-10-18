@@ -114,12 +114,12 @@ export function openCandidateProfileModal({ candidateId, onUpdate = () => {} }) 
                         </span>
                         <span class="badge badge-neutral-xs">${prog.category}</span>
                         ${isMetToday ? `
-                          <span class="badge badge-stage text-xs font-semibold" title="Met today: ${latestMeetToday.percentage}%">
-                            ✓ Met Today (${latestMeetToday.percentage}%)
+                          <span class="badge badge-stage text-xs font-semibold" title="Met today: ${latestMeetToday.percentage}%" style="display: inline-flex; align-items: center; gap: 4px;">
+                            ${getIcon('checkCircle')} Met Today (${latestMeetToday.percentage}%)
                           </span>
                         ` : `
-                          <span class="badge badge-warning text-xs font-semibold" title="Pending check-in today">
-                            ○ Pending Today
+                          <span class="badge badge-warning text-xs font-semibold" title="Pending check-in today" style="display: inline-flex; align-items: center; gap: 4px;">
+                            ${getIcon('clock')} Pending Today
                           </span>
                         `}
                       </div>

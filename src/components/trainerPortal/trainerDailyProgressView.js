@@ -145,9 +145,9 @@ export function renderTrainerDailyProgressView(container, navigateTo) {
 
           <select id="selStatusFilter" class="form-select" style="height: 38px; font-size: 11.5px; width: auto; max-width: 145px; padding: 0 8px; flex-shrink: 0; font-weight: 700; color: #1e293b; border-color: #cbd5e1;">
             <option value="ALL" ${activeStatusFilter === 'ALL' ? 'selected' : ''}>All (${rosterItems.length})</option>
-            <option value="MET" ${activeStatusFilter === 'MET' ? 'selected' : ''}>🟢 Met (${metCount})</option>
-            <option value="PENDING" ${activeStatusFilter === 'PENDING' ? 'selected' : ''}>🟡 Pending (${pendingCount})</option>
-            ${missedCount > 0 ? `<option value="MISSED" ${activeStatusFilter === 'MISSED' ? 'selected' : ''}>🔴 Missed (${missedCount})</option>` : ''}
+            <option value="MET" ${activeStatusFilter === 'MET' ? 'selected' : ''}>Met (${metCount})</option>
+            <option value="PENDING" ${activeStatusFilter === 'PENDING' ? 'selected' : ''}>Pending (${pendingCount})</option>
+            ${missedCount > 0 ? `<option value="MISSED" ${activeStatusFilter === 'MISSED' ? 'selected' : ''}>Missed (${missedCount})</option>` : ''}
           </select>
         </div>
 
@@ -172,21 +172,21 @@ export function renderTrainerDailyProgressView(container, navigateTo) {
               const pStatus = getProgressStatus(latest.percentage);
               statusCapsuleHtml = `
                 <div class="saas-status-capsule saas-status-met" style="width: auto !important; max-width: 100% !important; display: inline-flex !important; align-items: center !important; gap: 6px !important; padding: 4px 10px !important; border-radius: 99px !important; justify-content: flex-start !important;">
-                  <span class="saas-dot dot-emerald"></span>
+                  <span class="saas-status-icon text-emerald">${getIcon('checkCircle')}</span>
                   <span style="font-weight: 700; font-size: 11.5px;">Meet #${meets.length} (${latest.percentage}% • ${pStatus.label})</span>
                 </div>
               `;
             } else if (item.isMissed) {
               statusCapsuleHtml = `
                 <div class="saas-status-capsule saas-status-missed" style="width: auto !important; max-width: 100% !important; display: inline-flex !important; align-items: center !important; gap: 6px !important; padding: 4px 10px !important; border-radius: 99px !important; justify-content: flex-start !important;">
-                  <span class="saas-dot dot-danger"></span>
+                  <span class="saas-status-icon text-danger">${getIcon('xCircle')}</span>
                   <span style="font-weight: 700; font-size: 11.5px;">Missed (Past Cutoff)</span>
                 </div>
               `;
             } else {
               statusCapsuleHtml = `
                 <div class="saas-status-capsule saas-status-pending" style="width: auto !important; max-width: 100% !important; display: inline-flex !important; align-items: center !important; gap: 6px !important; padding: 4px 10px !important; border-radius: 99px !important; justify-content: flex-start !important;">
-                  <span class="saas-dot dot-amber"></span>
+                  <span class="saas-status-icon text-amber">${getIcon('clock')}</span>
                   <span style="font-weight: 700; font-size: 11.5px;">Pending Check-in</span>
                 </div>
               `;
@@ -239,8 +239,8 @@ export function renderTrainerDailyProgressView(container, navigateTo) {
                               const opMeetsToday = state.getDailyMeets(selectedDate).filter(m => m.candidateId === c.id && m.programId === op.id);
                               const isOpMet = opMeetsToday.length > 0;
                               return `
-                                <span class="badge ${isOpMet ? 'badge-stage' : 'badge-neutral'}" style="font-size: 9.5px; padding: 1px 5px;" title="${op.name}: ${isOpMet ? 'Met today' : 'Pending'}">
-                                  ${op.code}: ${isOpMet ? '✓ Met' : '○ Pending'}
+                                <span class="badge ${isOpMet ? 'badge-stage' : 'badge-neutral'}" style="font-size: 9.5px; padding: 2px 6px; display: inline-flex; align-items: center; gap: 3px;" title="${op.name}: ${isOpMet ? 'Met today' : 'Pending'}">
+                                  ${op.code}: ${isOpMet ? `${getIcon('checkCircle')} Met` : `${getIcon('clock')} Pending`}
                                 </span>
                               `;
                             }).join('')}

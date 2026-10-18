@@ -15,7 +15,7 @@ export function openTrainerLoginModal({ onSuccess = () => {} }) {
         <div class="official-logo-wrap" style="width: 52px; height: 52px; margin-bottom: 8px;">
           <img src="/logo.png" alt="Logo" class="sidebar-brand-logo" style="width: 100%; height: 100%; object-fit: contain;" />
         </div>
-        <div class="modal-badge" style="background: #eef2ff; color: #4f46e5; font-weight: 700;">Faculty Portal</div>
+        <div class="modal-badge" style="background: #eef2ff; color: #4f46e5; font-weight: 700;">Trainer Portal</div>
         <h2 class="modal-title" style="margin-top: 4px; font-size: 20px;">Trainer Sign In</h2>
         <p class="modal-subtitle" style="font-size: 12.5px; color: #64748b; margin-top: 2px;">
           Access your assigned candidates, programs, and progress reports.

@@ -500,7 +500,7 @@ export function renderProgramsView(container, navigateTo) {
                 <div class="ctfb-icon">${getIcon('trainers')}</div>
                 <div class="ctfb-text">
                   <span class="ctfb-label">Choose Trainer</span>
-                  <span class="ctfb-hint">Click to search and select from faculty directory</span>
+                  <span class="ctfb-hint">Click to search and select from trainer directory</span>
                 </div>
               </div>
               <div class="ctfb-right">

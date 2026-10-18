@@ -18,7 +18,7 @@ export function openTrainerFormModal({ trainer = null, onSave = () => {} }) {
     <div class="modal-dialog" style="max-width: 500px;">
       <div class="modal-header">
         <div>
-          <div class="modal-badge">Faculty & Trainers</div>
+          <div class="modal-badge">Trainers & Mentors</div>
           <h2 class="modal-title">${title}</h2>
           <p class="modal-subtitle">Manage trainer profile and Portal login credentials.</p>
         </div>

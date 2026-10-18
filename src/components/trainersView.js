@@ -44,7 +44,7 @@ export function renderTrainersView(container, navigateTo) {
     <div class="saas-table-card trainers-table-card">
       <div class="saas-table-head-strip" style="margin-bottom: 14px;">
         <div class="sth-left">
-          <span class="sth-title">Active Faculty Network</span>
+          <span class="sth-title">Active Trainer Network</span>
           <span id="trainersCountBadge" class="saas-badge-pill">0</span>
         </div>
       </div>
@@ -336,7 +336,7 @@ export function renderTrainersView(container, navigateTo) {
     btnExportTrainers.addEventListener('click', () => {
       const allTrainers = state.getTrainers();
       if (allTrainers.length === 0) {
-        toast.info('No trainers in the faculty roster to export.');
+        toast.info('No trainers in the trainer roster to export.');
         return;
       }
       excelService.exportTrainers(allTrainers, state);

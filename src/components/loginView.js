@@ -125,7 +125,7 @@ export function renderLoginView(container, onLoginSuccess, options = {}) {
               <!-- ================= TRAINER LOGIN FORM ================= -->
               <div class="auth-form-header">
                 <div class="auth-badge-pill badge-trainer">
-                  <span class="auth-badge-dot" style="background: #6366f1;"></span> Faculty Portal
+                  <span class="auth-badge-dot" style="background: #6366f1;"></span> Trainer Portal
                 </div>
                 <h2 class="auth-form-title">Trainer Sign In</h2>
                 <p class="auth-form-desc">

@@ -156,7 +156,7 @@ export function openCandidateProfileModal({ candidateId, onUpdate = () => {} }) 
             ? `
           <div class="profile-section mt-3">
             <div class="profile-section-title">
-              <span>${getIcon('trainers')} Faculty & Mentors Guiding ${candidate.name}</span>
+              <span>${getIcon('trainers')} Trainers & Mentors Guiding ${candidate.name}</span>
             </div>
             <div class="mentors-summary-grid">
               ${uniqueTrainers

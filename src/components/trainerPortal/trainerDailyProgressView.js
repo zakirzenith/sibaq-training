@@ -89,52 +89,49 @@ export function renderTrainerDailyProgressView(container, navigateTo) {
     container.innerHTML = `
       <div class="trainer-daily-progress-container">
         <!-- 1. VIEW HEADER -->
-        <div class="saas-view-header" style="margin-bottom: 14px;">
-          <div class="svh-title-block">
-            <div style="display: flex; align-items: center; gap: 8px;">
-              <span class="badge badge-primary-subtle" style="font-size: 11px;">Faculty Session Tracker</span>
-              <span class="text-xs text-muted">• Logged in as <strong>${currentTrainer.name}</strong></span>
-            </div>
-            <h1 class="svh-title" style="margin-top: 4px;">My Daily Progress & Meetings</h1>
-            <p class="svh-desc">
-              Record and track candidate meetings strictly for your assigned programs.
-            </p>
-          </div>
-
-          <div class="saas-header-actions">
-            <button type="button" id="btnBackToTrainerDash" class="btn btn-outline btn-sm" style="border-radius: 10px; font-weight: 700;">
-              &larr; Back to Dashboard
+        <div class="trainer-view-header" style="margin-bottom: 14px;">
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px;">
+            <span class="badge badge-primary-subtle" style="font-size: 11px;">Trainer Session Tracker</span>
+            <button type="button" id="btnBackToTrainerDash" class="btn btn-outline btn-xs" style="border-radius: 8px; font-weight: 700; font-size: 11.5px; padding: 4px 10px;">
+              &larr; Dashboard
             </button>
+          </div>
+          <h1 style="font-size: 19px; font-weight: 800; color: #0f172a; margin: 0 0 2px 0;">Daily Progress & Meetings</h1>
+          <div style="font-size: 12px; color: #64748b;">
+            Logged in as <strong>${currentTrainer.name}</strong> • ${assignedPrograms.length} Assigned Program(s)
           </div>
         </div>
 
-        <!-- 2. DATE & SUMMARY BAR -->
-        <div class="tdp-summary-card" style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 14px; padding: 14px 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.03); margin-bottom: 14px;">
-          <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
-            <!-- Date Segmented Control -->
-            <div class="saas-date-segmented" style="display: flex; gap: 6px; align-items: center;">
-              <button type="button" class="saas-date-btn ${selectedDate === todayStr ? 'active' : ''}" id="btnDateToday" style="padding: 7px 12px; border-radius: 8px; font-size: 12.5px; font-weight: 700; border: 1px solid #cbd5e1; background: ${selectedDate === todayStr ? '#4f46e5' : '#ffffff'}; color: ${selectedDate === todayStr ? '#ffffff' : '#334155'}; cursor: pointer;">
+        <!-- 2. DATE & SUMMARY BAR (Phone & Desktop Optimized) -->
+        <div class="tdp-summary-card" style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 14px; padding: 12px 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.03); margin-bottom: 14px;">
+          <!-- Date Selection Row -->
+          <div class="trainer-date-row" style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 10px;">
+            <div style="display: flex; gap: 6px; flex: 1; min-width: 150px;">
+              <button type="button" class="btn-trainer-date ${selectedDate === todayStr ? 'active' : ''}" id="btnDateToday" style="flex: 1; height: 36px; border-radius: 8px; font-size: 12px; font-weight: 700; border: 1px solid #cbd5e1; background: ${selectedDate === todayStr ? '#4f46e5' : '#ffffff'}; color: ${selectedDate === todayStr ? '#ffffff' : '#334155'}; cursor: pointer;">
                 Today
               </button>
-              <button type="button" class="saas-date-btn ${selectedDate === new Date(Date.now() - 86400000).toISOString().split('T')[0] ? 'active' : ''}" id="btnDateYesterday" style="padding: 7px 12px; border-radius: 8px; font-size: 12.5px; font-weight: 700; border: 1px solid #cbd5e1; background: ${selectedDate === new Date(Date.now() - 86400000).toISOString().split('T')[0] ? '#4f46e5' : '#ffffff'}; color: ${selectedDate === new Date(Date.now() - 86400000).toISOString().split('T')[0] ? '#ffffff' : '#334155'}; cursor: pointer;">
+              <button type="button" class="btn-trainer-date ${selectedDate === new Date(Date.now() - 86400000).toISOString().split('T')[0] ? 'active' : ''}" id="btnDateYesterday" style="flex: 1; height: 36px; border-radius: 8px; font-size: 12px; font-weight: 700; border: 1px solid #cbd5e1; background: ${selectedDate === new Date(Date.now() - 86400000).toISOString().split('T')[0] ? '#4f46e5' : '#ffffff'}; color: ${selectedDate === new Date(Date.now() - 86400000).toISOString().split('T')[0] ? '#ffffff' : '#334155'}; cursor: pointer;">
                 Yesterday
               </button>
+            </div>
+            <div style="flex: 1; min-width: 140px;">
               <input 
                 type="date" 
                 id="inpProgressDate" 
-                class="saas-date-input" 
                 value="${selectedDate}"
-                style="height: 36px; padding: 0 10px; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 12.5px; font-weight: 600;"
+                style="width: 100%; height: 36px; padding: 0 8px; border-radius: 8px; border: 1px solid #cbd5e1; font-size: 12px; font-weight: 600; background: #ffffff; box-sizing: border-box;"
               />
             </div>
+          </div>
 
-            <!-- Stats Counts -->
-            <div style="display: flex; align-items: center; gap: 12px; font-size: 12.5px;">
-              <span style="color: #10b981; font-weight: 700;">🟢 Met: ${metCount}</span>
-              <span style="color: #f59e0b; font-weight: 700;">🟡 Pending: ${pendingCount}</span>
-              ${missedCount > 0 ? `<span style="color: #ef4444; font-weight: 700;">🔴 Missed: ${missedCount}</span>` : ''}
-              <span class="text-muted font-bold">Total: ${rosterItems.length}</span>
+          <!-- Stats Chips Row -->
+          <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 12px; border-top: 1px dashed #e2e8f0; padding-top: 8px; flex-wrap: wrap;">
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+              <span style="color: #059669; font-weight: 700;">🟢 Met: ${metCount}</span>
+              <span style="color: #d97706; font-weight: 700;">🟡 Pending: ${pendingCount}</span>
+              ${missedCount > 0 ? `<span style="color: #dc2626; font-weight: 700;">🔴 Missed: ${missedCount}</span>` : ''}
             </div>
+            <span style="font-weight: 700; color: #475569;">Total: ${rosterItems.length}</span>
           </div>
         </div>
 
@@ -188,27 +185,23 @@ export function renderTrainerDailyProgressView(container, navigateTo) {
             if (item.isMet) {
               const pStatus = getProgressStatus(latest.percentage);
               statusCapsuleHtml = `
-                <div class="saas-status-capsule saas-status-met">
+                <div class="saas-status-capsule saas-status-met" style="width: auto !important; max-width: 100% !important; display: inline-flex !important; align-items: center !important; gap: 6px !important; padding: 4px 10px !important; border-radius: 99px !important; justify-content: flex-start !important;">
                   <span class="saas-dot dot-emerald"></span>
-                  <span class="saas-meet-pill">Meet #${meets.length}</span>
-                  <span class="saas-score-num"><strong>${latest.percentage}%</strong></span>
-                  <span class="saas-score-label">${pStatus.label}</span>
+                  <span style="font-weight: 700; font-size: 11.5px;">Meet #${meets.length} (${latest.percentage}% • ${pStatus.label})</span>
                 </div>
               `;
             } else if (item.isMissed) {
               statusCapsuleHtml = `
-                <div class="saas-status-capsule saas-status-missed">
+                <div class="saas-status-capsule saas-status-missed" style="width: auto !important; max-width: 100% !important; display: inline-flex !important; align-items: center !important; gap: 6px !important; padding: 4px 10px !important; border-radius: 99px !important; justify-content: flex-start !important;">
                   <span class="saas-dot dot-danger"></span>
-                  <span class="saas-score-label">Missed</span>
-                  <span class="text-muted text-xs desktop-only-btn">(Cutoff)</span>
+                  <span style="font-weight: 700; font-size: 11.5px;">Missed (Past Cutoff)</span>
                 </div>
               `;
             } else {
               statusCapsuleHtml = `
-                <div class="saas-status-capsule saas-status-pending">
+                <div class="saas-status-capsule saas-status-pending" style="width: auto !important; max-width: 100% !important; display: inline-flex !important; align-items: center !important; gap: 6px !important; padding: 4px 10px !important; border-radius: 99px !important; justify-content: flex-start !important;">
                   <span class="saas-dot dot-amber"></span>
-                  <span class="saas-score-label">Pending</span>
-                  <span class="text-muted text-xs desktop-only-btn">(Due today)</span>
+                  <span style="font-weight: 700; font-size: 11.5px;">Pending Check-in</span>
                 </div>
               `;
             }
@@ -254,17 +247,17 @@ export function renderTrainerDailyProgressView(container, navigateTo) {
                   </div>
 
                   <!-- Col 3: Status -->
-                  <div class="src-col src-status">
+                  <div class="src-col src-status" style="display: flex; align-items: center;">
                     ${statusCapsuleHtml}
                   </div>
 
                   <!-- Col 4: Action & Reports Toggle -->
-                  <div class="src-col src-action">
-                    <button type="button" class="saas-action-btn ${item.isMet ? 'saas-btn-accent' : 'saas-btn-primary'} btn-record-meet" data-cid="${c.id}" data-pid="${p.id}">
+                  <div class="src-col src-action" style="display: flex; gap: 8px; width: 100%;">
+                    <button type="button" class="saas-action-btn ${item.isMet ? 'saas-btn-accent' : 'saas-btn-primary'} btn-record-meet" data-cid="${c.id}" data-pid="${p.id}" style="flex: 2; height: 40px; justify-content: center; font-size: 12.5px; border-radius: 8px;">
                       ${getIcon('plus')} ${item.isMet ? `Meet #${meets.length + 1}` : 'Meet #1'}
                     </button>
 
-                    <button type="button" class="saas-report-toggle-pill btn-toggle-row-drawer ${isExpanded ? 'active' : ''}" data-key="${rowKey}">
+                    <button type="button" class="saas-report-toggle-pill btn-toggle-row-drawer ${isExpanded ? 'active' : ''}" data-key="${rowKey}" style="flex: 1; height: 40px; justify-content: center; font-size: 11.5px; border-radius: 8px;">
                       <span>${isExpanded ? 'Hide' : `Reports (${item.allTrainerMeets.length})`}</span>
                       <span class="saas-chevron ${isExpanded ? 'open' : ''}">▼</span>
                     </button>
@@ -362,6 +355,7 @@ export function renderTrainerDailyProgressView(container, navigateTo) {
         render();
       });
     }
+
 
     const txtSearch = container.querySelector('#txtProgressSearch');
     if (txtSearch) {

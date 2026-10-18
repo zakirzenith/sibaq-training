@@ -91,32 +91,38 @@
       <!-- Topbar Header -->
       <header class="app-topbar">
         <div class="topbar-left">
-          <div class="saas-breadcrumb-pill">
+          <!-- Mobile-only Brand Header -->
+          <div class="mobile-topbar-brand">
+            <img src="/logo.png" alt="Logo" class="mtb-logo" />
+            <span class="mtb-title">SIBAQ MENTORING</span>
+          </div>
+
+          <!-- Desktop Breadcrumbs -->
+          <div class="saas-breadcrumb-pill desktop-only-inline">
             <span class="text-muted">DH BENGAL</span>
             <span class="sb-sep">/</span>
             <strong id="topbarCurrentViewName" class="sb-active">Daily Progress</strong>
           </div>
-          <div class="topbar-status-capsule">
+          <div class="topbar-status-capsule desktop-only-inline">
             <span class="dot-stage"></span> Stage & Non-Stage Hub
           </div>
         </div>
 
         <div class="topbar-right">
-          <!-- Trainer Portal Access Button -->
-          <button id="btnTopTrainerPortal" class="btn btn-outline btn-sm" title="Trainer Sign In & Portal" style="font-weight: 700; border-color: #cbd5e1; gap: 6px;">
+          <!-- Trainer Portal Access Button (Desktop Only) -->
+          <button id="btnTopTrainerPortal" class="btn btn-outline btn-sm desktop-only-btn" title="Trainer Sign In & Portal" style="font-weight: 700; border-color: #cbd5e1; gap: 6px;">
             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 1 0-16 0"/></svg>
             <span class="btn-trainer-portal-text">Trainer Portal</span>
           </button>
 
-          <!-- Backup / Data Management Menu Button -->
-          <button id="btnDataManage" class="btn btn-secondary btn-sm" title="System Data Backup and Demo Options">
+          <!-- Backup / Data Management Menu Button (Desktop Only) -->
+          <button id="btnDataManage" class="btn btn-secondary btn-sm desktop-only-btn" title="System Data Backup and Demo Options">
             <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
             <span class="btn-data-text">System Data</span>
           </button>
 
-
-          <!-- User Pill -->
-          <div class="saas-user-pill">
+          <!-- User Pill / Profile Circle (Clickable on both Phone & Desktop) -->
+          <div class="saas-user-pill" id="topbarUserProfileBtn" role="button" tabindex="0" title="Profile & Session Info">
             <div class="sup-avatar" style="overflow: hidden; padding: 2px; background: #ffffff; border: 1px solid #e2e8f0;">
               <img src="/logo.png" alt="DH" style="width: 100%; height: 100%; object-fit: contain;" />
             </div>
@@ -125,8 +131,8 @@
             </div>
           </div>
 
-          <!-- Official Sign Out Button -->
-          <button id="btnTopLogout" class="btn btn-outline btn-sm" title="Sign Out of Session" style="font-weight: 700; border-color: #cbd5e1; color: #64748b; gap: 6px;">
+          <!-- Official Sign Out Button (Desktop Only) -->
+          <button id="btnTopLogout" class="btn btn-outline btn-sm desktop-only-btn" title="Sign Out of Session" style="font-weight: 700; border-color: #cbd5e1; color: #64748b; gap: 6px;">
             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4"/><polyline points="16 17 21 12 16 7"/><line x1="21" x2="9" y1="12" y2="12"/></svg>
             <span class="btn-logout-text">Sign Out</span>
           </button>

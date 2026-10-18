@@ -122,7 +122,7 @@ export function openProgramFormModal({ program = null, onSave = () => {} }) {
       openTrainerPickerModal({
         currentTrainerId: selProgTrainer.value,
         title: 'Select Program Trainer',
-        subtitle: 'Search faculty directory by name or domain expertise',
+        subtitle: 'Search trainer directory by name or domain expertise',
         onSelect: (t) => {
           selProgTrainer.value = t ? t.id : '';
           lblFormTrainerText.textContent = t ? `${t.name} (${t.expertise})` : '-- Choose Trainer --';

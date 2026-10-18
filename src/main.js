@@ -60,6 +60,11 @@ class App {
     // Global exposure for modal triggers
     window.appInstance = this;
     window.openTrainerLogin = () => {
+      const session = state.getAuthSession();
+      if (session && session.role === 'trainer') {
+        toast.info(`You are currently logged in as ${session.trainer.name}. Sign out first to switch accounts.`);
+        return;
+      }
       openTrainerLoginModal({
         onSuccess: (trainer) => {
           this.switchPortal('trainer', trainer);
@@ -98,6 +103,25 @@ class App {
       };
     }
 
+    const userPill = document.getElementById('topbarUserProfileBtn') || document.querySelector('.saas-user-pill');
+    if (userPill) {
+      userPill.onclick = () => {
+        this.openProfileModal();
+      };
+      userPill.onkeydown = (e) => {
+        if (e.key === 'Enter' || e.key === ' ') {
+          e.preventDefault();
+          this.openProfileModal();
+        }
+      };
+    }
+
+    document.querySelectorAll('[data-action="open-profile"]').forEach(el => {
+      el.onclick = () => {
+        this.openProfileModal();
+      };
+    });
+
     document.querySelectorAll('[data-action="logout"]').forEach(el => {
       el.onclick = () => {
         this.logout();
@@ -114,6 +138,145 @@ class App {
     document.body.classList.add('auth-mode');
     toast.info('You have been signed out.');
     this.render();
+  }
+
+  openProfileModal() {
+    const session = state.getAuthSession();
+    if (!session) return;
+
+    const isTrainer = session.role === 'trainer' || this.currentPortal === 'trainer';
+    const activeTrainer = isTrainer ? state.getActiveTrainer() : null;
+
+    const overlay = document.createElement('div');
+    overlay.className = 'modal-backdrop';
+
+    const panelName = isTrainer ? 'Trainer Panel' : 'Controller Panel';
+    const panelBadgeStyle = isTrainer 
+      ? 'background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0;' 
+      : 'background: #eef2ff; color: #4338ca; border: 1px solid #c7d2fe;';
+    const panelDotColor = isTrainer ? '#10b981' : '#6366f1';
+
+    const userName = isTrainer && activeTrainer ? activeTrainer.name : 'DH BENGAL';
+    const userRole = isTrainer ? 'Assigned Trainer & Mentor' : 'Sibaq Controller Central Hub';
+    const userIdentifier = isTrainer && activeTrainer 
+      ? (activeTrainer.username || activeTrainer.email || activeTrainer.phone || 'Trainer ID: ' + activeTrainer.id) 
+      : 'Username: sibaq';
+
+    overlay.innerHTML = `
+      <div class="modal-dialog profile-modal-dialog" style="max-width: 400px; width: 92%;">
+        <div class="modal-header" style="border-bottom: 1px solid #f1f5f9; padding-bottom: 12px;">
+          <div>
+            <div class="modal-badge" style="display: inline-flex; align-items: center; gap: 5px;">
+              <span style="width: 7px; height: 7px; border-radius: 50%; background: ${panelDotColor};"></span>
+              Session Profile
+            </div>
+            <h2 class="modal-title" style="font-size: 18px; margin: 4px 0 0 0;">Profile & Panel Info</h2>
+          </div>
+          <button class="modal-close-btn" id="btnCloseProfileModal" aria-label="Close">${getIcon('x')}</button>
+        </div>
+
+        <div class="modal-body" style="padding: 16px 18px;">
+          <!-- Top Profile Banner -->
+          <div style="background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border: 1px solid #e2e8f0; border-radius: 14px; padding: 16px; text-align: center; margin-bottom: 14px;">
+            <div style="display: inline-flex; align-items: center; justify-content: center; width: 62px; height: 62px; border-radius: 50%; background: ${isTrainer && activeTrainer ? (activeTrainer.color || '#6366f1') : '#ffffff'}; color: #fff; font-size: 22px; font-weight: 800; box-shadow: 0 4px 12px rgba(0,0,0,0.08); border: 3px solid #ffffff; margin-bottom: 10px; overflow: hidden;">
+              ${isTrainer && activeTrainer 
+                ? activeTrainer.name.split(' ').map(n => n[0]).slice(0, 2).join('') 
+                : `<img src="/logo.png" alt="Logo" style="width: 100%; height: 100%; object-fit: contain; padding: 4px;" />`}
+            </div>
+            <h3 style="font-size: 16.5px; font-weight: 800; color: #0f172a; margin: 0 0 4px 0;">${userName}</h3>
+            <div style="font-size: 12px; color: #64748b; margin-bottom: 10px;">${userRole}</div>
+
+            <!-- Active Panel Capsule Badge -->
+            <div style="display: inline-flex; align-items: center; gap: 6px; padding: 5px 14px; border-radius: 9999px; font-size: 12px; font-weight: 800; ${panelBadgeStyle}; box-shadow: 0 1px 2px rgba(0,0,0,0.04);">
+              <span style="width: 8px; height: 8px; border-radius: 50%; background: ${panelDotColor}; box-shadow: 0 0 0 2px rgba(255,255,255,0.8);"></span>
+              <span>Active in: <strong>${panelName}</strong></span>
+            </div>
+          </div>
+
+          <!-- Session Metadata Details -->
+          <div style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 12px; padding: 12px 14px; font-size: 12.5px; display: flex; flex-direction: column; gap: 8px; margin-bottom: 14px;">
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span style="color: #64748b;">Current Panel:</span>
+              <span style="font-weight: 800; color: #0f172a;">${panelName}</span>
+            </div>
+            <div style="display: flex; justify-content: space-between; align-items: center;">
+              <span style="color: #64748b;">Account ID:</span>
+              <span style="font-weight: 700; color: #334155; font-family: monospace;">${userIdentifier}</span>
+            </div>
+            ${isTrainer && activeTrainer ? `
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="color: #64748b;">Assigned Domain:</span>
+                <span style="font-weight: 700; color: #0f172a;">${activeTrainer.expertise || 'General'}</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="color: #64748b;">Assigned Programs:</span>
+                <span style="font-weight: 700; color: #4f46e5;">${state.getTrainerPrograms(activeTrainer.id).length} Active Program(s)</span>
+              </div>
+            ` : `
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="color: #64748b;">Authority:</span>
+                <span style="font-weight: 700; color: #059669;">Full Controller Privileges</span>
+              </div>
+            `}
+          </div>
+
+          <!-- Controller Shortcuts (Controller Only) -->
+          ${session.role === 'controller' ? `
+            <div style="margin-bottom: 12px;">
+              ${this.currentPortal === 'trainer' ? `
+                <button type="button" id="btnModalSwitchToController" class="btn btn-outline" style="width: 100%; height: 38px; font-weight: 700; font-size: 12px; border-radius: 10px; margin-bottom: 6px;">
+                  ${getIcon('logout')} Return to Controller Panel
+                </button>
+              ` : `
+                <button type="button" id="btnModalOpenTrainerLogin" class="btn btn-outline" style="width: 100%; height: 38px; font-weight: 700; font-size: 12px; border-radius: 10px; margin-bottom: 6px;">
+                  ${getIcon('trainers')} Switch to Trainer Portal
+                </button>
+              `}
+            </div>
+          ` : ''}
+
+          <!-- Prominent Sign Out Button -->
+          <button type="button" id="btnModalSignOut" class="btn btn-primary" style="width: 100%; height: 42px; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); border: none; color: #ffffff; font-weight: 800; font-size: 13px; border-radius: 10px; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25); cursor: pointer;">
+            ${getIcon('logout')}
+            <span>Sign Out</span>
+          </button>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(overlay);
+
+    const close = () => {
+      overlay.classList.add('modal-closing');
+      setTimeout(() => overlay.remove(), 200);
+    };
+
+    overlay.querySelector('#btnCloseProfileModal').onclick = close;
+    overlay.onclick = (e) => {
+      if (e.target === overlay) close();
+    };
+
+    // Sign out action
+    overlay.querySelector('#btnModalSignOut').onclick = () => {
+      close();
+      this.logout();
+    };
+
+    const btnSwitchCtrl = overlay.querySelector('#btnModalSwitchToController');
+    if (btnSwitchCtrl) {
+      btnSwitchCtrl.onclick = () => {
+        close();
+        this.switchPortal('controller');
+      };
+    }
+
+    const btnOpenTrn = overlay.querySelector('#btnModalOpenTrainerLogin');
+    if (btnOpenTrn) {
+      btnOpenTrn.onclick = () => {
+        close();
+        window.openTrainerLogin();
+      };
+    }
   }
 
   handleLoginSuccess(role, data) {
@@ -137,16 +300,30 @@ class App {
   }
 
   switchPortal(portalType, trainer = null) {
+    const session = state.getAuthSession();
+
     if (portalType === 'trainer') {
-      this.currentPortal = 'trainer';
-      localStorage.setItem('mentorflow_active_portal', 'trainer');
-      if (trainer) {
-        state.setActiveTrainer(trainer.id);
+      if (session && session.role === 'trainer') {
+        state.setActiveTrainer(session.trainer.id);
+        this.currentPortal = 'trainer';
+        this.updatePortalUI();
+        this.navigateTo('trainer-dashboard');
+        return;
       }
-      this.updatePortalUI();
-      this.navigateTo('trainer-dashboard');
+      if (session && session.role === 'controller') {
+        this.currentPortal = 'trainer';
+        localStorage.setItem('mentorflow_active_portal', 'trainer');
+        if (trainer) {
+          state.setActiveTrainer(trainer.id);
+        }
+        this.updatePortalUI();
+        this.navigateTo('trainer-dashboard');
+      } else {
+        this.loginDefaultRole = 'trainer';
+        this.logout();
+      }
     } else {
-      const session = state.getAuthSession();
+      // Switching to controller panel: ONLY allowed if authenticated as controller
       if (session && session.role === 'controller') {
         this.currentPortal = 'controller';
         localStorage.setItem('mentorflow_active_portal', 'controller');
@@ -154,7 +331,7 @@ class App {
         this.updatePortalUI();
         this.navigateTo('dashboard');
       } else {
-        // Not authenticated as controller -> redirect to login with controller tab
+        toast.error('Access Restricted: Trainer accounts cannot enter the Controller Panel.');
         this.loginDefaultRole = 'controller';
         this.logout();
       }
@@ -169,6 +346,8 @@ class App {
 
     document.body.classList.remove('auth-mode');
 
+    const session = state.getAuthSession();
+    const isRealTrainerSession = session && session.role === 'trainer';
     const isTrainer = this.currentPortal === 'trainer';
     const activeTrainer = state.getActiveTrainer();
 
@@ -200,14 +379,22 @@ class App {
           </div>
         `;
       }
+
       if (btnTopTrainer) {
-        btnTopTrainer.innerHTML = `
-          ${getIcon('logout')}
-          <span class="btn-trainer-portal-text">Exit to Controller</span>
-        `;
-        btnTopTrainer.title = 'Switch back to Controller Panel';
-        btnTopTrainer.style.borderColor = '#cbd5e1';
-        btnTopTrainer.style.color = '#64748b';
+        if (isRealTrainerSession) {
+          // Real trainer session: completely hide switch button
+          btnTopTrainer.style.display = 'none';
+        } else {
+          // Controller inspecting trainer: can exit to controller
+          btnTopTrainer.style.display = 'inline-flex';
+          btnTopTrainer.innerHTML = `
+            ${getIcon('logout')}
+            <span class="btn-trainer-portal-text">Exit to Controller</span>
+          `;
+          btnTopTrainer.title = 'Switch back to Controller Panel';
+          btnTopTrainer.style.borderColor = '#cbd5e1';
+          btnTopTrainer.style.color = '#64748b';
+        }
       }
 
       // Sidebar Nav for Trainer Portal
@@ -223,11 +410,15 @@ class App {
             <span>Daily Progress</span>
           </a>
 
-          <div class="nav-section-title" style="margin-top: 18px;">Navigation</div>
-          <a class="nav-item" data-action="exit-portal" id="navTrainerExit" style="cursor: pointer; color: #64748b;">
-            <span class="nav-item-icon">${getIcon('logout')}</span>
-            <span>Exit to Controller</span>
-          </a>
+          ${!isRealTrainerSession ? `
+            <div class="nav-section-title" style="margin-top: 18px;">Navigation</div>
+            <a class="nav-item" data-action="exit-portal" id="navTrainerExit" style="cursor: pointer; color: #64748b;">
+              <span class="nav-item-icon">${getIcon('logout')}</span>
+              <span>Exit to Controller</span>
+            </a>
+          ` : ''}
+
+          <div class="nav-section-title" style="margin-top: 18px;">Account</div>
           <a class="nav-item" data-action="logout" style="cursor: pointer; color: #ef4444;">
             <span class="nav-item-icon">${getIcon('logout')}</span>
             <span>Sign Out</span>
@@ -238,16 +429,18 @@ class App {
       // Sidebar Footer for Trainer Portal
       if (sidebarFooter) {
         sidebarFooter.innerHTML = `
-          <button id="sidebarBtnExitPortal" class="sidebar-portal-btn" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 9px 12px; background: #f8fafc; color: #475569; border: 1px solid #cbd5e1; border-radius: 10px; font-weight: 700; font-size: 12px; cursor: pointer; margin-bottom: 10px; transition: all 0.15s ease;">
-            ${getIcon('logout')}
-            <span>Exit to Controller</span>
-          </button>
+          ${!isRealTrainerSession ? `
+            <button id="sidebarBtnExitPortal" class="sidebar-portal-btn" style="width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 9px 12px; background: #f8fafc; color: #475569; border: 1px solid #cbd5e1; border-radius: 10px; font-weight: 700; font-size: 12px; cursor: pointer; margin-bottom: 10px; transition: all 0.15s ease;">
+              ${getIcon('logout')}
+              <span>Exit to Controller</span>
+            </button>
+          ` : ''}
           <div class="saas-system-card">
             <div class="ssc-dot-row">
               <span class="status-pulse-dot" style="background: #10b981;"></span>
-              <span class="ssc-title">${activeTrainer.expertise}</span>
+              <span class="ssc-title">${activeTrainer.expertise || 'Trainer Workspace'}</span>
             </div>
-            <div class="ssc-subtitle">Faculty Session Active</div>
+            <div class="ssc-subtitle">Trainer Session Active</div>
           </div>
         `;
       }
@@ -262,6 +455,12 @@ class App {
           <button class="mobile-nav-btn ${this.currentView === 'trainer-daily-progress' ? 'active' : ''}" data-view="trainer-daily-progress">
             ${getIcon('calendar')}
             <span>Daily Progress</span>
+          </button>
+          <button class="mobile-nav-btn" data-action="open-profile">
+            <span style="display:inline-flex; align-items:center; justify-content:center; width:22px; height:22px; border-radius:50%; background:${activeTrainer.color || '#6366f1'}; color:#fff; font-weight:700; font-size:11px;">
+              ${activeTrainer.name.split(' ').map(n => n[0]).slice(0, 2).join('')}
+            </span>
+            <span>Profile</span>
           </button>
           <button class="mobile-nav-btn" data-action="logout">
             ${getIcon('logout')}
@@ -287,6 +486,7 @@ class App {
         `;
       }
       if (btnTopTrainer) {
+        btnTopTrainer.style.display = 'inline-flex';
         btnTopTrainer.innerHTML = `
           ${getIcon('trainers')}
           <span class="btn-trainer-portal-text">Trainer Portal</span>
@@ -366,6 +566,17 @@ class App {
       this.currentView = 'login';
       this.render();
       return;
+    }
+
+    const session = state.getAuthSession();
+    if (session && session.role === 'trainer') {
+      const allowedTrainerViews = ['trainer-dashboard', 'trainer-daily-progress'];
+      if (!allowedTrainerViews.includes(viewName)) {
+        toast.error('Access Restricted: Trainer accounts cannot access Controller views.');
+        this.currentView = 'trainer-dashboard';
+        this.render();
+        return;
+      }
     }
 
     this.currentView = viewName;

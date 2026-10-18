@@ -85,7 +85,7 @@ export function renderTrainerDashboardView(container, navigateTo) {
                 <div style="display: flex; align-items: center; gap: 10px; font-size: 12px; color: #64748b; margin-top: 4px; flex-wrap: wrap;">
                   <span>Username: <strong>@${currentTrainer.username || currentTrainer.name.toLowerCase().replace(/[^a-z0-9]/g, '')}</strong></span>
                   ${currentTrainer.phone ? `<span>• Tel: <strong>${currentTrainer.phone}</strong></span>` : ''}
-                  <span>• Status: <strong style="color: #10b981;">Active Faculty</strong></span>
+                  <span>• Status: <strong style="color: #10b981;">Active Trainer</strong></span>
                 </div>
               </div>
             </div>

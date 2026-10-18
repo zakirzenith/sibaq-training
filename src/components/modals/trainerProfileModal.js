@@ -32,7 +32,7 @@ export function openTrainerProfileModal({ trainerId, onUpdate = () => {} }) {
       <!-- Modal Header -->
       <div class="modal-header">
         <div class="profile-header-meta">
-          <div class="modal-badge">${getIcon('trainers')} Faculty & Mentor Profile</div>
+          <div class="modal-badge">${getIcon('trainers')} Trainer & Mentor Profile</div>
           <div class="profile-name-row">
             <div class="tpm-avatar-lg" style="background: ${trainer.color || '#6366f1'}">
               ${(trainer.name || 'T').split(' ').map(n => n[0]).slice(0, 2).join('')}

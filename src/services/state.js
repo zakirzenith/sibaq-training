@@ -819,6 +819,7 @@ class StateService {
     }
 
     localStorage.setItem('mentorflow_auth_role', 'trainer');
+    localStorage.setItem('mentorflow_auth_trainer_id', trainer.id);
     localStorage.setItem('mentorflow_active_portal', 'trainer');
     this.setActiveTrainer(trainer.id);
     return { success: true, trainer };
@@ -850,7 +851,8 @@ class StateService {
       return { role: 'controller', user: 'sibaq' };
     }
     if (role === 'trainer') {
-      const trainer = this.getActiveTrainer();
+      const authId = localStorage.getItem('mentorflow_auth_trainer_id');
+      const trainer = authId ? this.getTrainerById(authId) : null;
       if (trainer) {
         return { role: 'trainer', trainer };
       }
@@ -860,18 +862,34 @@ class StateService {
 
   logout() {
     localStorage.removeItem('mentorflow_auth_role');
+    localStorage.removeItem('mentorflow_auth_trainer_id');
     localStorage.removeItem('mentorflow_controller_user');
     this.clearActiveTrainer();
     localStorage.removeItem('mentorflow_active_portal');
   }
 
   getActiveTrainer() {
+    const role = localStorage.getItem('mentorflow_auth_role');
+    if (role === 'trainer') {
+      const authId = localStorage.getItem('mentorflow_auth_trainer_id');
+      if (authId) {
+        return this.getTrainerById(authId);
+      }
+    }
     const tid = localStorage.getItem('mentorflow_active_trainer_id');
     if (!tid) return null;
     return this.getTrainerById(tid);
   }
 
   setActiveTrainer(trainerId) {
+    const role = localStorage.getItem('mentorflow_auth_role');
+    if (role === 'trainer') {
+      const authId = localStorage.getItem('mentorflow_auth_trainer_id');
+      if (authId) {
+        localStorage.setItem('mentorflow_active_trainer_id', authId);
+        return;
+      }
+    }
     if (trainerId) {
       localStorage.setItem('mentorflow_active_trainer_id', String(trainerId).trim());
     } else {

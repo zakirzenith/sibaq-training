@@ -3,7 +3,7 @@ import { getIcon } from '../icons.js';
 
 /**
  * Universal Searchable Trainer Picker Modal
- * Allows searching faculty members by name, domain, expertise, or experience,
+ * Allows searching trainers by name, domain, expertise, or experience,
  * and selecting or clearing a trainer assignment with 1 click.
  */
 export function openTrainerPickerModal({
@@ -19,7 +19,7 @@ export function openTrainerPickerModal({
     <div class="modal-dialog modal-md trainer-picker-dialog">
       <div class="modal-header">
         <div>
-          <div class="modal-badge">Faculty Directory</div>
+          <div class="modal-badge">Trainer Directory</div>
           <h2 class="modal-title">${title}</h2>
           <p class="modal-subtitle">${subtitle}</p>
         </div>
@@ -103,7 +103,7 @@ export function openTrainerPickerModal({
       );
     });
 
-    countText.textContent = `${filtered.length} of ${all.length} faculty members`;
+    countText.textContent = `${filtered.length} of ${all.length} trainers`;
     trainersList.innerHTML = '';
 
     if (filtered.length === 0) {

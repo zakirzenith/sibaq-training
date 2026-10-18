@@ -20,7 +20,7 @@ export function openExcelUploadModal({ type = 'candidates', onComplete = () => {
   } else if (isTrainers) {
     title = 'Bulk Upload Trainers';
     subtitle = 'Upload an Excel (.xlsx, .xls) or CSV file with Trainer Name, Expertise / Field, and Experience.';
-    badgeName = 'Trainers Faculty';
+    badgeName = 'Trainers Directory';
   }
 
   let parsedRows = [];

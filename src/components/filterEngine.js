@@ -229,7 +229,7 @@ export function createFilterBar({
 
         <div class="sfe-values-list">
           <button type="button" class="sfe-val-item ${!currentVal || currentVal === 'ALL' ? 'selected' : ''}" data-val="ALL">
-            <span class="sfe-val-name">All ${cfg.label}s (Reset)</span>
+            <span class="sfe-val-name">All ${cfg.label.endsWith('y') ? cfg.label.slice(0, -1) + 'ies' : (cfg.label.endsWith('s') ? cfg.label : cfg.label + 's')} (Reset)</span>
             ${!currentVal || currentVal === 'ALL' ? `<span class="sfe-val-check">${getIcon('check')}</span>` : ''}
           </button>
 
@@ -331,13 +331,17 @@ export function createFilterBar({
 
   function openPopover() {
     popoverOpen = true;
-    popover.style.display = 'flex';
-    backdrop.style.display = 'block';
+    popover.classList.add('is-open');
+    backdrop.classList.add('is-open');
+    popover.style.display = '';
+    backdrop.style.display = '';
     renderPopoverContent();
   }
 
   function closePopover() {
     popoverOpen = false;
+    popover.classList.remove('is-open');
+    backdrop.classList.remove('is-open');
     popover.style.display = 'none';
     backdrop.style.display = 'none';
     activeFieldForPopover = null;

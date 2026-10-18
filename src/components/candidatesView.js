@@ -257,11 +257,15 @@ export function renderCandidatesView(container, navigateTo) {
         });
       });
 
-      // Click candidate name opens full profile
-      tr.querySelector('.btn-view-profile').addEventListener('click', () => {
-        openCandidateProfileModal({
-          candidateId: c.id,
-          onUpdate: () => renderTable()
+      // Click candidate name or avatar opens full profile instantly
+      tr.querySelectorAll('.btn-view-profile, .saas-student-cell').forEach(el => {
+        el.style.cursor = 'pointer';
+        el.addEventListener('click', (e) => {
+          e.stopPropagation();
+          openCandidateProfileModal({
+            candidateId: c.id,
+            onUpdate: () => renderTable()
+          });
         });
       });
 

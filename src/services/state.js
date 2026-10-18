@@ -261,8 +261,11 @@ class StateService {
 
   getCandidateById(id) {
     if (!id) return null;
-    const cleanId = String(id).trim();
-    return this.candidates.find(c => String(c.id).trim() === cleanId) || null;
+    const cleanId = String(id).trim().toLowerCase();
+    return this.candidates.find(
+      c => String(c.id).trim().toLowerCase() === cleanId || 
+           String(c.adNo).trim().toLowerCase() === cleanId
+    ) || null;
   }
 
   getCandidateByAdNo(adNo) {
@@ -649,8 +652,11 @@ class StateService {
 
   getTrainerById(id) {
     if (!id) return null;
-    const cleanId = String(id).trim();
-    return this.trainers.find(t => String(t.id).trim() === cleanId) || null;
+    const cleanId = String(id).trim().toLowerCase();
+    return this.trainers.find(
+      t => String(t.id).trim().toLowerCase() === cleanId || 
+           String(t.name).trim().toLowerCase() === cleanId
+    ) || null;
   }
 
   addTrainer(trainerData) {
@@ -735,26 +741,45 @@ class StateService {
 
   getCandidatePrograms(candidateId) {
     if (!candidateId) return [];
-    const cId = String(candidateId).trim();
+    const cand = this.getCandidateById(candidateId);
+    const validMatches = new Set();
+    validMatches.add(String(candidateId).trim().toLowerCase());
+    if (cand) {
+      if (cand.id) validMatches.add(String(cand.id).trim().toLowerCase());
+      if (cand.adNo) validMatches.add(String(cand.adNo).trim().toLowerCase());
+    }
     return this.programs.filter(
-      p => Array.isArray(p.candidateIds) && p.candidateIds.some(id => String(id).trim() === cId)
+      p => Array.isArray(p.candidateIds) && p.candidateIds.some(cid => {
+        const clean = String(cid).trim().toLowerCase();
+        return validMatches.has(clean);
+      })
     );
   }
 
   getTrainerPrograms(trainerId) {
     if (!trainerId) return [];
-    const tId = String(trainerId).trim();
-    return this.programs.filter(p => p.trainerId && String(p.trainerId).trim() === tId);
+    const trn = this.getTrainerById(trainerId);
+    const validMatches = new Set();
+    validMatches.add(String(trainerId).trim().toLowerCase());
+    if (trn) {
+      if (trn.id) validMatches.add(String(trn.id).trim().toLowerCase());
+      if (trn.name) validMatches.add(String(trn.name).trim().toLowerCase());
+    }
+    return this.programs.filter(p => {
+      if (!p.trainerId) return false;
+      const clean = String(p.trainerId).trim().toLowerCase();
+      return validMatches.has(clean);
+    });
   }
 
   getTrainerMentees(trainerId) {
     const programs = this.getTrainerPrograms(trainerId);
-    const candidateIdSet = new Set();
+    const candidateMatches = new Set();
     programs.forEach(prg => {
-      (prg.candidateIds || []).forEach(id => candidateIdSet.add(String(id).trim()));
+      (prg.candidateIds || []).forEach(id => candidateMatches.add(String(id).trim()));
     });
 
-    return Array.from(candidateIdSet)
+    return Array.from(candidateMatches)
       .map(id => this.getCandidateById(id))
       .filter(Boolean);
   }

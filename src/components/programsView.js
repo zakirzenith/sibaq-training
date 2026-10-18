@@ -358,8 +358,8 @@ export function renderProgramsView(container, navigateTo) {
                         return `
                     <tr class="saas-table-row">
                       <td>
-                        <!-- CLICKING CANDIDATE NAME OPENS PROFILE MODAL -->
-                        <div class="saas-student-cell">
+                        <!-- CLICKING CANDIDATE NAME OR AVATAR OPENS PROFILE MODAL INSTANTLY -->
+                        <div class="saas-student-cell" data-cid="${cand.id}">
                           <div class="saas-avatar-soft">${initials}</div>
                           <button class="candidate-name-btn btn-open-cand-profile" data-cid="${cand.id}" title="Click to view candidate profile with all assigned programs and trainers">
                             <strong>${cand.name}</strong>
@@ -416,11 +416,13 @@ export function renderProgramsView(container, navigateTo) {
       }
     });
 
-    // 4. Clicking Candidate Name opens Candidate Profile Modal!
-    programDetailContainer.querySelectorAll('.btn-open-cand-profile').forEach(btn => {
+    // 4. Clicking Candidate Name or cell opens Candidate Profile Modal INSTANTLY!
+    programDetailContainer.querySelectorAll('.btn-open-cand-profile, .saas-student-cell').forEach(btn => {
+      btn.style.cursor = 'pointer';
       btn.addEventListener('click', e => {
         e.stopPropagation();
-        const cid = btn.getAttribute('data-cid');
+        const cid = btn.getAttribute('data-cid') || btn.closest('[data-cid]')?.getAttribute('data-cid');
+        if (!cid) return;
         openCandidateProfileModal({
           candidateId: cid,
           onUpdate: () => {
@@ -456,10 +458,11 @@ export function renderProgramsView(container, navigateTo) {
       });
     });
 
-    // 7. Save Trainer from Dropdown
+    // 7. Save Trainer from Dropdown (Instant on-change + button click)
     const trainerDropdown = programDetailContainer.querySelector('#trainerDropdown');
     const btnSaveTrainer = programDetailContainer.querySelector('#btnSaveTrainer');
-    btnSaveTrainer.addEventListener('click', () => {
+
+    const handleTrainerSave = () => {
       const newTrainerId = trainerDropdown.value ? trainerDropdown.value.trim() : null;
       state.assignTrainerToProgram(program.id, newTrainerId);
       const trn = newTrainerId ? state.getTrainerById(newTrainerId) : null;
@@ -470,7 +473,10 @@ export function renderProgramsView(container, navigateTo) {
       );
       renderLeftList();
       renderRightDetail(program.id);
-    });
+    };
+
+    trainerDropdown.addEventListener('change', handleTrainerSave);
+    btnSaveTrainer.addEventListener('click', handleTrainerSave);
 
     // 8. Unassign Trainer button
     const btnUnassignTrainer = programDetailContainer.querySelector('#btnUnassignTrainer');

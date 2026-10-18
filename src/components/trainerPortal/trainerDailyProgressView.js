@@ -224,11 +224,29 @@ export function renderTrainerDailyProgressView(container, navigateTo) {
                         ${p.name}
                       </span>
                     </div>
-                    <div class="src-prog-bottom">
+                    <div class="src-prog-bottom" style="display: flex; flex-direction: column; align-items: flex-start; gap: 2px;">
                       <span class="saas-mentor-pill">
                         <span class="saas-dot" style="background: ${currentTrainer.color || '#6366f1'};"></span>
                         <span class="saas-mentor-name">${currentTrainer.name} (You)</span>
                       </span>
+                      ${(() => {
+                        const otherProgs = state.getCandidatePrograms(c.id).filter(op => op.id !== p.id);
+                        if (otherProgs.length === 0) return '';
+                        return `
+                          <div class="trainer-other-progs-strip" style="display: flex; gap: 4px; align-items: center; margin-top: 2px; flex-wrap: wrap;">
+                            <span style="font-size: 10.5px; color: #64748b;">Other:</span>
+                            ${otherProgs.map(op => {
+                              const opMeetsToday = state.getDailyMeets(selectedDate).filter(m => m.candidateId === c.id && m.programId === op.id);
+                              const isOpMet = opMeetsToday.length > 0;
+                              return `
+                                <span class="badge ${isOpMet ? 'badge-stage' : 'badge-neutral'}" style="font-size: 9.5px; padding: 1px 5px;" title="${op.name}: ${isOpMet ? 'Met today' : 'Pending'}">
+                                  ${op.code}: ${isOpMet ? '✓ Met' : '○ Pending'}
+                                </span>
+                              `;
+                            }).join('')}
+                          </div>
+                        `;
+                      })()}
                     </div>
                   </div>
 

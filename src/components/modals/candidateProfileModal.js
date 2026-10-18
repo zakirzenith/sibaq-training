@@ -99,6 +99,10 @@ export function openCandidateProfileModal({ candidateId, onUpdate = () => {} }) 
                     .map(prog => {
                       const trainer = prog.trainerId ? state.getTrainerById(prog.trainerId) : null;
                       const isStage = prog.type === 'Stage';
+                      const todayStr = new Date().toISOString().split('T')[0];
+                      const progMeetsToday = state.getDailyMeets(todayStr).filter(m => m.candidateId === candidate.id && m.programId === prog.id);
+                      const isMetToday = progMeetsToday.length > 0;
+                      const latestMeetToday = isMetToday ? progMeetsToday[progMeetsToday.length - 1] : null;
 
                       return `
                   <div class="profile-program-card ${isStage ? 'border-stage' : 'border-nonstage'}">
@@ -109,6 +113,15 @@ export function openCandidateProfileModal({ candidateId, onUpdate = () => {} }) 
                           ${isStage ? getIcon('stage') : getIcon('nonStage')} ${prog.type}
                         </span>
                         <span class="badge badge-neutral-xs">${prog.category}</span>
+                        ${isMetToday ? `
+                          <span class="badge badge-stage text-xs font-semibold" title="Met today: ${latestMeetToday.percentage}%">
+                            ✓ Met Today (${latestMeetToday.percentage}%)
+                          </span>
+                        ` : `
+                          <span class="badge badge-warning text-xs font-semibold" title="Pending check-in today">
+                            ○ Pending Today
+                          </span>
+                        `}
                       </div>
                       <h4 class="profile-prog-title">${prog.name}</h4>
                     </div>
@@ -138,9 +151,16 @@ export function openCandidateProfileModal({ candidateId, onUpdate = () => {} }) 
                         }
                       </div>
 
-                      <button class="btn btn-text btn-xs text-danger btn-unenroll-from-prog" data-pid="${prog.id}" title="Remove candidate from this program">
-                        ${getIcon('trash')} Unenroll
-                      </button>
+                      <div class="profile-prog-actions-strip" style="display: flex; align-items: center; gap: 6px;">
+                        ${!isMetToday ? `
+                          <button type="button" class="btn btn-outline btn-xs btn-profile-meet-prog" data-pid="${prog.id}" data-tid="${trainer ? trainer.id : ''}" title="Record today's meet for ${prog.code}" style="font-weight: 700;">
+                            ${getIcon('plus')} Meet
+                          </button>
+                        ` : ''}
+                        <button class="btn btn-text btn-xs text-danger btn-unenroll-from-prog" data-pid="${prog.id}" title="Remove candidate from this program">
+                          ${getIcon('trash')} Unenroll
+                        </button>
+                      </div>
                     </div>
                   </div>
                 `;
@@ -271,6 +291,25 @@ export function openCandidateProfileModal({ candidateId, onUpdate = () => {} }) 
       });
     });
   }
+
+  // Quick record meet for a specific program
+  overlay.querySelectorAll('.btn-profile-meet-prog').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const pid = btn.getAttribute('data-pid');
+      const tid = btn.getAttribute('data-tid');
+      openRecordMeetModal({
+        candidateId: candidate.id,
+        programId: pid,
+        trainerId: tid,
+        onSave: () => {
+          close();
+          onUpdate();
+          openCandidateProfileModal({ candidateId: candidate.id, onUpdate });
+        }
+      });
+    });
+  });
 
   // Unenroll button
   overlay.querySelectorAll('.btn-unenroll-from-prog').forEach(btn => {

@@ -1267,43 +1267,80 @@ class StateService {
       .filter(m => m.candidateId === candidateId && m.date === targetDate)
       .sort((a, b) => a.meetNumber - b.meetNumber);
 
-    const meetCount = meets.length;
-    const isMet = meetCount > 0;
-    const latestMeet = isMet ? meets[meets.length - 1] : null;
+    // Calculate per-program meeting status
+    const programBreakdown = programs.map(prog => {
+      const progMeets = meets.filter(m => m.programId === prog.id);
+      const isMet = progMeets.length > 0;
+      const latestMeet = isMet ? progMeets[progMeets.length - 1] : null;
+      const trainer = prog.trainerId ? this.getTrainerById(prog.trainerId) : null;
+      return {
+        program: prog,
+        trainer,
+        isMet,
+        meets: progMeets,
+        meetCount: progMeets.length,
+        latestMeet
+      };
+    });
+
+    const totalPrograms = programs.length;
+    const metProgramsCount = programBreakdown.filter(pb => pb.isMet).length;
+    const pendingProgramsCount = totalPrograms - metProgramsCount;
 
     let overallStatus = 'PENDING';
-    let statusLabel = 'Pending (Needs Meet #1)';
+    let statusLabel = 'Pending';
     let statusClass = 'badge-warning';
 
-    if (isMet) {
-      overallStatus = 'MET';
-      statusLabel = meetCount === 1 ? 'Met (Meet #1)' : `Met (Meet #${meetCount})`;
-      statusClass = meetCount === 1 ? 'badge-stage' : 'badge-primary';
-    } else {
-      if (targetDate < todayStr) {
+    if (totalPrograms === 0) {
+      if (meets.length > 0) {
+        overallStatus = 'MET';
+        statusLabel = `Met (Meet #${meets.length})`;
+        statusClass = 'badge-stage';
+      } else if (targetDate < todayStr) {
         overallStatus = 'MISSED';
         statusLabel = 'Missed';
         statusClass = 'badge-danger';
-      } else if (targetDate === todayStr) {
-        overallStatus = 'PENDING';
-        statusLabel = 'Pending Meet Today';
-        statusClass = 'badge-warning';
       } else {
-        overallStatus = 'UPCOMING';
-        statusLabel = 'Upcoming';
-        statusClass = 'badge-neutral';
+        overallStatus = 'PENDING';
+        statusLabel = 'Pending Check-in';
+        statusClass = 'badge-warning';
+      }
+    } else if (metProgramsCount === totalPrograms) {
+      overallStatus = 'MET';
+      statusLabel = totalPrograms === 1 ? 'Fully Met (1/1)' : `Fully Met (${metProgramsCount}/${totalPrograms})`;
+      statusClass = 'badge-stage';
+    } else if (metProgramsCount > 0 && metProgramsCount < totalPrograms) {
+      overallStatus = 'PARTIAL';
+      statusLabel = `Partial (${metProgramsCount}/${totalPrograms} Met)`;
+      statusClass = 'badge-amber';
+    } else {
+      if (targetDate < todayStr) {
+        overallStatus = 'MISSED';
+        statusLabel = `Missed (${totalPrograms} Programs)`;
+        statusClass = 'badge-danger';
+      } else {
+        overallStatus = 'PENDING';
+        statusLabel = totalPrograms === 1 ? 'Pending Check-in' : `Pending (0/${totalPrograms} Met)`;
+        statusClass = 'badge-warning';
       }
     }
+
+    const latestMeet = meets.length > 0 ? meets[meets.length - 1] : null;
 
     return {
       candidate,
       programs,
       trainers,
       meets,
-      meetCount,
-      isMet,
-      isMissed: overallStatus === 'MISSED',
+      meetCount: meets.length,
+      programBreakdown,
+      totalPrograms,
+      metProgramsCount,
+      pendingProgramsCount,
+      isMet: overallStatus === 'MET',
+      isPartiallyMet: overallStatus === 'PARTIAL',
       isPending: overallStatus === 'PENDING',
+      isMissed: overallStatus === 'MISSED',
       overallStatus,
       statusLabel,
       statusClass,
@@ -1328,6 +1365,7 @@ class StateService {
 
     const totalScheduled = enrolledCandidates.length;
     const metCandidates = candidateStatuses.filter(s => s && s.isMet);
+    const partialCandidates = candidateStatuses.filter(s => s && s.isPartiallyMet);
     const pendingCandidates = candidateStatuses.filter(s => s && s.isPending);
     const missedCandidates = candidateStatuses.filter(s => s && s.isMissed);
 
@@ -1342,6 +1380,7 @@ class StateService {
       targetDate,
       totalScheduled,
       metCount: metCandidates.length,
+      partialCount: partialCandidates.length,
       pendingCount: pendingCandidates.length,
       missedCount: missedCandidates.length,
       multiMeetCount: multiMeetCandidates.length,

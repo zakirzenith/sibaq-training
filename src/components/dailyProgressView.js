@@ -87,8 +87,9 @@ export function renderDailyProgressView(container, navigateTo) {
         getOptions: () => {
           const summary = state.getDailySummary(selectedDate);
           return [
-            { value: 'MET', label: 'Met / Completed', count: summary.metCount },
-            { value: 'PENDING', label: 'Pending Check-in', count: summary.pendingCount },
+            { value: 'MET', label: 'Fully Met (All Programs)', count: summary.metCount },
+            { value: 'PARTIAL', label: 'Partially Met (1+ Remaining)', count: summary.partialCount },
+            { value: 'PENDING', label: 'Pending Check-in (0 Met)', count: summary.pendingCount },
             { value: 'MISSED', label: 'Missed (Past Cutoff)', count: summary.missedCount }
           ];
         }
@@ -162,9 +163,10 @@ export function renderDailyProgressView(container, navigateTo) {
     // Render Unified Interactive Daily Check-In Command Hub
     const total = summary.totalScheduled || 0;
     const met = summary.metCount || 0;
+    const partial = summary.partialCount || 0;
     const pending = summary.pendingCount || 0;
     const missed = summary.missedCount || 0;
-    const metPct = total > 0 ? Math.round((met / total) * 100) : 0;
+    const metPct = total > 0 ? Math.round(((met + partial * 0.5) / total) * 100) : 0;
     const readiness = summary.avgScore || 0;
     const readinessStatus = readiness > 0 ? getProgressStatus(readiness) : { label: 'Not Evaluated', badgeClass: 'badge-neutral', color: '#64748b' };
 
@@ -173,7 +175,7 @@ export function renderDailyProgressView(container, navigateTo) {
         <div class="dch-progress-wrap">
           <div class="dch-progress-meta">
             <span class="dch-progress-title">
-              <strong>${met}</strong> of <strong>${total}</strong> Candidates Evaluated
+              <strong>${met}</strong> Fully Met ${partial > 0 ? `• <strong>${partial}</strong> Partial` : ''} of <strong>${total}</strong> Candidates
             </span>
             <span class="dch-progress-pct">${metPct}% Complete</span>
           </div>
@@ -198,8 +200,13 @@ export function renderDailyProgressView(container, navigateTo) {
         </button>
         <button type="button" class="dch-tab-btn dch-tab-met ${statusTabFilter === 'MET' ? 'active' : ''}" data-status="MET">
           <span class="saas-dot dot-emerald"></span>
-          <span>Met</span>
+          <span>Fully Met</span>
           <span class="dch-tab-badge badge-emerald">${met}</span>
+        </button>
+        <button type="button" class="dch-tab-btn dch-tab-partial ${statusTabFilter === 'PARTIAL' ? 'active' : ''}" data-status="PARTIAL">
+          <span class="saas-dot dot-orange"></span>
+          <span>Partially Met</span>
+          <span class="dch-tab-badge badge-orange">${partial}</span>
         </button>
         <button type="button" class="dch-tab-btn dch-tab-pending ${statusTabFilter === 'PENDING' ? 'active' : ''}" data-status="PENDING">
           <span class="saas-dot dot-amber"></span>
@@ -234,12 +241,14 @@ export function renderDailyProgressView(container, navigateTo) {
 
       // Quick tab filter
       if (statusTabFilter === 'MET' && !item.isMet) return false;
+      if (statusTabFilter === 'PARTIAL' && !item.isPartiallyMet) return false;
       if (statusTabFilter === 'PENDING' && !item.isPending) return false;
       if (statusTabFilter === 'MISSED' && !item.isMissed) return false;
 
       // Filter engine: Status
       if (activeFilters.status) {
         if (activeFilters.status === 'MET' && !item.isMet) return false;
+        if (activeFilters.status === 'PARTIAL' && !item.isPartiallyMet) return false;
         if (activeFilters.status === 'PENDING' && !item.isPending) return false;
         if (activeFilters.status === 'MISSED' && !item.isMissed) return false;
       }
@@ -296,20 +305,39 @@ export function renderDailyProgressView(container, navigateTo) {
       const primaryTrainer = item.trainers[0] || null;
       const isExpanded = expandedRows.has(c.id);
 
-      // Card wrapper with rounded corners
+      // Identify first pending program for quick-action button
+      const firstPendingPb = item.programBreakdown.find(pb => !pb.isMet);
+      const targetProgForMeet = firstPendingPb ? firstPendingPb.program : primaryProgram;
+      const targetTrainerForMeet = firstPendingPb && firstPendingPb.trainer ? firstPendingPb.trainer : primaryTrainer;
+
+      // Card wrapper with status-colored border
       const rowCard = document.createElement('div');
-      rowCard.className = `saas-candidate-row ${item.isMissed ? 'row-missed' : (item.isMet ? 'row-met' : 'row-pending')}`;
+      rowCard.className = `saas-candidate-row ${
+        item.isMissed 
+          ? 'row-missed' 
+          : (item.isMet 
+              ? 'row-met' 
+              : (item.isPartiallyMet ? 'row-partial' : 'row-pending'))
+      }`;
 
       // Status pill HTML
       let statusCapsuleHtml = '';
       if (item.isMet) {
-        const pStatus = getProgressStatus(latestMeet.percentage);
+        const pStatus = latestMeet ? getProgressStatus(latestMeet.percentage) : { label: 'Met' };
         statusCapsuleHtml = `
           <div class="saas-status-capsule saas-status-met">
             <span class="saas-dot dot-emerald"></span>
-            <span class="saas-meet-pill">Meet #${meets.length}</span>
-            <span class="saas-score-num"><strong>${latestMeet.percentage}%</strong></span>
+            <span class="saas-meet-pill">${item.totalPrograms > 1 ? `All Met (${item.metProgramsCount}/${item.totalPrograms})` : `Meet #${meets.length}`}</span>
+            ${latestMeet ? `<span class="saas-score-num"><strong>${latestMeet.percentage}%</strong></span>` : ''}
             <span class="saas-score-label">${pStatus.label}</span>
+          </div>
+        `;
+      } else if (item.isPartiallyMet) {
+        statusCapsuleHtml = `
+          <div class="saas-status-capsule saas-status-partial">
+            <span class="saas-dot dot-orange"></span>
+            <span class="saas-meet-pill">${item.metProgramsCount}/${item.totalPrograms} Met</span>
+            <span class="saas-score-label" style="font-weight: 700;">${item.pendingProgramsCount} Pending</span>
           </div>
         `;
       } else if (item.isMissed) {
@@ -324,8 +352,8 @@ export function renderDailyProgressView(container, navigateTo) {
         statusCapsuleHtml = `
           <div class="saas-status-capsule saas-status-pending">
             <span class="saas-dot dot-amber"></span>
-            <span class="saas-score-label">Pending</span>
-            <span class="text-muted text-xs desktop-only-btn">(Due today)</span>
+            <span class="saas-score-label">${item.totalPrograms > 1 ? `Pending (0/${item.totalPrograms})` : 'Pending'}</span>
+            <span class="text-muted text-xs desktop-only-btn">Due today</span>
           </div>
         `;
       }
@@ -394,6 +422,92 @@ export function renderDailyProgressView(container, navigateTo) {
         `;
       };
 
+      // Generate Col 2 Program & Mentor HTML
+      let programColHtml = '';
+      if (item.programs.length === 0) {
+        programColHtml = `<span class="text-muted text-xs">No program enrolled</span>`;
+      } else if (item.programs.length === 1) {
+        const pb = item.programBreakdown[0];
+        programColHtml = `
+          <div class="src-prog-top">
+            <span class="saas-prog-capsule ${primaryProgram.type === 'Stage' ? 'p-stage' : 'p-nonstage'}">
+              ${primaryProgram.code}
+            </span>
+            <span class="saas-prog-name truncate" title="${primaryProgram.name}">
+              ${primaryProgram.name}
+            </span>
+            ${pb && pb.isMet ? `
+              <span class="prog-chip-single-tag met" title="Met today: ${pb.latestMeet ? `${pb.latestMeet.percentage}%` : 'Done'}">
+                ✓ Met (${pb.latestMeet ? `${pb.latestMeet.percentage}%` : 'Done'})
+              </span>
+            ` : `
+              <span class="prog-chip-single-tag pending" title="Pending check-in today">
+                ○ Pending
+              </span>
+            `}
+          </div>
+
+          <div class="src-prog-bottom">
+            ${primaryTrainer ? `
+              <span class="saas-mentor-pill">
+                <span class="saas-dot" style="background: ${primaryTrainer.color || '#6366f1'};"></span>
+                <span class="saas-mentor-name">${primaryTrainer.name}</span>
+              </span>
+            ` : `
+              <span class="text-danger text-xs font-semibold">Unassigned Trainer</span>
+            `}
+          </div>
+        `;
+      } else {
+        // Multi-program candidate: render interactive per-program status checklist chips
+        programColHtml = `
+          <div class="src-prog-multiple-wrap">
+            <div class="prog-checklist-strip">
+              ${item.programBreakdown.map(pb => {
+                const prog = pb.program;
+                const trn = pb.trainer;
+                if (pb.isMet) {
+                  return `
+                    <div class="prog-chip prog-chip-met" title="Met today: [${prog.code}] ${prog.name} (Mentor: ${trn ? trn.name : 'Unassigned'})">
+                      <span class="chip-status-icon">✓</span>
+                      <span class="chip-code">${prog.code}</span>
+                      <span class="chip-name truncate" style="max-width: 90px;">${prog.name}</span>
+                      <span class="chip-score">${pb.latestMeet ? `${pb.latestMeet.percentage}%` : 'Met'}</span>
+                    </div>
+                  `;
+                } else {
+                  return `
+                    <div class="prog-chip prog-chip-pending" title="Pending check-in: [${prog.code}] ${prog.name} (Mentor: ${trn ? trn.name : 'Unassigned'})">
+                      <span class="chip-status-icon">○</span>
+                      <span class="chip-code">${prog.code}</span>
+                      <span class="chip-name truncate" style="max-width: 80px;">${prog.name}</span>
+                      <button type="button" class="btn-prog-chip-action btn-prog-meet-trigger" data-cid="${c.id}" data-pid="${prog.id}" data-tid="${trn ? trn.id : ''}" title="Record meeting for ${prog.code}">
+                        + Meet
+                      </button>
+                    </div>
+                  `;
+                }
+              }).join('')}
+            </div>
+
+            <div class="src-prog-mentors-summary">
+              <span class="spm-label">Mentors:</span>
+              ${item.trainers.length > 0 
+                ? item.trainers.map(t => `<span class="spm-mentor-name" style="color: ${t.color || '#4f46e5'}; font-weight: 600;">${t.name}</span>`).join('<span class="spm-sep">•</span>')
+                : '<span class="text-danger font-semibold text-xs">Unassigned</span>'}
+            </div>
+          </div>
+        `;
+      }
+
+      // Action button text and target program
+      let actionBtnText = `${getIcon('plus')} Meet #1`;
+      if (item.isMet) {
+        actionBtnText = `${getIcon('plus')} Meet #${nextMeetNum}`;
+      } else if (item.isPartiallyMet && firstPendingPb) {
+        actionBtnText = `${getIcon('plus')} Meet ${firstPendingPb.program.code}`;
+      }
+
       rowCard.innerHTML = `
         <div class="saas-row-master">
           <!-- Col 1: Student Identity -->
@@ -415,34 +529,9 @@ export function renderDailyProgressView(container, navigateTo) {
             </div>
           </div>
 
-          <!-- Col 2: Program & Mentor -->
+          <!-- Col 2: Program & Mentor (With Per-Program Status Chips) -->
           <div class="src-col src-program">
-            <div class="src-prog-top">
-              ${primaryProgram ? `
-                <span class="saas-prog-capsule ${primaryProgram.type === 'Stage' ? 'p-stage' : 'p-nonstage'}">
-                  ${primaryProgram.code}
-                </span>
-                <span class="saas-prog-name truncate" title="${primaryProgram.name}">
-                  ${primaryProgram.name}
-                </span>
-                ${item.programs.length > 1 ? `
-                  <span class="saas-count-pill">+${item.programs.length - 1}</span>
-                ` : ''}
-              ` : `
-                <span class="text-muted text-xs">No program enrolled</span>
-              `}
-            </div>
-
-            <div class="src-prog-bottom">
-              ${primaryTrainer ? `
-                <span class="saas-mentor-pill">
-                  <span class="saas-dot" style="background: ${primaryTrainer.color || '#6366f1'};"></span>
-                  <span class="saas-mentor-name">${primaryTrainer.name}</span>
-                </span>
-              ` : `
-                <span class="text-danger text-xs font-semibold">Unassigned Trainer</span>
-              `}
-            </div>
+            ${programColHtml}
           </div>
 
           <!-- Col 3: Evaluation Status -->
@@ -452,15 +541,9 @@ export function renderDailyProgressView(container, navigateTo) {
 
           <!-- Col 4: Action & Reports Toggle -->
           <div class="src-col src-action">
-            ${item.isMet ? `
-              <button class="saas-action-btn saas-btn-accent btn-record-meet" data-cid="${c.id}" data-pid="${primaryProgram?.id || ''}" data-tid="${primaryTrainer?.id || ''}">
-                ${getIcon('plus')} Meet #${nextMeetNum}
-              </button>
-            ` : `
-              <button class="saas-action-btn saas-btn-primary btn-record-meet" data-cid="${c.id}" data-pid="${primaryProgram?.id || ''}" data-tid="${primaryTrainer?.id || ''}">
-                ${getIcon('plus')} Meet #1
-              </button>
-            `}
+            <button class="saas-action-btn ${item.isMet ? 'saas-btn-accent' : 'saas-btn-primary'} btn-record-meet" data-cid="${c.id}" data-pid="${targetProgForMeet?.id || ''}" data-tid="${targetTrainerForMeet?.id || ''}">
+              ${actionBtnText}
+            </button>
 
             <button class="saas-report-toggle-pill btn-toggle-drawer ${isExpanded ? 'active' : ''}" data-cid="${c.id}" title="${isExpanded ? 'Hide reports' : 'View program meeting reports'}">
               <span class="srt-text">${isExpanded ? 'Hide' : `Reports (${meets.length})`}</span>
@@ -475,13 +558,14 @@ export function renderDailyProgressView(container, navigateTo) {
             <div class="drawer-compact-nav" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;">
               <div class="dcn-tabs-group" style="display: flex; gap: 4px; align-items: center; flex-wrap: wrap;">
                 <span class="dcn-label text-xs text-muted" style="font-weight: 600;">Program:</span>
-                ${item.programs.map(p => {
-                  const pMeets = meets.filter(m => m.programId === p.id);
+                ${item.programBreakdown.map(pb => {
+                  const p = pb.program;
                   const isSelected = p.id === activeDrawerPid;
                   return `
-                    <button type="button" class="dcn-tab-btn saas-pill-btn ${isSelected ? 'active' : ''}" data-pid="${p.id}" title="${p.name}" style="padding: 3px 8px; font-size: 11px;">
+                    <button type="button" class="dcn-tab-btn saas-pill-btn ${isSelected ? 'active' : ''}" data-pid="${p.id}" title="${p.name} - ${pb.isMet ? 'Met' : 'Pending'}" style="padding: 3px 8px; font-size: 11px;">
+                      <span class="saas-dot ${pb.isMet ? 'dot-emerald' : 'dot-amber'}"></span>
                       <span class="dcn-code font-bold">${p.code}</span>
-                      <span class="dcn-badge ${pMeets.length > 0 ? 'badge-met' : 'badge-zero'}">${pMeets.length}</span>
+                      <span class="dcn-badge ${pb.isMet ? 'badge-met' : 'badge-zero'}">${pb.isMet ? `${pb.meetCount} Met` : 'Pending'}</span>
                     </button>
                   `;
                 }).join('')}
@@ -514,6 +598,23 @@ export function renderDailyProgressView(container, navigateTo) {
       if (isExpanded) {
         rowCard.classList.add('row-expanded');
       }
+
+      // Quick-action meet buttons from individual program chips
+      rowCard.querySelectorAll('.btn-prog-meet-trigger').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          const cid = btn.getAttribute('data-cid');
+          const pid = btn.getAttribute('data-pid');
+          const tid = btn.getAttribute('data-tid');
+          openRecordMeetModal({
+            candidateId: cid,
+            programId: pid,
+            trainerId: tid,
+            dateStr: selectedDate,
+            onSave: renderView
+          });
+        });
+      });
 
       // Drawer toggle
       const toggleBtn = rowCard.querySelector('.btn-toggle-drawer');

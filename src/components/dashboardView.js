@@ -75,7 +75,7 @@ export function renderDashboardView(container, navigateTo) {
           <div class="stat-label">Daily Progress Meets</div>
           <div class="stat-value">${dailySummary.metCount} / ${dailySummary.totalScheduled}</div>
           <div class="stat-foot text-emerald">
-            ${dailySummary.pendingCount} pending • Avg ${dailySummary.avgScore}% readiness &rarr;
+            ${dailySummary.partialCount > 0 ? `<span style="color: #ea580c; font-weight: 700;">${dailySummary.partialCount} partial</span> • ` : ''}${dailySummary.pendingCount} pending • Avg ${dailySummary.avgScore}% &rarr;
           </div>
         </div>
       </div>

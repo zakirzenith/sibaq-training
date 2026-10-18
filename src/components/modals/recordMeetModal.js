@@ -59,15 +59,15 @@ export function openRecordMeetModal({ candidateId, programId = null, trainerId =
               <span class="saas-adno-pill">${candidate.adNo}</span>
               <span class="saas-class-pill">${candidate.class || 'No Class'}</span>
               <span class="saas-cat-pill">${candidate.category}</span>
-              <span class="saas-meet-badge">Meet #${nextMeetNumber}</span>
+              <span class="saas-meet-badge" id="smmMeetBadge">Meet #${nextMeetNumber}</span>
             </div>
             <div class="smm-header-meta-row">
               <span class="smm-meta-item">Date: <strong>${targetDate === todayStr ? 'Today' : targetDate}</strong></span>
               <span class="smm-bullet">•</span>
-              <span class="smm-meta-item">
+              <span class="smm-meta-item" id="smmProgramMetaStatus">
                 ${existingMeetsToday.length > 0 
                   ? `<span class="text-emerald font-semibold">Completed ${existingMeetsToday.length} check-in(s) today</span>` 
-                  : `<span class="text-warning font-semibold">First check-in today</span>`}
+                  : `<span class="text-warning font-semibold">Pending check-in today</span>`}
               </span>
             </div>
           </div>
@@ -85,11 +85,19 @@ export function openRecordMeetModal({ candidateId, programId = null, trainerId =
             </label>
             <select id="meetProgramSelect" class="saas-select-pill smm-select">
               ${candidatePrograms.length === 0 ? `<option value="">No enrolled programs</option>` : ''}
-              ${candidatePrograms.map(p => `
-                <option value="${p.id}" ${p.id === selectedProgramId ? 'selected' : ''}>
-                  [${p.code}] ${p.name} (${p.type})
-                </option>
-              `).join('')}
+              ${candidatePrograms.map(p => {
+                const pMeetsToday = existingMeetsToday.filter(m => m.programId === p.id);
+                const isProgMetToday = pMeetsToday.length > 0;
+                const latestPMeet = isProgMetToday ? pMeetsToday[pMeetsToday.length - 1] : null;
+                const statusPrefix = isProgMetToday 
+                  ? `🟢 [Met • ${latestPMeet.percentage}%]` 
+                  : `🟡 [Pending Today]`;
+                return `
+                  <option value="${p.id}" ${p.id === selectedProgramId ? 'selected' : ''}>
+                    ${statusPrefix} [${p.code}] ${p.name} (${p.type})
+                  </option>
+                `;
+              }).join('')}
             </select>
           </div>
 
@@ -274,15 +282,37 @@ export function openRecordMeetModal({ candidateId, programId = null, trainerId =
   const trnSelect = overlay.querySelector('#meetTrainerSelect');
 
   const lblMeetTrainerText = overlay.querySelector('#lblMeetTrainerText');
+  const smmMeetBadge = overlay.querySelector('#smmMeetBadge');
+  const smmProgramMetaStatus = overlay.querySelector('#smmProgramMetaStatus');
 
-  // When program changes, sync default assigned trainer
+  const updateProgramContextMeta = (pid) => {
+    const prog = pid ? state.getProgramById(pid) : null;
+    const progMeets = existingMeetsToday.filter(m => m.programId === pid);
+    if (smmProgramMetaStatus) {
+      if (progMeets.length > 0) {
+        smmProgramMetaStatus.innerHTML = `<span class="text-emerald font-semibold">🟢 ${prog ? `[${prog.code}]` : 'Program'}: Completed ${progMeets.length} meet(s) today</span>`;
+      } else {
+        smmProgramMetaStatus.innerHTML = `<span class="text-warning font-semibold">🟡 ${prog ? `[${prog.code}]` : 'Program'}: Pending check-in today</span>`;
+      }
+    }
+    if (smmMeetBadge) {
+      smmMeetBadge.textContent = prog ? `${prog.code} Meet #${progMeets.length + 1}` : `Meet #${nextMeetNumber}`;
+    }
+  };
+
+  // When program changes, sync default assigned trainer and status headers
   progSelect.addEventListener('change', (e) => {
-    const trn = getProgramTrainer(e.target.value);
+    const pid = e.target.value;
+    updateProgramContextMeta(pid);
+    const trn = getProgramTrainer(pid);
     if (trn) {
       trnSelect.value = trn.id;
       if (lblMeetTrainerText) lblMeetTrainerText.textContent = `${trn.name} (${trn.expertise})`;
     }
   });
+
+  // Initial status sync
+  updateProgramContextMeta(selectedProgramId);
 
   // Searchable Trainer Picker Trigger
   overlay.querySelector('#btnChooseMeetTrainer')?.addEventListener('click', () => {

@@ -4926,5 +4926,888 @@ code, .ad-badge, .program-code-pill, .program-code-badge {
   color: #1d4ed8;
 }
 
+/* ==========================================================================
+   MODERN NOTION/LINEAR FILTER ENGINE & CHIPS SYSTEM
+   ========================================================================== */
+.saas-filter-engine-wrap {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  margin-bottom: 16px;
+}
+
+.sfe-main-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+
+.sfe-search-box {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-full);
+  padding: 8px 16px;
+  flex: 1;
+  min-width: 0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+  transition: all var(--transition-fast);
+}
+
+.sfe-search-box:focus-within {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 3px var(--primary-light);
+  background: #ffffff;
+}
+
+.sfe-search-icon {
+  color: #94a3b8;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.sfe-search-input {
+  border: none;
+  background: transparent;
+  width: 100%;
+  font-family: inherit;
+  font-size: 13.5px;
+  color: var(--text-main);
+  outline: none;
+}
+
+.sfe-search-input::placeholder {
+  color: #94a3b8;
+}
+
+.sfe-search-clear {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0 4px;
+  transition: color 0.15s ease;
+}
+
+.sfe-search-clear:hover {
+  color: #0f172a;
+}
+
+.sfe-popover-anchor {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.btn-sfe-add-filter {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  background: var(--bg-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-full);
+  padding: 8px 16px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-main);
+  cursor: pointer;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+  transition: all var(--transition-fast);
+  white-space: nowrap;
+}
+
+.btn-sfe-add-filter:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  transform: translateY(-1px);
+}
+
+.btn-sfe-add-filter.has-filters {
+  background: var(--primary-light);
+  border-color: var(--primary-border);
+  color: var(--primary);
+  font-weight: 700;
+}
+
+.sfe-funnel-icon {
+  flex-shrink: 0;
+}
+
+.sfe-badge {
+  background: var(--primary);
+  color: #ffffff;
+  font-size: 10.5px;
+  font-weight: 800;
+  padding: 1px 6px;
+  border-radius: var(--radius-full);
+  line-height: 1.2;
+}
+
+/* Floating Popover */
+.sfe-popover-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  width: 260px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.15), 0 4px 12px rgba(0, 0, 0, 0.06);
+  z-index: 1050;
+  overflow: hidden;
+  animation: sfeScaleIn 0.18s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+@keyframes sfeScaleIn {
+  from { opacity: 0; transform: scale(0.95) translateY(-6px); }
+  to { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+.sfe-popover-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  border-bottom: 1px solid #f1f5f9;
+  background: #fafafa;
+}
+
+.sfe-ph-title {
+  font-size: 12px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.sfe-ph-close {
+  background: none;
+  border: none;
+  color: #94a3b8;
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 2px 4px;
+}
+
+.sfe-ph-close:hover {
+  color: #0f172a;
+}
+
+.sfe-back-btn {
+  background: none;
+  border: none;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--primary);
+  cursor: pointer;
+  padding: 0;
+}
+
+.sfe-fields-list,
+.sfe-values-list {
+  padding: 6px;
+  max-height: 260px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sfe-field-item,
+.sfe-val-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  padding: 8px 10px;
+  border: none;
+  background: transparent;
+  border-radius: 8px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: #0f172a;
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.12s ease;
+}
+
+.sfe-field-item:hover,
+.sfe-val-item:hover {
+  background: #f1f5f9;
+}
+
+.sfe-field-item.is-active,
+.sfe-val-item.selected {
+  background: #eef2ff;
+  color: #4338ca;
+  font-weight: 700;
+}
+
+.sfe-fi-icon {
+  margin-right: 8px;
+  font-size: 14px;
+}
+
+.sfe-fi-arrow {
+  color: #94a3b8;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.sfe-val-count {
+  font-size: 11px;
+  color: #64748b;
+  background: #e2e8f0;
+  padding: 1px 6px;
+  border-radius: 999px;
+  margin-left: auto;
+  margin-right: 6px;
+}
+
+/* Active Chips Strip */
+.sfe-chips-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  padding-top: 2px;
+}
+
+.sfe-chips-label {
+  font-size: 11.5px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.sfe-chips-list {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.sfe-filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #eef2ff;
+  border: 1px solid #c7d2fe;
+  color: #4338ca;
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.sfe-filter-chip:hover {
+  background: #e0e7ff;
+  border-color: #a5b4fc;
+}
+
+.sfe-chip-field {
+  color: #6366f1;
+  font-weight: 600;
+}
+
+.sfe-chip-val {
+  color: #312e81;
+  font-weight: 700;
+}
+
+.sfe-chip-remove {
+  background: transparent;
+  border: none;
+  color: #6366f1;
+  font-size: 14px;
+  line-height: 1;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: 2px;
+}
+
+.sfe-chip-remove:hover {
+  color: #1e1b4b;
+}
+
+.sfe-clear-all-btn {
+  background: none;
+  border: none;
+  color: #ef4444;
+  font-size: 11.5px;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 3px 8px;
+  border-radius: 6px;
+  transition: all 0.15s ease;
+}
+
+.sfe-clear-all-btn:hover {
+  background: #fef2f2;
+}
+
+/* ==========================================================================
+   MOBILE BOTTOM NAVIGATION & PHONE VIEW RESPONSIVENESS (< 768px)
+   ========================================================================== */
+.app-mobile-nav {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  /* Hide Desktop Sidebar on Phone */
+  .app-sidebar {
+    display: none !important;
+  }
+
+  /* Make Main Container full width & add bottom padding for mobile nav */
+  .app-container {
+    flex-direction: column;
+    min-height: 100vh;
+  }
+
+  .app-main {
+    width: 100% !important;
+    max-width: 100vw;
+    margin: 0 !important;
+    padding-bottom: 74px !important;
+    overflow-x: hidden;
+  }
+
+  /* Compact Phone Topbar */
+  .app-topbar {
+    padding: 10px 14px;
+    height: auto;
+    position: sticky;
+    top: 0;
+    z-index: 100;
+    background: rgba(255, 255, 255, 0.95);
+    backdrop-filter: blur(12px);
+  }
+
+  .topbar-left {
+    gap: 6px;
+  }
+
+  .topbar-status-capsule {
+    display: none;
+  }
+
+  .saas-breadcrumb-pill {
+    font-size: 12px;
+    padding: 4px 10px;
+  }
+
+  .saas-user-pill .sup-info {
+    display: none;
+  }
+
+  #btnDataManage span,
+  #btnDataManage svg {
+    margin-right: 0;
+  }
+
+  /* View Headers: Remove clutter & bulky descriptions on phone */
+  .saas-view-header,
+  .view-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 10px;
+    padding: 14px 16px 8px 16px;
+  }
+
+  .svh-title,
+  .view-title {
+    font-size: 20px;
+    letter-spacing: -0.02em;
+  }
+
+  .svh-desc,
+  .view-desc,
+  .svh-eyebrow,
+  .view-tag {
+    display: none !important;
+  }
+
+  /* Header action buttons: make primary full or touch-friendly */
+  .saas-header-actions,
+  .view-actions {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  /* Hide bulky template & export buttons on phone */
+  .desktop-only-btn,
+  .saas-action-pill-group,
+  #btnQuickUploadCandidates,
+  #btnQuickUploadPrograms {
+    display: none !important;
+  }
+
+  .btn-saas-primary,
+  .btn-primary {
+    padding: 8px 16px;
+    font-size: 13px;
+  }
+
+  /* Main view padding */
+  .main-view-container {
+    padding: 12px 14px !important;
+  }
+
+  /* Mobile Bottom Navigation Bar */
+  .app-mobile-nav {
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 60px;
+    background: rgba(255, 255, 255, 0.97);
+    backdrop-filter: blur(16px);
+    border-top: 1px solid #e2e8f0;
+    z-index: 1000;
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+    box-shadow: 0 -2px 12px rgba(0, 0, 0, 0.05);
+  }
+
+  .mobile-nav-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 3px;
+    background: transparent;
+    border: none;
+    color: #64748b;
+    font-family: inherit;
+    font-size: 10.5px;
+    font-weight: 600;
+    cursor: pointer;
+    flex: 1;
+    height: 100%;
+    padding: 6px 0;
+    transition: all 0.15s ease;
+  }
+
+  .mobile-nav-btn svg {
+    transition: transform 0.15s ease;
+  }
+
+  .mobile-nav-btn:active svg {
+    transform: scale(0.9);
+  }
+
+  .mobile-nav-btn.active {
+    color: var(--primary);
+    font-weight: 800;
+  }
+
+  .mobile-nav-btn.active svg {
+    stroke: var(--primary);
+    stroke-width: 2.4;
+  }
+
+  /* Dark theme mobile nav */
+  body:not(.light-theme) .app-mobile-nav {
+    background: rgba(15, 23, 42, 0.95);
+    border-top-color: #334155;
+  }
+
+  body:not(.light-theme) .mobile-nav-btn {
+    color: #94a3b8;
+  }
+
+  body:not(.light-theme) .mobile-nav-btn.active {
+    color: #a5b4fc;
+  }
+
+  /* Popover positioning on mobile */
+  .sfe-popover-dropdown {
+    position: fixed;
+    top: auto;
+    bottom: 70px;
+    left: 14px;
+    right: 14px;
+    width: auto;
+    max-height: 55vh;
+  }
+
+  /* Cards on Phone View */
+  .saas-table-card,
+  .saas-section-card {
+    padding: 14px;
+    border-radius: 14px;
+  }
+
+  /* Hide huge table on phone, show mobile cards */
+  .desktop-table-view {
+    display: none !important;
+  }
+
+  .mobile-cards-view {
+    display: flex !important;
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  /* Mobile Candidate Touch Card */
+  .mobile-candidate-card {
+    background: #ffffff;
+    border: 1px solid #eef2f6;
+    border-radius: 14px;
+    padding: 12px 14px;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+    cursor: pointer;
+    transition: transform 0.12s ease, border-color 0.12s ease;
+  }
+
+  .mobile-candidate-card:active {
+    transform: scale(0.99);
+    border-color: #cbd5e1;
+  }
+
+  .mcc-top {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .mcc-meta {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+    flex: 1;
+    min-width: 0;
+  }
+
+  .mcc-name {
+    font-size: 14px;
+    color: #0f172a;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .mcc-sub {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .mcc-programs-strip {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+    border-top: 1px solid #f1f5f9;
+    padding-top: 8px;
+  }
+
+  /* Mobile Programs Master-Detail Experience */
+  .programs-split-layout {
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+  }
+
+  .programs-left-col {
+    position: static;
+    max-height: none;
+    border-radius: 16px;
+  }
+
+  /* In mobile view, control visibility of list vs detail */
+  .programs-split-layout.mobile-show-detail .programs-left-col {
+    display: none !important;
+  }
+
+  .programs-split-layout:not(.mobile-show-detail) .programs-right-col {
+    display: none !important;
+  }
+
+  /* Mobile Programs Navigation Header */
+  .mobile-programs-back-bar {
+    display: flex !important;
+    align-items: center;
+    gap: 8px;
+    padding: 10px 14px;
+    background: #eef2ff;
+    border: 1px solid #c7d2fe;
+    border-radius: 12px;
+    margin-bottom: 12px;
+    color: #4338ca;
+    font-weight: 700;
+    font-size: 13px;
+    cursor: pointer;
+  }
+
+  /* Mobile Modals (Bottom sheet style) */
+  .modal-dialog {
+    max-width: 100% !important;
+    width: 100% !important;
+    margin: 0 !important;
+    max-height: 90vh !important;
+    border-radius: 20px 20px 0 0 !important;
+    position: fixed !important;
+    bottom: 0 !important;
+  }
+
+  .modal-backdrop {
+    align-items: flex-end !important;
+    padding: 0 !important;
+  }
+
+  /* Daily Progress Candidate Rows on Mobile */
+  .saas-table-head {
+    display: none !important;
+  }
+
+  .saas-candidate-row {
+    padding: 14px !important;
+    border-radius: 16px !important;
+    margin-bottom: 10px !important;
+  }
+
+  .saas-row-master {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    padding: 0 !important;
+    gap: 10px !important;
+    min-height: auto !important;
+  }
+
+  .src-col {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .src-student {
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+  }
+
+  .src-program {
+    flex-direction: row !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    background: #f8fafc !important;
+    padding: 8px 12px !important;
+    border-radius: 10px !important;
+  }
+
+  .src-status {
+    width: 100% !important;
+  }
+
+  .src-action {
+    display: flex !important;
+    gap: 8px !important;
+    width: 100% !important;
+  }
+
+  .src-action .btn-record-meet {
+    flex: 2 !important;
+    height: 42px !important;
+    justify-content: center !important;
+    font-size: 13px !important;
+    font-weight: 700 !important;
+    border-radius: 10px !important;
+  }
+
+  .src-action .btn-toggle-drawer {
+    flex: 1 !important;
+    height: 42px !important;
+    justify-content: center !important;
+    border-radius: 10px !important;
+  }
+
+  /* Metric ribbon on mobile */
+  .saas-metric-ribbon {
+    display: flex !important;
+    overflow-x: auto !important;
+    gap: 8px !important;
+    padding: 10px !important;
+    -webkit-overflow-scrolling: touch !important;
+    scrollbar-width: none !important;
+  }
+
+  .saas-metric-ribbon::-webkit-scrollbar {
+    display: none;
+  }
+
+  .smr-divider {
+    display: none !important;
+  }
+
+  .smr-item {
+    flex: 0 0 auto !important;
+    min-width: 85px !important;
+    padding: 6px 12px !important;
+    background: #ffffff !important;
+    border: 1px solid #eef2f6 !important;
+    border-radius: 12px !important;
+    text-align: center !important;
+  }
+
+  .smr-val {
+    font-size: 18px !important;
+  }
+
+  .smr-lbl {
+    font-size: 10.5px !important;
+  }
+
+  /* Trainers Grid on Mobile */
+  .trainers-cards-grid {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  .saas-trainer-card {
+    padding: 14px !important;
+    border-radius: 16px !important;
+  }
+
+  /* Filter popover on mobile: modern bottom sheet style */
+  .sfe-popover-dropdown {
+    position: fixed !important;
+    top: auto !important;
+    bottom: 74px !important;
+    left: 12px !important;
+    right: 12px !important;
+    width: auto !important;
+    min-width: 0 !important;
+    max-height: 60vh !important;
+    border-radius: 20px !important;
+    box-shadow: 0 -10px 35px rgba(0, 0, 0, 0.2) !important;
+    z-index: 9999 !important;
+    animation: sfeSlideUpMobile 0.22s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  }
+
+  @keyframes sfeSlideUpMobile {
+    from {
+      transform: translateY(30px);
+      opacity: 0;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+
+  /* Date segmented controls on mobile */
+  .saas-date-segmented {
+    width: 100% !important;
+    justify-content: space-between !important;
+  }
+
+  .saas-date-btn {
+    flex: 1 !important;
+    text-align: center !important;
+    padding: 6px 8px !important;
+    font-size: 12px !important;
+  }
+
+  .saas-date-input-wrap {
+    flex: 1.2 !important;
+  }
+
+  /* Program Detail banner on mobile */
+  .saas-detail-banner {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 12px !important;
+    padding: 14px !important;
+  }
+
+  .sdb-actions {
+    width: 100% !important;
+    justify-content: flex-end !important;
+  }
+
+  .trainer-card-content-grid {
+    grid-template-columns: 1fr !important;
+    gap: 14px !important;
+  }
+
+  .trainer-assign-input-group {
+    flex-direction: column !important;
+    width: 100% !important;
+  }
+
+  .trainer-assign-input-group .saas-select-pill,
+  .trainer-assign-input-group .btn-assign-trainer-action {
+    width: 100% !important;
+    height: 42px !important;
+  }
+
+  /* Stats grid on mobile */
+
+  .stats-grid {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 10px !important;
+  }
+
+  .stat-card {
+    padding: 12px !important;
+  }
+
+  .stat-icon-wrap {
+    width: 38px !important;
+    height: 38px !important;
+  }
+
+  .stat-value {
+    font-size: 20px !important;
+  }
+
+  .quick-banner-buttons {
+    flex-direction: column !important;
+  }
+
+  .quick-banner-buttons .btn {
+    width: 100% !important;
+  }
+}
+
+
+@media (min-width: 769px) {
+  .mobile-cards-view {
+    display: none !important;
+  }
+
+  .mobile-programs-back-bar {
+    display: none !important;
+  }
+
+  .desktop-table-view {
+    display: block !important;
+  }
+}
+
+
 
 

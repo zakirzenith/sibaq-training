@@ -3,17 +3,15 @@ import { toast } from './toast.js';
 import { getIcon } from './icons.js';
 import { openTrainerFormModal } from './modals/trainerFormModal.js';
 import { openAssignCandidatesModal } from './modals/assignCandidatesModal.js';
+import { createFilterBar } from './filterEngine.js';
 
 export function renderTrainersView(container, navigateTo) {
-  let searchQuery = '';
+  let activeFilters = {};
+  let currentSearchQuery = '';
 
   container.innerHTML = `
     <div class="saas-view-header">
       <div class="svh-title-block">
-        <div class="svh-eyebrow">
-          <span class="saas-tag-pill p-stage">${getIcon('trainers')} Faculty & Mentors</span>
-          <span class="svh-meta-text">Coaching Network</span>
-        </div>
         <h1 class="svh-title">Trainers & Mentors</h1>
         <p class="svh-desc">
           Add trainers, view specialized domains, and monitor candidates/mentees under their coaching.
@@ -27,57 +25,132 @@ export function renderTrainersView(container, navigateTo) {
       </div>
     </div>
 
-    <!-- Search Command Bar -->
-    <div class="saas-command-bar">
-      <div class="scb-search-wrap flex-1">
-        <span class="scb-search-icon">${getIcon('search')}</span>
-        <input 
-          type="text" 
-          id="searchTrainers" 
-          class="scb-search-input" 
-          placeholder="Search by trainer name or domain of expertise..."
-        />
+    <!-- Modern Notion/Linear Filter Engine -->
+    <div id="trainersFilterBar"></div>
+
+    <!-- Trainers Count & Grid Container -->
+    <div class="saas-table-card" style="padding: 16px;">
+      <div class="saas-table-head-strip" style="margin-bottom: 16px;">
+        <div class="sth-left">
+          <span class="sth-title">Active Faculty Network</span>
+          <span id="trainersCountBadge" class="saas-badge-pill">0</span>
+        </div>
       </div>
 
-      <div class="scb-filters-group">
-        <span id="trainersCountBadge" class="saas-badge-pill">0 Trainers</span>
+      <!-- Trainers Cards Grid -->
+      <div id="trainersGrid" class="trainers-cards-grid">
+        <!-- Rendered dynamically -->
       </div>
-    </div>
-
-    <!-- Trainers Cards Grid -->
-    <div id="trainersGrid" class="trainers-cards-grid">
-      <!-- Rendered dynamically -->
     </div>
   `;
 
-  const searchInput = container.querySelector('#searchTrainers');
+  const filterContainer = container.querySelector('#trainersFilterBar');
   const trainersGrid = container.querySelector('#trainersGrid');
   const countBadge = container.querySelector('#trainersCountBadge');
+
+  // Filter Engine Configuration
+  createFilterBar({
+    container: filterContainer,
+    searchPlaceholder: 'Search trainer by name or domain of expertise...',
+    filterConfig: [
+      {
+        key: 'expertise',
+        label: 'Domain / Expertise',
+        icon: '🎯',
+        getOptions: () => {
+          const trainers = state.getTrainers();
+          const counts = {};
+          trainers.forEach(t => {
+            const exp = t.expertise || 'General';
+            counts[exp] = (counts[exp] || 0) + 1;
+          });
+          return Object.keys(counts).sort().map(exp => ({
+            value: exp,
+            label: exp,
+            count: counts[exp]
+          }));
+        }
+      },
+      {
+        key: 'programs',
+        label: 'Program Assignment',
+        icon: '🎭',
+        getOptions: () => {
+          const trainers = state.getTrainers();
+          const withProgs = trainers.filter(t => state.getTrainerPrograms(t.id).length > 0).length;
+          const noProgs = trainers.length - withProgs;
+          return [
+            { value: 'Assigned', label: 'Assigned to Programs', count: withProgs },
+            { value: 'Unassigned', label: 'No Programs Assigned', count: noProgs }
+          ];
+        }
+      },
+      {
+        key: 'mentees',
+        label: 'Mentee Roster',
+        icon: '👥',
+        getOptions: () => {
+          const trainers = state.getTrainers();
+          const withMentees = trainers.filter(t => state.getTrainerMentees(t.id).length > 0).length;
+          const noMentees = trainers.length - withMentees;
+          return [
+            { value: 'With Mentees', label: 'Coaching Mentees', count: withMentees },
+            { value: 'No Mentees', label: 'No Mentees Yet', count: noMentees }
+          ];
+        }
+      }
+    ],
+    onFilterChange: (filters, search) => {
+      activeFilters = filters;
+      currentSearchQuery = search;
+      renderGrid();
+    }
+  });
 
   function renderGrid() {
     const trainers = state.getTrainers();
 
     const filtered = trainers.filter(t => {
-      const q = searchQuery.toLowerCase().trim();
-      return (
+      const q = currentSearchQuery.toLowerCase().trim();
+      const matchesSearch =
         !q ||
         t.name.toLowerCase().includes(q) ||
         t.expertise.toLowerCase().includes(q) ||
-        (t.email && t.email.toLowerCase().includes(q))
-      );
+        (t.email && t.email.toLowerCase().includes(q));
+
+      if (!matchesSearch) return false;
+
+      // Filter: Expertise
+      if (activeFilters.expertise && t.expertise !== activeFilters.expertise) return false;
+
+      // Filter: Programs
+      if (activeFilters.programs) {
+        const hasProgs = state.getTrainerPrograms(t.id).length > 0;
+        if (activeFilters.programs === 'Assigned' && !hasProgs) return false;
+        if (activeFilters.programs === 'Unassigned' && hasProgs) return false;
+      }
+
+      // Filter: Mentees
+      if (activeFilters.mentees) {
+        const hasMentees = state.getTrainerMentees(t.id).length > 0;
+        if (activeFilters.mentees === 'With Mentees' && !hasMentees) return false;
+        if (activeFilters.mentees === 'No Mentees' && hasMentees) return false;
+      }
+
+      return true;
     });
 
-    countBadge.textContent = `${filtered.length} Trainers`;
+    countBadge.textContent = `${filtered.length}`;
     trainersGrid.innerHTML = '';
 
     if (filtered.length === 0) {
       trainersGrid.innerHTML = `
-        <div class="empty-state-card col-span-full">
+        <div class="empty-state-card col-span-full" style="text-align: center; padding: 40px 16px;">
           <div class="empty-icon">${getIcon('trainers')}</div>
-          <h3>No trainers found</h3>
-          <p>Add mentors to assign them to your Stage and Non-Stage programs.</p>
+          <h3 style="margin: 8px 0 4px; font-size: 16px;">No trainers match your filter</h3>
+          <p class="text-xs text-muted">Try clearing the active filters or search query.</p>
           <button id="btnEmptyAddTrainer" class="btn-saas-primary btn-sm mt-3">
-            ${getIcon('plus')} Add First Trainer
+            ${getIcon('plus')} Add New Trainer
           </button>
         </div>
       `;
@@ -156,17 +229,6 @@ export function renderTrainersView(container, navigateTo) {
         </div>
       `;
 
-      // Program link clicks inside trainer card
-      card.querySelectorAll('.btn-program-link').forEach(btn => {
-        btn.addEventListener('click', () => {
-          const pid = btn.getAttribute('data-pid');
-          openAssignCandidatesModal({
-            programId: pid,
-            onSave: renderGrid
-          });
-        });
-      });
-
       // Edit trainer
       card.querySelector('.btn-edit-trainer').addEventListener('click', () => {
         openTrainerFormModal({
@@ -188,14 +250,18 @@ export function renderTrainersView(container, navigateTo) {
     });
   }
 
-  searchInput.addEventListener('input', e => {
-    searchQuery = e.target.value;
-    renderGrid();
-  });
-
   container.querySelector('#btnAddTrainer').addEventListener('click', () => {
     openTrainerFormModal({ onSave: renderGrid });
   });
 
   renderGrid();
+
+  // Cross-device sync
+  const unsubscribeState = state.subscribe(() => {
+    if (!document.body.contains(container)) {
+      unsubscribeState();
+      return;
+    }
+    renderGrid();
+  });
 }

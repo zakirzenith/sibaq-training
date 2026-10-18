@@ -2,37 +2,32 @@ import { state, getProgressStatus } from '../services/state.js';
 import { getIcon } from './icons.js';
 import { openRecordMeetModal } from './modals/recordMeetModal.js';
 import { openCandidateProfileModal } from './modals/candidateProfileModal.js';
+import { createFilterBar } from './filterEngine.js';
 import { toast } from './toast.js';
 
 /**
  * Daily Progress & Mentorship Tracker View
- * Modern SaaS rounded interface with unified control ribbon and high-density floating rows.
+ * Modern SaaS rounded interface with Notion/Linear filter engine and phone-responsive cards.
  */
 export function renderDailyProgressView(container, navigateTo) {
   const todayStr = new Date().toISOString().split('T')[0];
   let selectedDate = todayStr;
-  let searchQuery = '';
-  let statusFilter = 'ALL'; // ALL, MET, PENDING, MISSED
-  let programFilter = 'ALL';
-  let trainerFilter = 'ALL';
+  let activeFilters = {};
+  let currentSearchQuery = '';
+  let statusTabFilter = 'ALL'; // Tab shortcut: ALL, MET, PENDING, MISSED
   const expandedRows = new Set(); // tracks expanded candidate IDs
 
   container.innerHTML = `
     <!-- Top Hero / Header Area -->
     <div class="saas-view-header">
-      <div class="svh-left">
-        <div class="svh-title-row">
-          <h1 class="saas-view-title">Daily Mentorship & Progress</h1>
-          <span class="saas-cutoff-badge">
-            ${getIcon('clock')} Cutoff: 11:59 PM Daily
-          </span>
-        </div>
-        <p class="saas-view-desc">
+      <div class="svh-title-block">
+        <h1 class="svh-title">Daily Mentorship & Progress</h1>
+        <p class="svh-desc">
           Daily trainer check-ins, dynamic skill ratings, and multi-session tracking. Every candidate must complete at least 1 meet daily.
         </p>
       </div>
 
-      <div class="svh-right">
+      <div class="saas-header-actions">
         <!-- Segmented Date Control Capsule -->
         <div class="saas-date-segmented">
           <button class="saas-date-btn" id="btnDateYesterday">Yesterday</button>
@@ -43,8 +38,8 @@ export function renderDailyProgressView(container, navigateTo) {
           </div>
         </div>
 
-        <!-- Export CSV Pill Button -->
-        <button id="btnExportDailyReport" class="saas-btn-export" title="Export daily report to CSV">
+        <!-- Export CSV Button (Desktop Only) -->
+        <button id="btnExportDailyReport" class="saas-pill-btn desktop-only-btn" title="Export daily report to CSV">
           ${getIcon('download')} Export CSV
         </button>
       </div>
@@ -55,41 +50,17 @@ export function renderDailyProgressView(container, navigateTo) {
       <!-- Injected dynamically -->
     </div>
 
-    <!-- Unified Rounded Command & Filter Bar -->
-    <div class="saas-command-bar">
-      <!-- Segmented Status Filter Tabs -->
-      <div class="saas-status-tabs" id="statusTabBar">
-        <!-- Injected dynamically -->
-      </div>
-
-      <!-- Integrated Search Input -->
-      <div class="saas-search-box">
-        <span class="saas-search-icon">${getIcon('search')}</span>
-        <input 
-          type="text" 
-          id="dailyProgressSearch" 
-          class="saas-search-input" 
-          placeholder="Search student, admission no, class, or program..."
-        />
-      </div>
-
-      <!-- Rounded Filter Dropdowns -->
-      <div class="saas-filter-dropdowns">
-        <select id="filterProgramSelect" class="saas-select-pill">
-          <option value="ALL">All Programs</option>
-          ${state.getPrograms().map(p => `<option value="${p.id}">[${p.code}] ${p.name}</option>`).join('')}
-        </select>
-
-        <select id="filterTrainerSelect" class="saas-select-pill">
-          <option value="ALL">All Trainers</option>
-          ${state.getTrainers().map(t => `<option value="${t.id}">${t.name}</option>`).join('')}
-        </select>
-      </div>
+    <!-- Quick Status Filter Pills Row -->
+    <div class="saas-quick-status-tabs" id="statusTabBar" style="display: flex; gap: 8px; margin-bottom: 12px; overflow-x: auto; padding-bottom: 4px;">
+      <!-- Injected dynamically -->
     </div>
+
+    <!-- Modern Notion/Linear Filter Engine -->
+    <div id="dailyProgressFilterBar"></div>
 
     <!-- Modern Table Container for Floating SaaS Rows -->
     <div class="saas-roster-container">
-      <div class="saas-table-head">
+      <div class="saas-table-head desktop-table-view">
         <div class="sth-col sth-candidate">Student & Identity</div>
         <div class="sth-col sth-program">Program & Designated Mentor</div>
         <div class="sth-col sth-status">Daily Evaluation & Score</div>
@@ -103,14 +74,82 @@ export function renderDailyProgressView(container, navigateTo) {
   `;
 
   const datePicker = container.querySelector('#dailyDatePicker');
-  const searchInput = container.querySelector('#dailyProgressSearch');
-  const filterProg = container.querySelector('#filterProgramSelect');
-  const filterTrn = container.querySelector('#filterTrainerSelect');
   const metricRibbon = container.querySelector('#dailyMetricRibbon');
   const rosterGrid = container.querySelector('#dailyCandidatesRoster');
   const statusTabBar = container.querySelector('#statusTabBar');
   const btnToday = container.querySelector('#btnDateToday');
   const btnYesterday = container.querySelector('#btnDateYesterday');
+  const filterBarContainer = container.querySelector('#dailyProgressFilterBar');
+
+  // Modern Notion/Linear Filter Engine
+  createFilterBar({
+    container: filterBarContainer,
+    searchPlaceholder: 'Search student name, admission no, class, or program...',
+    filterConfig: [
+      {
+        key: 'status',
+        label: 'Evaluation Status',
+        icon: '📊',
+        getOptions: () => {
+          const summary = state.getDailySummary(selectedDate);
+          return [
+            { value: 'MET', label: 'Met / Completed', count: summary.metCount },
+            { value: 'PENDING', label: 'Pending Check-in', count: summary.pendingCount },
+            { value: 'MISSED', label: 'Missed (Past Cutoff)', count: summary.missedCount }
+          ];
+        }
+      },
+      {
+        key: 'program',
+        label: 'Program',
+        icon: '🎭',
+        getOptions: () => {
+          const progs = state.getPrograms();
+          return progs.map(p => ({
+            value: p.id,
+            label: `[${p.code}] ${p.name}`,
+            count: (p.candidateIds || []).length
+          }));
+        }
+      },
+      {
+        key: 'trainer',
+        label: 'Trainer',
+        icon: '👨‍🏫',
+        getOptions: () => {
+          const trainers = state.getTrainers();
+          return trainers.map(t => ({
+            value: t.id,
+            label: t.name,
+            count: state.getTrainerMentees(t.id).length
+          }));
+        }
+      },
+      {
+        key: 'category',
+        label: 'Category',
+        icon: '🏷️',
+        getOptions: () => {
+          const cands = state.getCandidates();
+          const counts = {};
+          cands.forEach(c => {
+            const cat = c.category || 'General';
+            counts[cat] = (counts[cat] || 0) + 1;
+          });
+          return Object.keys(counts).sort().map(cat => ({
+            value: cat,
+            label: cat,
+            count: counts[cat]
+          }));
+        }
+      }
+    ],
+    onFilterChange: (filters, search) => {
+      activeFilters = filters;
+      currentSearchQuery = search;
+      renderRosterOnly();
+    }
+  });
 
   function renderView() {
     const summary = state.getDailySummary(selectedDate);
@@ -132,78 +171,100 @@ export function renderDailyProgressView(container, navigateTo) {
     metricRibbon.innerHTML = `
       <div class="smr-item">
         <span class="smr-val">${summary.totalScheduled}</span>
-        <span class="smr-lbl">Candidates Enrolled</span>
+        <span class="smr-lbl">Candidates</span>
       </div>
       <span class="smr-divider"></span>
 
       <div class="smr-item">
         <span class="smr-val text-emerald">${summary.metCount}</span>
-        <span class="smr-lbl">Completed Check-in</span>
-        ${summary.multiMeetCount > 0 ? `<span class="saas-tag-pill saas-tag-emerald">${summary.multiMeetCount} multi-meets</span>` : ''}
+        <span class="smr-lbl">Completed</span>
+        ${summary.multiMeetCount > 0 ? `<span class="saas-tag-pill saas-tag-emerald desktop-only-btn">${summary.multiMeetCount} multi</span>` : ''}
       </div>
       <span class="smr-divider"></span>
 
       <div class="smr-item">
         <span class="smr-val text-amber">${summary.pendingCount}</span>
-        <span class="smr-lbl">Pending Today</span>
+        <span class="smr-lbl">Pending</span>
       </div>
       <span class="smr-divider"></span>
 
       <div class="smr-item">
         <span class="smr-val text-danger">${summary.missedCount}</span>
-        <span class="smr-lbl">Missed (Past 11:59 PM)</span>
+        <span class="smr-lbl">Missed</span>
       </div>
       <span class="smr-divider"></span>
 
       <div class="smr-item">
         <span class="smr-val text-primary">${summary.avgScore}%</span>
-        <span class="smr-lbl">Avg Readiness</span>
-        ${readinessStatus ? `<span class="saas-tag-pill ${readinessStatus.badgeClass}">${readinessStatus.label}</span>` : ''}
+        <span class="smr-lbl">Readiness</span>
+        ${readinessStatus ? `<span class="saas-tag-pill ${readinessStatus.badgeClass} desktop-only-btn">${readinessStatus.label}</span>` : ''}
       </div>
     `;
 
     // Render Segmented Status Filter Tabs
     statusTabBar.innerHTML = `
-      <button class="saas-tab-pill ${statusFilter === 'ALL' ? 'active' : ''}" data-status="ALL">
+      <button class="saas-tab-pill ${statusTabFilter === 'ALL' ? 'active' : ''}" data-status="ALL">
         All <span class="stp-count">${summary.totalScheduled}</span>
       </button>
-      <button class="saas-tab-pill ${statusFilter === 'MET' ? 'active' : ''}" data-status="MET">
+      <button class="saas-tab-pill ${statusTabFilter === 'MET' ? 'active' : ''}" data-status="MET">
         <span class="saas-dot dot-emerald"></span> Met <span class="stp-count">${summary.metCount}</span>
       </button>
-      <button class="saas-tab-pill ${statusFilter === 'PENDING' ? 'active' : ''}" data-status="PENDING">
+      <button class="saas-tab-pill ${statusTabFilter === 'PENDING' ? 'active' : ''}" data-status="PENDING">
         <span class="saas-dot dot-amber"></span> Pending <span class="stp-count">${summary.pendingCount}</span>
       </button>
-      <button class="saas-tab-pill ${statusFilter === 'MISSED' ? 'active' : ''}" data-status="MISSED">
+      <button class="saas-tab-pill ${statusTabFilter === 'MISSED' ? 'active' : ''}" data-status="MISSED">
         <span class="saas-dot dot-danger"></span> Missed <span class="stp-count">${summary.missedCount}</span>
       </button>
     `;
 
     statusTabBar.querySelectorAll('.saas-tab-pill').forEach(btn => {
       btn.addEventListener('click', () => {
-        statusFilter = btn.getAttribute('data-status');
+        statusTabFilter = btn.getAttribute('data-status');
         renderView();
       });
     });
 
+    renderRosterOnly();
+  }
+
+  function renderRosterOnly() {
+    const summary = state.getDailySummary(selectedDate);
+
     // Filter candidate statuses
     const filtered = summary.candidateStatuses.filter(item => {
       const c = item.candidate;
-      const q = searchQuery.toLowerCase().trim();
+      const q = currentSearchQuery.toLowerCase().trim();
 
-      if (statusFilter === 'MET' && !item.isMet) return false;
-      if (statusFilter === 'PENDING' && !item.isPending) return false;
-      if (statusFilter === 'MISSED' && !item.isMissed) return false;
+      // Quick tab filter
+      if (statusTabFilter === 'MET' && !item.isMet) return false;
+      if (statusTabFilter === 'PENDING' && !item.isPending) return false;
+      if (statusTabFilter === 'MISSED' && !item.isMissed) return false;
 
-      if (programFilter !== 'ALL') {
-        const hasProg = item.programs.some(p => p.id === programFilter);
+      // Filter engine: Status
+      if (activeFilters.status) {
+        if (activeFilters.status === 'MET' && !item.isMet) return false;
+        if (activeFilters.status === 'PENDING' && !item.isPending) return false;
+        if (activeFilters.status === 'MISSED' && !item.isMissed) return false;
+      }
+
+      // Filter engine: Program
+      if (activeFilters.program) {
+        const hasProg = item.programs.some(p => p.id === activeFilters.program);
         if (!hasProg) return false;
       }
 
-      if (trainerFilter !== 'ALL') {
-        const hasTrn = item.trainers.some(t => t.id === trainerFilter);
+      // Filter engine: Trainer
+      if (activeFilters.trainer) {
+        const hasTrn = item.trainers.some(t => t.id === activeFilters.trainer);
         if (!hasTrn) return false;
       }
 
+      // Filter engine: Category
+      if (activeFilters.category) {
+        if (c.category !== activeFilters.category) return false;
+      }
+
+      // Search query
       if (q) {
         const matchesName = c.name.toLowerCase().includes(q);
         const matchesAd = c.adNo.toLowerCase().includes(q);
@@ -220,10 +281,10 @@ export function renderDailyProgressView(container, navigateTo) {
 
     if (filtered.length === 0) {
       rosterGrid.innerHTML = `
-        <div class="saas-empty-card">
+        <div class="saas-empty-card" style="text-align: center; padding: 36px 16px;">
           <div class="empty-icon">${getIcon('trendingUp')}</div>
-          <h4>No matching candidates</h4>
-          <p class="text-muted text-xs">Try selecting a different status filter or date.</p>
+          <h4 style="margin: 8px 0 4px; font-size: 15px;">No matching candidates</h4>
+          <p class="text-muted text-xs">Try selecting a different status filter, clearing search, or changing date.</p>
         </div>
       `;
       return;
@@ -258,25 +319,24 @@ export function renderDailyProgressView(container, navigateTo) {
         statusCapsuleHtml = `
           <div class="saas-status-capsule saas-status-missed">
             <span class="saas-dot dot-danger"></span>
-            <span class="saas-score-label">Missed Check-in</span>
-            <span class="text-muted text-xs">(Past 11:59 PM)</span>
+            <span class="saas-score-label">Missed</span>
+            <span class="text-muted text-xs desktop-only-btn">(Cutoff)</span>
           </div>
         `;
       } else {
         statusCapsuleHtml = `
           <div class="saas-status-capsule saas-status-pending">
             <span class="saas-dot dot-amber"></span>
-            <span class="saas-score-label">Pending Meet #1</span>
-            <span class="text-muted text-xs">(Due 11:59 PM)</span>
+            <span class="saas-score-label">Pending</span>
+            <span class="text-muted text-xs desktop-only-btn">(Due today)</span>
           </div>
         `;
       }
 
-      // Determine initial active program for drawer
+      // Drawer program content generator
       const defaultDrawerPid = item.programs.length > 0 ? item.programs[0].id : 'ALL';
       let activeDrawerPid = defaultDrawerPid;
 
-      // Helper function to build compact meeting report cards for selected program
       const renderDrawerProgramContent = (targetPid) => {
         activeDrawerPid = targetPid;
         const isAll = targetPid === 'ALL';
@@ -290,12 +350,12 @@ export function renderDailyProgressView(container, navigateTo) {
 
         if (progMeets.length === 0) {
           return `
-            <div class="compact-empty-strip">
-              <span class="text-xs text-muted">
+            <div class="compact-empty-strip" style="padding: 12px; background: #f8fafc; border-radius: 8px; text-align: center;">
+              <span class="text-xs text-muted" style="display: block; margin-bottom: 8px;">
                 ⏳ No check-ins recorded ${prog ? `for <strong>[${prog.code}] ${prog.name}</strong>` : ''} today (${selectedDate}).
                 ${prog ? (progTrainer ? `• Mentor: <strong>${progTrainer.name}</strong>` : '• Mentor: <span class="text-muted font-semibold">Unassigned</span>') : ''}
               </span>
-              <button type="button" class="btn-compact-add btn-drawer-record-meet" data-cid="${c.id}" data-pid="${prog ? prog.id : ''}" data-tid="${progTrainer ? progTrainer.id : ''}">
+              <button type="button" class="btn-compact-add btn-drawer-record-meet btn-saas-primary btn-sm" data-cid="${c.id}" data-pid="${prog ? prog.id : ''}" data-tid="${progTrainer ? progTrainer.id : ''}">
                 ${getIcon('plus')} Record Meet 1 for ${prog ? prog.code : 'Program'}
               </button>
             </div>
@@ -311,26 +371,24 @@ export function renderDailyProgressView(container, navigateTo) {
               const progSessionIdx = idx + 1;
 
               return `
-                <div class="compact-session-strip status-border-${mStatus.key}">
-                  <div class="css-head-row">
-                    <div class="css-head-left">
-                      <span class="css-meet-pill">${!isAll && prog ? `Meet #${progSessionIdx}` : `Meet #${m.meetNumber}`}</span>
+                <div class="compact-session-strip status-border-${mStatus.key}" style="background: #fff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 12px; margin-bottom: 8px;">
+                  <div class="css-head-row" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; flex-wrap: wrap; gap: 6px;">
+                    <div class="css-head-left" style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                      <span class="css-meet-pill" style="font-weight: 700; font-size: 11px; background: #eef2ff; color: #4338ca; padding: 2px 6px; border-radius: 4px;">${!isAll && prog ? `Meet #${progSessionIdx}` : `Meet #${m.meetNumber}`}</span>
                       <span class="css-time font-mono text-xs text-muted">${m.time || ''}</span>
                       ${isAll && mProg ? `<span class="saas-prog-capsule p-stage font-bold" style="font-size: 10px; padding: 1px 6px;">${mProg.code}</span>` : ''}
                       <span class="css-mentor text-xs text-muted">Mentor: <strong>${mTrn ? mTrn.name : 'Unassigned'}</strong></span>
                     </div>
 
-                    <div class="css-head-right">
+                    <div class="css-head-right" style="display: flex; align-items: center; gap: 6px;">
                       <span class="css-score-capsule ${mStatus.badgeClass}">
                         <strong>${m.percentage}%</strong> ${m.status}
                       </span>
-                      <span class="css-locked-badge">${getIcon('lock')} Finalized</span>
                     </div>
                   </div>
 
-                  <div class="css-remark-row">
-                    <span class="css-remark-label text-xs font-semibold text-muted">Observation:</span>
-                    <span class="css-remark-text text-xs text-main">"${m.remark}"</span>
+                  <div class="css-remark-row" style="margin-top: 4px;">
+                    <span class="css-remark-text text-xs text-main" style="display: block; font-style: italic; color: #334155;">"${m.remark || 'No remark entered.'}"</span>
                   </div>
                 </div>
               `;
@@ -341,7 +399,7 @@ export function renderDailyProgressView(container, navigateTo) {
 
       rowCard.innerHTML = `
         <div class="saas-row-master">
-          <!-- Col 1: Student Identity (Avatar + Name + Ad Code) -->
+          <!-- Col 1: Student Identity -->
           <div class="src-col src-student">
             <div class="saas-avatar-soft">
               ${c.name.split(' ').map(n => n[0]).slice(0, 2).join('')}
@@ -354,13 +412,13 @@ export function renderDailyProgressView(container, navigateTo) {
                 <span class="saas-code-badge">${c.adNo}</span>
                 <span class="saas-bullet">•</span>
                 <span class="saas-meta-txt">${c.class || 'No Class'}</span>
-                <span class="saas-bullet">•</span>
-                <span class="saas-meta-txt">${c.category}</span>
+                <span class="saas-bullet desktop-only-btn">•</span>
+                <span class="saas-meta-txt desktop-only-btn">${c.category}</span>
               </div>
             </div>
           </div>
 
-          <!-- Col 2: Program & Mentor (Streamlined Rounded Pills) -->
+          <!-- Col 2: Program & Mentor -->
           <div class="src-col src-program">
             <div class="src-prog-top">
               ${primaryProgram ? `
@@ -371,7 +429,7 @@ export function renderDailyProgressView(container, navigateTo) {
                   ${primaryProgram.name}
                 </span>
                 ${item.programs.length > 1 ? `
-                  <span class="saas-count-pill">+${item.programs.length - 1} more</span>
+                  <span class="saas-count-pill">+${item.programs.length - 1}</span>
                 ` : ''}
               ` : `
                 <span class="text-muted text-xs">No program enrolled</span>
@@ -387,23 +445,15 @@ export function renderDailyProgressView(container, navigateTo) {
               ` : `
                 <span class="text-danger text-xs font-semibold">Unassigned Trainer</span>
               `}
-              ${item.programs.length > 1 ? `
-                <span class="saas-prog-breakdown-strip">
-                  ${item.programs.map(p => {
-                    const pMeetsCount = meets.filter(m => m.programId === p.id).length;
-                    return `<span class="spb-chip ${pMeetsCount > 0 ? 'spb-met' : 'spb-pending'}">${p.code}: ${pMeetsCount}</span>`;
-                  }).join('')}
-                </span>
-              ` : ''}
             </div>
           </div>
 
-          <!-- Col 3: Evaluation Status & Score Capsule -->
+          <!-- Col 3: Evaluation Status -->
           <div class="src-col src-status">
             ${statusCapsuleHtml}
           </div>
 
-          <!-- Col 4: Primary Action & Details Toggle -->
+          <!-- Col 4: Action & Reports Toggle -->
           <div class="src-col src-action">
             ${item.isMet ? `
               <button class="saas-action-btn saas-btn-accent btn-record-meet" data-cid="${c.id}" data-pid="${primaryProgram?.id || ''}" data-tid="${primaryTrainer?.id || ''}">
@@ -422,39 +472,34 @@ export function renderDailyProgressView(container, navigateTo) {
           </div>
         </div>
 
-        <!-- Expandable Secondary Drawer (Ultra-Compact High-Density Tray) -->
+        <!-- Expandable Drawer for Meeting Sessions -->
         <div class="saas-row-drawer" style="display: ${isExpanded ? 'block' : 'none'};">
           <div class="drawer-compact-tray">
-            <!-- Compact Program Tabs & Action Strip -->
-            <div class="drawer-compact-nav">
-              <div class="dcn-tabs-group">
-                <span class="dcn-label">Program:</span>
+            <div class="drawer-compact-nav" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; flex-wrap: wrap; gap: 8px;">
+              <div class="dcn-tabs-group" style="display: flex; gap: 4px; align-items: center; flex-wrap: wrap;">
+                <span class="dcn-label text-xs text-muted" style="font-weight: 600;">Program:</span>
                 ${item.programs.map(p => {
                   const pMeets = meets.filter(m => m.programId === p.id);
                   const isSelected = p.id === activeDrawerPid;
                   return `
-                    <button type="button" class="dcn-tab-btn ${isSelected ? 'active' : ''}" data-pid="${p.id}" title="${p.name}">
-                      <span class="dcn-code">${p.code}</span>
+                    <button type="button" class="dcn-tab-btn saas-pill-btn ${isSelected ? 'active' : ''}" data-pid="${p.id}" title="${p.name}" style="padding: 3px 8px; font-size: 11px;">
+                      <span class="dcn-code font-bold">${p.code}</span>
                       <span class="dcn-badge ${pMeets.length > 0 ? 'badge-met' : 'badge-zero'}">${pMeets.length}</span>
                     </button>
                   `;
                 }).join('')}
 
                 ${item.programs.length > 1 ? `
-                  <button type="button" class="dcn-tab-btn ${activeDrawerPid === 'ALL' ? 'active' : ''}" data-pid="ALL" title="All programs combined">
-                    <span class="dcn-code">ALL</span>
+                  <button type="button" class="dcn-tab-btn saas-pill-btn ${activeDrawerPid === 'ALL' ? 'active' : ''}" data-pid="ALL" title="All programs combined" style="padding: 3px 8px; font-size: 11px;">
+                    <span class="dcn-code font-bold">ALL</span>
                     <span class="dcn-badge ${meets.length > 0 ? 'badge-met' : 'badge-zero'}">${meets.length}</span>
                   </button>
                 ` : ''}
               </div>
 
-              <!-- Right: Quick Status & Actions -->
               <div class="dcn-action-group">
-                <button type="button" class="btn-compact-record btn-drawer-record-meet" data-cid="${c.id}" data-pid="${defaultDrawerPid !== 'ALL' ? defaultDrawerPid : (item.programs[0]?.id || '')}" data-tid="${item.trainers[0]?.id || ''}">
+                <button type="button" class="btn-compact-record btn-drawer-record-meet btn-saas-primary btn-xs" data-cid="${c.id}" data-pid="${defaultDrawerPid !== 'ALL' ? defaultDrawerPid : (item.programs[0]?.id || '')}" data-tid="${item.trainers[0]?.id || ''}">
                   ${getIcon('plus')} Record Meet
-                </button>
-                <button class="saas-text-link btn-open-profile-dialog text-xs" data-cid="${c.id}" title="Open Profile">
-                  Profile &rarr;
                 </button>
               </div>
             </div>
@@ -496,7 +541,7 @@ export function renderDailyProgressView(container, navigateTo) {
         }
       });
 
-      // Program tab buttons inside compact drawer
+      // Wire program tab buttons inside drawer
       const tabBtns = drawer.querySelectorAll('.dcn-tab-btn');
       const drawerContent = drawer.querySelector('.drawer-compact-content');
       const mainRecordBtn = drawer.querySelector('.dcn-action-group .btn-drawer-record-meet');
@@ -590,21 +635,6 @@ export function renderDailyProgressView(container, navigateTo) {
     renderView();
   });
 
-  searchInput.addEventListener('input', (e) => {
-    searchQuery = e.target.value;
-    renderView();
-  });
-
-  filterProg.addEventListener('change', (e) => {
-    programFilter = e.target.value;
-    renderView();
-  });
-
-  filterTrn.addEventListener('change', (e) => {
-    trainerFilter = e.target.value;
-    renderView();
-  });
-
   // Export Daily Report
   container.querySelector('#btnExportDailyReport').addEventListener('click', () => {
     const meets = state.getDailyMeets(selectedDate);
@@ -648,4 +678,13 @@ export function renderDailyProgressView(container, navigateTo) {
 
   // Initial render
   renderView();
+
+  // Cross-device sync
+  const unsubscribeState = state.subscribe(() => {
+    if (!document.body.contains(container)) {
+      unsubscribeState();
+      return;
+    }
+    renderView();
+  });
 }

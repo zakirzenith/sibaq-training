@@ -6,25 +6,21 @@ import { openExcelUploadModal } from './modals/excelUploadModal.js';
 import { openCandidateFormModal } from './modals/candidateFormModal.js';
 import { openAssignCandidatesModal } from './modals/assignCandidatesModal.js';
 import { openCandidateProfileModal } from './modals/candidateProfileModal.js';
+import { createFilterBar } from './filterEngine.js';
 
 export function renderCandidatesView(container, navigateTo) {
-  let searchQuery = '';
-  let selectedCategory = 'ALL';
-  let selectedClass = 'ALL';
+  let activeFilters = {};
+  let currentSearchQuery = '';
 
   container.innerHTML = `
     <div class="saas-view-header">
       <div class="svh-title-block">
-        <div class="svh-eyebrow">
-          <span class="saas-tag-pill p-stage">${getIcon('candidates')} Roster Management</span>
-          <span class="svh-meta-text">Cohort 2026</span>
-        </div>
         <h1 class="svh-title">Candidates & Mentees</h1>
         <p class="svh-desc">Manage candidate master roster, bulk import Excel spreadsheets, and track category divisions.</p>
       </div>
 
       <div class="saas-header-actions">
-        <div class="saas-action-pill-group">
+        <div class="saas-action-pill-group desktop-only-btn">
           <button id="btnDownloadCandTemplate" class="saas-pill-btn" title="Download formatted sample Excel sheet">
             ${getIcon('fileSpreadsheet')} Template
           </button>
@@ -42,46 +38,23 @@ export function renderCandidatesView(container, navigateTo) {
       </div>
     </div>
 
-    <!-- Filters & Search Command Bar -->
-    <div class="saas-command-bar">
-      <div class="scb-search-wrap flex-1">
-        <span class="scb-search-icon">${getIcon('search')}</span>
-        <input 
-          type="text" 
-          id="searchCandidates" 
-          class="scb-search-input" 
-          placeholder="Search by candidate name, admission number, or class..."
-        />
-      </div>
+    <!-- Modern Notion/Linear Filter Engine -->
+    <div id="candidatesFilterBar"></div>
 
-      <div class="scb-filters-group">
-        <select id="filterCategory" class="saas-select-pill">
-          <option value="ALL">All Categories</option>
-        </select>
-
-        <select id="filterClass" class="saas-select-pill">
-          <option value="ALL">All Classes</option>
-        </select>
-
-        <button id="btnResetFilters" class="saas-circle-btn" title="Reset all filters">
-          ${getIcon('refresh')}
-        </button>
-      </div>
-    </div>
-
-    <!-- Candidates Table Card -->
+    <!-- Candidates Card -->
     <div class="saas-table-card">
       <div class="saas-table-head-strip">
         <div class="sth-left">
           <span class="sth-title">Active Candidate Directory</span>
           <span id="candidatesCountBadge" class="saas-badge-pill">0</span>
         </div>
-        <div class="sth-right text-xs text-muted">
-          Click student name to view all enrolled programs & trainers
+        <div class="sth-right text-xs text-muted desktop-only-btn">
+          Click student name to view enrolled programs & trainers
         </div>
       </div>
 
-      <div class="saas-table-responsive">
+      <!-- Desktop Table View (>= 769px) -->
+      <div class="saas-table-responsive desktop-table-view">
         <table class="saas-data-table">
           <thead>
             <tr>
@@ -98,90 +71,128 @@ export function renderCandidatesView(container, navigateTo) {
           </tbody>
         </table>
       </div>
+
+      <!-- Mobile Touch Cards List (< 769px) -->
+      <div id="candidatesMobileList" class="mobile-cards-view">
+        <!-- Rendered dynamically for phone view -->
+      </div>
     </div>
   `;
 
-  // Elements
-  const searchInput = container.querySelector('#searchCandidates');
-  const categorySelect = container.querySelector('#filterCategory');
-  const classSelect = container.querySelector('#filterClass');
-  const resetBtn = container.querySelector('#btnResetFilters');
   const tableBody = container.querySelector('#candidatesTableBody');
+  const mobileList = container.querySelector('#candidatesMobileList');
   const countBadge = container.querySelector('#candidatesCountBadge');
+  const filterContainer = container.querySelector('#candidatesFilterBar');
 
-  // Populate Filter Dropdowns
-  function populateFilters() {
-    const candidates = state.getCandidates();
-    const categories = Array.from(new Set(candidates.map(c => c.category).filter(Boolean))).sort();
-    const classes = Array.from(new Set(candidates.map(c => c.class).filter(Boolean))).sort();
-
-    categorySelect.innerHTML = '<option value="ALL">All Categories</option>';
-    categories.forEach(cat => {
-      const opt = document.createElement('option');
-      opt.value = cat;
-      opt.textContent = cat;
-      if (cat === selectedCategory) opt.selected = true;
-      categorySelect.appendChild(opt);
-    });
-
-    classSelect.innerHTML = '<option value="ALL">All Classes</option>';
-    classes.forEach(cls => {
-      const opt = document.createElement('option');
-      opt.value = cls;
-      opt.textContent = cls;
-      if (cls === selectedClass) opt.selected = true;
-      classSelect.appendChild(opt);
-    });
-  }
+  // Filter Engine Configuration
+  const filterEngine = createFilterBar({
+    container: filterContainer,
+    searchPlaceholder: 'Search by candidate name, admission no, or class...',
+    filterConfig: [
+      {
+        key: 'category',
+        label: 'Category',
+        icon: '🏷️',
+        getOptions: () => {
+          const cands = state.getCandidates();
+          const counts = {};
+          cands.forEach(c => {
+            const cat = c.category || 'General';
+            counts[cat] = (counts[cat] || 0) + 1;
+          });
+          return Object.keys(counts).sort().map(cat => ({
+            value: cat,
+            label: cat,
+            count: counts[cat]
+          }));
+        }
+      },
+      {
+        key: 'class',
+        label: 'Class / Grade',
+        icon: '🎓',
+        getOptions: () => {
+          const cands = state.getCandidates();
+          const counts = {};
+          cands.forEach(c => {
+            const cls = c.class || 'No Class';
+            counts[cls] = (counts[cls] || 0) + 1;
+          });
+          return Object.keys(counts).sort().map(cls => ({
+            value: cls === 'No Class' ? '' : cls,
+            label: cls,
+            count: counts[cls]
+          }));
+        }
+      },
+      {
+        key: 'enrollment',
+        label: 'Enrollment Status',
+        icon: '⚡',
+        getOptions: () => [
+          { value: 'enrolled', label: 'Enrolled in Programs' },
+          { value: 'not_enrolled', label: 'Not Enrolled' }
+        ]
+      }
+    ],
+    onFilterChange: (newFilters, newSearch) => {
+      activeFilters = newFilters;
+      currentSearchQuery = newSearch;
+      renderTable();
+    }
+  });
 
   function renderTable() {
     const candidates = state.getCandidates();
 
     const filtered = candidates.filter(c => {
-      const q = searchQuery.toLowerCase().trim();
+      const q = currentSearchQuery.toLowerCase().trim();
       const matchesSearch =
         !q ||
         c.name.toLowerCase().includes(q) ||
         c.adNo.toLowerCase().includes(q) ||
         (c.class && c.class.toLowerCase().includes(q));
 
-      const matchesCat = selectedCategory === 'ALL' || c.category === selectedCategory;
-      const matchesCls = selectedClass === 'ALL' || c.class === selectedClass;
+      const matchesCat = !activeFilters.category || c.category === activeFilters.category;
+      const matchesCls = activeFilters.class === undefined || (c.class || '') === activeFilters.class;
 
-      return matchesSearch && matchesCat && matchesCls;
+      let matchesEnrollment = true;
+      if (activeFilters.enrollment) {
+        const progCount = state.getCandidatePrograms(c.id).length;
+        if (activeFilters.enrollment === 'enrolled') {
+          matchesEnrollment = progCount > 0;
+        } else if (activeFilters.enrollment === 'not_enrolled') {
+          matchesEnrollment = progCount === 0;
+        }
+      }
+
+      return matchesSearch && matchesCat && matchesCls && matchesEnrollment;
     });
 
     countBadge.textContent = `${filtered.length} Candidates`;
     tableBody.innerHTML = '';
+    mobileList.innerHTML = '';
 
     if (filtered.length === 0) {
-      tableBody.innerHTML = `
-        <tr>
-          <td colspan="6" class="text-center py-5 text-muted">
-            <div class="empty-state-box">
-              <div class="empty-icon">${getIcon('candidates')}</div>
-              <h3>No candidates found</h3>
-              <p>Try clearing your filters or upload candidates in bulk using an Excel file.</p>
-              <button id="btnEmptyUploadCand" class="btn btn-primary btn-sm mt-3">
-                ${getIcon('upload')} Bulk Upload via Excel
-              </button>
-            </div>
-          </td>
-        </tr>
+      const emptyHtml = `
+        <div class="empty-state-box py-5 text-center">
+          <div class="empty-icon">${getIcon('candidates')}</div>
+          <h3>No candidates match your filters</h3>
+          <p class="text-xs text-muted mt-1">Try clearing some filter chips or search queries.</p>
+          <button id="btnResetAllCandFilters" class="btn btn-secondary btn-sm mt-3">
+            Reset All Filters
+          </button>
+        </div>
       `;
 
-      const emptyUploadBtn = tableBody.querySelector('#btnEmptyUploadCand');
-      if (emptyUploadBtn) {
-        emptyUploadBtn.addEventListener('click', () => {
-          openExcelUploadModal({
-            type: 'candidates',
-            onComplete: () => {
-              populateFilters();
-              renderTable();
-            }
-          });
+      tableBody.innerHTML = `<tr><td colspan="6">${emptyHtml}</td></tr>`;
+      mobileList.innerHTML = emptyHtml;
+
+      container.querySelectorAll('#btnResetAllCandFilters').forEach(btn => {
+        btn.addEventListener('click', () => {
+          filterEngine.clearAll();
         });
-      }
+      });
       return;
     }
 
@@ -189,15 +200,16 @@ export function renderCandidatesView(container, navigateTo) {
       const assignedPrograms = state.getCandidatePrograms(c.id);
       const initials = c.name.split(' ').map(n => n[0]).slice(0, 2).join('');
 
+      // 1. Desktop Row
       const tr = document.createElement('tr');
       tr.className = 'saas-table-row';
       tr.innerHTML = `
         <td><span class="saas-adno-pill">${c.adNo}</span></td>
         <td>
-          <div class="saas-student-cell">
+          <div class="saas-student-cell" data-cid="${c.id}" style="cursor: pointer;">
             <div class="saas-avatar-soft">${initials}</div>
             <div class="saas-student-info">
-              <button class="candidate-name-btn btn-view-profile" data-cid="${c.id}" title="Click to view candidate profile with assigned programs & trainers">
+              <button class="candidate-name-btn btn-view-profile" data-cid="${c.id}" title="Click to view candidate profile">
                 <strong>${c.name}</strong>
               </button>
             </div>
@@ -246,9 +258,39 @@ export function renderCandidatesView(container, navigateTo) {
         </td>
       `;
 
-      // Click on program badge opens the program assignment modal
+      // 2. Mobile Card (Touch-Friendly Phone View)
+      const mobileCard = document.createElement('div');
+      mobileCard.className = 'mobile-candidate-card';
+      mobileCard.setAttribute('data-cid', c.id);
+      mobileCard.innerHTML = `
+        <div class="mcc-top">
+          <div class="saas-avatar-soft" style="width: 38px; height: 38px; font-size: 13px;">${initials}</div>
+          <div class="mcc-meta">
+            <strong class="mcc-name">${c.name}</strong>
+            <div class="mcc-sub">
+              <span class="saas-adno-pill">${c.adNo}</span>
+              <span class="saas-class-pill">${c.class || 'No Class'}</span>
+            </div>
+          </div>
+          <span class="saas-tag-pill ${c.category === 'Senior' ? 'p-stage' : 'p-neutral'}">${c.category}</span>
+        </div>
+        <div class="mcc-programs-strip">
+          ${
+            assignedPrograms.length > 0
+              ? assignedPrograms.map(p => `
+                <span class="saas-prog-capsule ${p.type === 'Stage' ? 'p-stage' : 'p-nonstage'}">
+                  ${p.code} • ${p.name}
+                </span>
+              `).join('')
+              : '<span class="text-muted text-xs">No programs assigned</span>'
+          }
+        </div>
+      `;
+
+      // Wire Desktop Events
       tr.querySelectorAll('.clickable-program').forEach(chip => {
-        chip.addEventListener('click', () => {
+        chip.addEventListener('click', (e) => {
+          e.stopPropagation();
           const pid = chip.getAttribute('data-pid');
           openAssignCandidatesModal({
             programId: pid,
@@ -257,9 +299,7 @@ export function renderCandidatesView(container, navigateTo) {
         });
       });
 
-      // Click candidate name or avatar opens full profile instantly
       tr.querySelectorAll('.btn-view-profile, .saas-student-cell').forEach(el => {
-        el.style.cursor = 'pointer';
         el.addEventListener('click', (e) => {
           e.stopPropagation();
           openCandidateProfileModal({
@@ -269,88 +309,69 @@ export function renderCandidatesView(container, navigateTo) {
         });
       });
 
-      // Edit candidate
-      tr.querySelector('.btn-edit-cand').addEventListener('click', () => {
+      tr.querySelector('.btn-edit-cand').addEventListener('click', (e) => {
+        e.stopPropagation();
         openCandidateFormModal({
           candidate: c,
-          onSave: () => {
-            populateFilters();
-            renderTable();
-          }
+          onSave: () => renderTable()
         });
       });
 
-      // Delete candidate
-      tr.querySelector('.btn-delete-cand').addEventListener('click', () => {
-        if (confirm(`Are you sure you want to delete "${c.name}" (${c.adNo})? They will also be removed from any assigned programs.`)) {
+      tr.querySelector('.btn-delete-cand').addEventListener('click', (e) => {
+        e.stopPropagation();
+        if (confirm(`Are you sure you want to delete candidate ${c.name} (${c.adNo})?`)) {
           state.deleteCandidate(c.id);
-          toast.info(`Candidate ${c.name} deleted.`);
-          populateFilters();
+          toast.info(`Deleted ${c.name}`);
           renderTable();
         }
       });
 
+      // Wire Mobile Events (Tap card opens full profile directly)
+      mobileCard.addEventListener('click', () => {
+        openCandidateProfileModal({
+          candidateId: c.id,
+          onUpdate: () => renderTable()
+        });
+      });
+
       tableBody.appendChild(tr);
+      mobileList.appendChild(mobileCard);
     });
   }
 
-  // Filter Listeners
-  searchInput.addEventListener('input', e => {
-    searchQuery = e.target.value;
-    renderTable();
-  });
-
-  categorySelect.addEventListener('change', e => {
-    selectedCategory = e.target.value;
-    renderTable();
-  });
-
-  classSelect.addEventListener('change', e => {
-    selectedClass = e.target.value;
-    renderTable();
-  });
-
-  resetBtn.addEventListener('click', () => {
-    searchQuery = '';
-    selectedCategory = 'ALL';
-    selectedClass = 'ALL';
-    searchInput.value = '';
-    categorySelect.value = 'ALL';
-    classSelect.value = 'ALL';
-    renderTable();
-  });
-
-  // Action Buttons
-  container.querySelector('#btnDownloadCandTemplate').addEventListener('click', () => {
-    excelService.downloadCandidatesTemplate();
-  });
-
-  container.querySelector('#btnExportCandidates').addEventListener('click', () => {
-    const list = state.getCandidates();
-    excelService.exportCandidates(list, state);
-    toast.success(`Exported ${list.length} candidates to Excel.`);
-  });
-
-  container.querySelector('#btnBulkUploadCandidates').addEventListener('click', () => {
-    openExcelUploadModal({
-      type: 'candidates',
-      onComplete: () => {
-        populateFilters();
-        renderTable();
-      }
-    });
-  });
-
+  // Header button events
   container.querySelector('#btnAddCandidate').addEventListener('click', () => {
     openCandidateFormModal({
-      onSave: () => {
-        populateFilters();
-        renderTable();
-      }
+      onSave: () => renderTable()
     });
   });
 
-  // Initial
-  populateFilters();
+  const btnDownloadTemplate = container.querySelector('#btnDownloadCandTemplate');
+  if (btnDownloadTemplate) {
+    btnDownloadTemplate.addEventListener('click', () => {
+      excelService.downloadTemplate('candidates');
+    });
+  }
+
+  const btnExport = container.querySelector('#btnExportCandidates');
+  if (btnExport) {
+    btnExport.addEventListener('click', () => {
+      const candidates = state.getCandidates();
+      excelService.exportCandidates(candidates);
+      toast.success(`Exported ${candidates.length} candidates.`);
+    });
+  }
+
+  const btnBulkUpload = container.querySelector('#btnBulkUploadCandidates');
+  if (btnBulkUpload) {
+    btnBulkUpload.addEventListener('click', () => {
+      openExcelUploadModal({
+        type: 'candidates',
+        onComplete: () => renderTable()
+      });
+    });
+  }
+
+  // Initial render
   renderTable();
 }

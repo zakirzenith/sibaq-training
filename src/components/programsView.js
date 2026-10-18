@@ -6,42 +6,58 @@ import { openExcelUploadModal } from './modals/excelUploadModal.js';
 import { openProgramFormModal } from './modals/programFormModal.js';
 import { openCandidateProfileModal } from './modals/candidateProfileModal.js';
 import { openCandidateSelectModal } from './modals/candidateSelectModal.js';
+import { createFilterBar } from './filterEngine.js';
 
 export function renderProgramsView(container, navigateTo) {
-  let searchQuery = '';
-  let selectedType = 'ALL';
-  let selectedCategory = 'ALL';
+  let activeFilters = {};
+  let currentSearchQuery = '';
   let selectedProgramId = null;
 
   function getProgramsList() {
     const programs = state.getPrograms();
     return programs.filter(p => {
-      const q = searchQuery.toLowerCase().trim();
+      const q = currentSearchQuery.toLowerCase().trim();
       const matchesSearch =
         !q ||
         p.name.toLowerCase().includes(q) ||
-        p.code.toLowerCase().includes(q);
+        p.code.toLowerCase().includes(q) ||
+        (p.category && p.category.toLowerCase().includes(q));
 
-      const matchesType = selectedType === 'ALL' || p.type === selectedType;
-      const matchesCat = selectedCategory === 'ALL' || p.category === selectedCategory;
+      if (!matchesSearch) return false;
 
-      return matchesSearch && matchesType && matchesCat;
+      // Filter: Type
+      if (activeFilters.type && p.type !== activeFilters.type) return false;
+
+      // Filter: Category
+      if (activeFilters.category && p.category !== activeFilters.category) return false;
+
+      // Filter: Trainer Assignment
+      if (activeFilters.trainer) {
+        const hasTrainer = Boolean(p.trainerId && state.getTrainerById(p.trainerId));
+        if (activeFilters.trainer === 'Assigned' && !hasTrainer) return false;
+        if (activeFilters.trainer === 'Unassigned' && hasTrainer) return false;
+      }
+
+      // Filter: Candidate Enrollment
+      if (activeFilters.enrollment) {
+        const hasCandidates = Boolean(p.candidateIds && p.candidateIds.length > 0);
+        if (activeFilters.enrollment === 'With Candidates' && !hasCandidates) return false;
+        if (activeFilters.enrollment === 'No Candidates' && hasCandidates) return false;
+      }
+
+      return true;
     });
   }
 
   container.innerHTML = `
     <div class="saas-view-header">
       <div class="svh-title-block">
-        <div class="svh-eyebrow">
-          <span class="saas-tag-pill p-stage">${getIcon('programs')} Program Operations</span>
-          <span class="svh-meta-text">Stage & Non-Stage Master</span>
-        </div>
         <h1 class="svh-title">Programs, Candidates & Trainers</h1>
-        <p class="svh-desc">Select a program on the left to assign candidates, assign trainers, and view candidate profiles.</p>
+        <p class="svh-desc">Select a program to assign candidates, assign trainers, and view candidate profiles.</p>
       </div>
 
       <div class="saas-header-actions">
-        <div class="saas-action-pill-group">
+        <div class="saas-action-pill-group desktop-only-btn">
           <button id="btnDownloadProgTemplate" class="saas-pill-btn" title="Download formatted sample Excel sheet">
             ${getIcon('fileSpreadsheet')} Template
           </button>
@@ -60,35 +76,12 @@ export function renderProgramsView(container, navigateTo) {
     </div>
 
     <!-- Master-Detail 2-Side Layout -->
-    <div class="programs-split-layout">
-      <!-- LEFT SIDE: All Programs List with Details -->
+    <div class="programs-split-layout" id="programsSplitLayout">
+      <!-- LEFT SIDE: All Programs List with Filter Engine -->
       <div class="programs-left-col">
-        <div class="left-col-header">
-          <div class="scb-search-wrap mb-2">
-            <span class="scb-search-icon">${getIcon('search')}</span>
-            <input 
-              type="text" 
-              id="searchProgramsInput" 
-              class="scb-search-input" 
-              placeholder="Search by code or name..."
-            />
-          </div>
-
-          <div class="left-filters-row" style="display: flex; gap: 6px; align-items: center;">
-            <select id="filterProgType" class="saas-select-pill flex-1">
-              <option value="ALL">All Types</option>
-              <option value="Stage">Stage Only</option>
-              <option value="Non-Stage">Non-Stage</option>
-            </select>
-
-            <select id="filterProgCategory" class="saas-select-pill flex-1">
-              <option value="ALL">All Categories</option>
-            </select>
-
-            <button id="btnResetProgFilters" class="saas-circle-btn" title="Reset filters">
-              ${getIcon('refresh')}
-            </button>
-          </div>
+        <div class="left-col-header" style="padding-bottom: 8px;">
+          <!-- Modern Notion/Linear Filter Engine -->
+          <div id="programsFilterBarContainer"></div>
         </div>
 
         <!-- Scrollable Cards List -->
@@ -104,26 +97,83 @@ export function renderProgramsView(container, navigateTo) {
     </div>
   `;
 
-  const searchInput = container.querySelector('#searchProgramsInput');
-  const typeSelect = container.querySelector('#filterProgType');
-  const categorySelect = container.querySelector('#filterProgCategory');
-  const resetFiltersBtn = container.querySelector('#btnResetProgFilters');
+  const splitLayout = container.querySelector('#programsSplitLayout');
   const programsListContainer = container.querySelector('#programsListContainer');
   const programDetailContainer = container.querySelector('#programDetailContainer');
+  const filterBarContainer = container.querySelector('#programsFilterBarContainer');
 
-  function populateCategories() {
-    const programs = state.getPrograms();
-    const categories = Array.from(new Set(programs.map(p => p.category).filter(Boolean))).sort();
-
-    categorySelect.innerHTML = '<option value="ALL">All Categories</option>';
-    categories.forEach(cat => {
-      const opt = document.createElement('option');
-      opt.value = cat;
-      opt.textContent = cat;
-      if (cat === selectedCategory) opt.selected = true;
-      categorySelect.appendChild(opt);
-    });
-  }
+  // Modern Notion/Linear Filter Engine for Programs
+  createFilterBar({
+    container: filterBarContainer,
+    searchPlaceholder: 'Search by code, title, or category...',
+    filterConfig: [
+      {
+        key: 'type',
+        label: 'Type',
+        icon: '🎭',
+        getOptions: () => {
+          const progs = state.getPrograms();
+          const stageCount = progs.filter(p => p.type === 'Stage').length;
+          const nonStageCount = progs.filter(p => p.type === 'Non-Stage').length;
+          return [
+            { value: 'Stage', label: 'Stage Only', count: stageCount },
+            { value: 'Non-Stage', label: 'Non-Stage Only', count: nonStageCount }
+          ];
+        }
+      },
+      {
+        key: 'category',
+        label: 'Category',
+        icon: '🏷️',
+        getOptions: () => {
+          const progs = state.getPrograms();
+          const counts = {};
+          progs.forEach(p => {
+            const cat = p.category || 'General';
+            counts[cat] = (counts[cat] || 0) + 1;
+          });
+          return Object.keys(counts).sort().map(cat => ({
+            value: cat,
+            label: cat,
+            count: counts[cat]
+          }));
+        }
+      },
+      {
+        key: 'trainer',
+        label: 'Trainer Assignment',
+        icon: '👨‍🏫',
+        getOptions: () => {
+          const progs = state.getPrograms();
+          const assigned = progs.filter(p => p.trainerId && state.getTrainerById(p.trainerId)).length;
+          const unassigned = progs.length - assigned;
+          return [
+            { value: 'Assigned', label: 'Trainer Assigned', count: assigned },
+            { value: 'Unassigned', label: 'No Trainer Assigned', count: unassigned }
+          ];
+        }
+      },
+      {
+        key: 'enrollment',
+        label: 'Candidate Roster',
+        icon: '👥',
+        getOptions: () => {
+          const progs = state.getPrograms();
+          const withCands = progs.filter(p => p.candidateIds && p.candidateIds.length > 0).length;
+          const noCands = progs.length - withCands;
+          return [
+            { value: 'With Candidates', label: 'Has Candidates', count: withCands },
+            { value: 'No Candidates', label: 'No Candidates Yet', count: noCands }
+          ];
+        }
+      }
+    ],
+    onFilterChange: (filters, search) => {
+      activeFilters = filters;
+      currentSearchQuery = search;
+      renderLeftList();
+    }
+  });
 
   function renderLeftList() {
     const list = getProgramsList();
@@ -131,10 +181,10 @@ export function renderProgramsView(container, navigateTo) {
 
     if (list.length === 0) {
       programsListContainer.innerHTML = `
-        <div class="empty-state-card py-4">
+        <div class="empty-state-card py-4" style="text-align: center; padding: 32px 16px;">
           <div class="empty-icon">${getIcon('programs')}</div>
-          <h4>No programs match</h4>
-          <p class="text-xs text-muted">Try clearing search filters.</p>
+          <h4 style="margin: 8px 0 4px; font-size: 15px;">No matching programs</h4>
+          <p class="text-xs text-muted">Try clearing or adjusting your active filters.</p>
         </div>
       `;
       renderRightDetail(null);
@@ -172,7 +222,7 @@ export function renderProgramsView(container, navigateTo) {
           <div class="prog-side-trainer">
             ${
               trainer
-                ? `<span class="trainer-tag-text" style="color: ${trainer.color}">
+                ? `<span class="trainer-tag-text" style="color: ${trainer.color || '#4f46e5'}">
                     ${getIcon('trainers')} ${trainer.name}
                   </span>`
                 : `<span class="text-warning text-xs font-semibold">No Trainer</span>`
@@ -187,6 +237,8 @@ export function renderProgramsView(container, navigateTo) {
 
       item.addEventListener('click', () => {
         selectedProgramId = p.id;
+        // On phone view, switch to detail view
+        splitLayout.classList.add('mobile-show-detail');
         renderLeftList();
         renderRightDetail(p);
       });
@@ -198,12 +250,14 @@ export function renderProgramsView(container, navigateTo) {
     renderRightDetail(activeProg);
   }
 
-  function renderRightDetail(program) {
+  function renderRightDetail(programOrId) {
+    const program = typeof programOrId === 'object' ? programOrId : state.getProgramById(programOrId);
+
     if (!program) {
       programDetailContainer.innerHTML = `
         <div class="empty-state-box py-5">
           <div class="empty-icon">${getIcon('programs')}</div>
-          <h3>Select a program from the left side</h3>
+          <h3>Select a program from the list</h3>
           <p class="text-muted">You will be able to assign candidates, assign trainers, and view candidate profiles.</p>
         </div>
       `;
@@ -216,7 +270,12 @@ export function renderProgramsView(container, navigateTo) {
     const allTrainers = state.getTrainers();
 
     programDetailContainer.innerHTML = `
-      <!-- Program Header Strip (Clean: No Venue or Date) -->
+      <!-- Mobile Only Back Button to Return to Program List -->
+      <div class="mobile-programs-back-bar" id="btnMobileBackToPrograms">
+        ${getIcon('chevronLeft')} <span>Back to Programs</span>
+      </div>
+
+      <!-- Program Header Strip -->
       <div class="saas-detail-banner">
         <div class="sdb-main">
           <div class="sdb-badges-row">
@@ -224,13 +283,13 @@ export function renderProgramsView(container, navigateTo) {
             <span class="saas-tag-pill ${isStage ? 'p-stage' : 'p-nonstage'}">
               ${isStage ? getIcon('stage') : getIcon('nonStage')} ${program.type}
             </span>
-            <span class="saas-tag-pill p-neutral">${program.category} Category</span>
+            <span class="saas-tag-pill p-neutral">${program.category}</span>
           </div>
           <h2 class="sdb-title">${program.name}</h2>
         </div>
 
         <div class="sdb-actions">
-          <button id="btnExportThisProg" class="saas-pill-btn" title="Export this roster to Excel">
+          <button id="btnExportThisProg" class="saas-pill-btn desktop-only-btn" title="Export this roster to Excel">
             ${getIcon('download')} Export Roster
           </button>
           <button id="btnEditThisProg" class="saas-pill-btn" title="Edit Program">
@@ -242,7 +301,7 @@ export function renderProgramsView(container, navigateTo) {
         </div>
       </div>
 
-      <!-- 1. DEDICATED TRAINER & MENTOR PANEL (HERO STRIP) -->
+      <!-- 1. DEDICATED TRAINER & MENTOR PANEL -->
       <div class="saas-section-card trainer-management-panel" style="margin-bottom: 20px;">
         <div class="ssc-head" style="margin-bottom: 12px; border-bottom: 1px solid #f1f5f9; padding-bottom: 10px;">
           <div class="ssc-head-title">
@@ -256,7 +315,7 @@ export function renderProgramsView(container, navigateTo) {
         </div>
 
         <div class="trainer-card-content-grid">
-          <!-- Left: Current Trainer Information / Empty State -->
+          <!-- Current Trainer Information / Empty State -->
           <div class="trainer-status-column">
             ${
               assignedTrainer
@@ -282,14 +341,14 @@ export function renderProgramsView(container, navigateTo) {
                 <div class="empty-icon-sm" style="color: #f59e0b; flex-shrink: 0;">${getIcon('info')}</div>
                 <div>
                   <strong class="text-xs text-main" style="display: block;">No trainer assigned yet</strong>
-                  <span class="text-muted text-xs">Assign a trainer on the right to mentor candidates in this program.</span>
+                  <span class="text-muted text-xs">Assign a trainer below to mentor candidates in this program.</span>
                 </div>
               </div>
             `
             }
           </div>
 
-          <!-- Right: Assign or Change Trainer Workspace -->
+          <!-- Assign or Change Trainer Workspace -->
           <div class="trainer-action-column">
             <label class="form-label text-xs font-semibold mb-1" style="display: block;">
               ${assignedTrainer ? 'Change Trainer:' : 'Assign Trainer:'}
@@ -315,14 +374,13 @@ export function renderProgramsView(container, navigateTo) {
         </div>
       </div>
 
-      <!-- 2. CANDIDATES IN PROGRAM (FULL-WIDTH COMFORTABLE TABLE) -->
+      <!-- 2. CANDIDATES IN PROGRAM -->
       <div class="saas-section-card candidate-management-panel">
         <div class="ssc-head">
           <div class="ssc-head-title">
-            <span>${getIcon('candidates')} Candidates in Program</span>
+            <span>${getIcon('candidates')} Candidates</span>
             <span class="saas-badge-pill">${assignedCandidates.length} Enrolled</span>
           </div>
-          <!-- OPENS POPUP MODAL BOX INSTEAD OF BOTTOM PANEL -->
           <button id="btnOpenCandidateModalBox" class="btn-saas-primary btn-sm">
             ${getIcon('plus')} Add Candidates
           </button>
@@ -336,14 +394,14 @@ export function renderProgramsView(container, navigateTo) {
               <div class="no-assigned-placeholder text-center py-5 text-muted">
                 <div class="empty-icon-sm mb-2">${getIcon('candidates')}</div>
                 <strong class="text-main" style="font-size: 14px;">No candidates assigned yet</strong>
-                <p class="text-xs mt-1">Click "Add Candidates" above to select candidates from the directory.</p>
+                <p class="text-xs mt-1">Tap "Add Candidates" above to select candidates from the directory.</p>
               </div>
             `
               : `
               <table class="saas-data-table assigned-candidates-table" style="width: 100%;">
                 <thead>
                   <tr>
-                    <th>Candidate Name</th>
+                    <th>Candidate</th>
                     <th>Admission No</th>
                     <th>Category</th>
                     <th>Class</th>
@@ -358,10 +416,9 @@ export function renderProgramsView(container, navigateTo) {
                         return `
                     <tr class="saas-table-row">
                       <td>
-                        <!-- CLICKING CANDIDATE NAME OR AVATAR OPENS PROFILE MODAL INSTANTLY -->
                         <div class="saas-student-cell" data-cid="${cand.id}">
                           <div class="saas-avatar-soft">${initials}</div>
-                          <button class="candidate-name-btn btn-open-cand-profile" data-cid="${cand.id}" title="Click to view candidate profile with all assigned programs and trainers">
+                          <button class="candidate-name-btn btn-open-cand-profile" data-cid="${cand.id}" title="Click to view candidate profile">
                             <strong>${cand.name}</strong>
                           </button>
                         </div>
@@ -387,20 +444,28 @@ export function renderProgramsView(container, navigateTo) {
       </div>
     `;
 
-    // Wire up events:
+    // Hook Mobile Back Button
+    const btnMobileBack = programDetailContainer.querySelector('#btnMobileBackToPrograms');
+    if (btnMobileBack) {
+      btnMobileBack.addEventListener('click', () => {
+        splitLayout.classList.remove('mobile-show-detail');
+      });
+    }
 
-    // 1. Export program roster
-    programDetailContainer.querySelector('#btnExportThisProg').addEventListener('click', () => {
-      excelService.exportSingleProgram(program, assignedCandidates, assignedTrainer);
-      toast.info(`Exported roster for [${program.code}] ${program.name}`);
-    });
+    // 1. Export program roster (Desktop)
+    const btnExportThisProg = programDetailContainer.querySelector('#btnExportThisProg');
+    if (btnExportThisProg) {
+      btnExportThisProg.addEventListener('click', () => {
+        excelService.exportSingleProgram(program, assignedCandidates, assignedTrainer);
+        toast.info(`Exported roster for [${program.code}] ${program.name}`);
+      });
+    }
 
     // 2. Edit program
     programDetailContainer.querySelector('#btnEditThisProg').addEventListener('click', () => {
       openProgramFormModal({
         program,
         onSave: () => {
-          populateCategories();
           renderLeftList();
         }
       });
@@ -411,12 +476,11 @@ export function renderProgramsView(container, navigateTo) {
       if (confirm(`Delete program [${program.code}] "${program.name}"?`)) {
         state.deleteProgram(program.id);
         toast.info(`Program [${program.code}] deleted.`);
-        populateCategories();
         renderLeftList();
       }
     });
 
-    // 4. Clicking Candidate Name or cell opens Candidate Profile Modal INSTANTLY!
+    // 4. Candidate Profile Modal
     programDetailContainer.querySelectorAll('.btn-open-cand-profile, .saas-student-cell').forEach(btn => {
       btn.style.cursor = 'pointer';
       btn.addEventListener('click', e => {
@@ -447,7 +511,7 @@ export function renderProgramsView(container, navigateTo) {
       });
     });
 
-    // 6. "+ Add Candidates" Button -> OPENS POPUP MODAL BOX
+    // 6. "+ Add Candidates" Button
     programDetailContainer.querySelector('#btnOpenCandidateModalBox').addEventListener('click', () => {
       openCandidateSelectModal({
         program,
@@ -458,7 +522,7 @@ export function renderProgramsView(container, navigateTo) {
       });
     });
 
-    // 7. Save Trainer from Dropdown (Instant on-change + button click)
+    // 7. Save Trainer from Dropdown
     const trainerDropdown = programDetailContainer.querySelector('#trainerDropdown');
     const btnSaveTrainer = programDetailContainer.querySelector('#btnSaveTrainer');
 
@@ -490,73 +554,52 @@ export function renderProgramsView(container, navigateTo) {
     }
   }
 
-  // Left List Filter Listeners
-  searchInput.addEventListener('input', e => {
-    searchQuery = e.target.value;
-    renderLeftList();
-  });
-
-  typeSelect.addEventListener('change', e => {
-    selectedType = e.target.value;
-    renderLeftList();
-  });
-
-  categorySelect.addEventListener('change', e => {
-    selectedCategory = e.target.value;
-    renderLeftList();
-  });
-
-  resetFiltersBtn.addEventListener('click', () => {
-    searchQuery = '';
-    selectedType = 'ALL';
-    selectedCategory = 'ALL';
-    searchInput.value = '';
-    typeSelect.value = 'ALL';
-    categorySelect.value = 'ALL';
-    renderLeftList();
-  });
-
   // Top Action Buttons
-  container.querySelector('#btnDownloadProgTemplate').addEventListener('click', () => {
-    excelService.downloadProgramsTemplate();
-  });
-
-  container.querySelector('#btnExportPrograms').addEventListener('click', () => {
-    const list = state.getPrograms();
-    excelService.exportPrograms(list, state);
-    toast.success(`Exported ${list.length} programs to Excel.`);
-  });
-
-  container.querySelector('#btnBulkUploadPrograms').addEventListener('click', () => {
-    openExcelUploadModal({
-      type: 'programs',
-      onComplete: () => {
-        populateCategories();
-        renderLeftList();
-      }
+  const btnDownloadProgTemplate = container.querySelector('#btnDownloadProgTemplate');
+  if (btnDownloadProgTemplate) {
+    btnDownloadProgTemplate.addEventListener('click', () => {
+      excelService.downloadProgramsTemplate();
     });
-  });
+  }
+
+  const btnExportPrograms = container.querySelector('#btnExportPrograms');
+  if (btnExportPrograms) {
+    btnExportPrograms.addEventListener('click', () => {
+      const list = state.getPrograms();
+      excelService.exportPrograms(list, state);
+      toast.success(`Exported ${list.length} programs to Excel.`);
+    });
+  }
+
+  const btnBulkUploadPrograms = container.querySelector('#btnBulkUploadPrograms');
+  if (btnBulkUploadPrograms) {
+    btnBulkUploadPrograms.addEventListener('click', () => {
+      openExcelUploadModal({
+        type: 'programs',
+        onComplete: () => {
+          renderLeftList();
+        }
+      });
+    });
+  }
 
   container.querySelector('#btnAddProgram').addEventListener('click', () => {
     openProgramFormModal({
       onSave: () => {
-        populateCategories();
         renderLeftList();
       }
     });
   });
 
   // Initial render
-  populateCategories();
   renderLeftList();
 
-  // Live cross-device synchronization
+  // Live synchronization
   const unsubscribeState = state.subscribe(() => {
     if (!document.body.contains(container)) {
       unsubscribeState();
       return;
     }
-    populateCategories();
     renderLeftList();
     if (selectedProgramId) {
       renderRightDetail(selectedProgramId);

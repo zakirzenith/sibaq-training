@@ -66,7 +66,7 @@ class App {
   }
 
   initNavigation() {
-    const navItems = document.querySelectorAll('.nav-item[data-view]');
+    const navItems = document.querySelectorAll('.nav-item[data-view], .mobile-nav-btn[data-view]');
 
     navItems.forEach(item => {
       item.addEventListener('click', () => {
@@ -79,8 +79,8 @@ class App {
   navigateTo(viewName) {
     this.currentView = viewName;
 
-    // Update active nav item
-    document.querySelectorAll('.nav-item').forEach(el => {
+    // Update active nav items (Desktop sidebar + Mobile bottom nav)
+    document.querySelectorAll('.nav-item[data-view], .mobile-nav-btn[data-view]').forEach(el => {
       if (el.getAttribute('data-view') === viewName) {
         el.classList.add('active');
       } else {

@@ -13,7 +13,7 @@ export function renderDashboardView(container, navigateTo) {
   const trainers = state.getTrainers();
   const dailySummary = state.getDailySummary();
 
-  const unassignedTrainerPrograms = programs.filter(p => !p.trainerId);
+  const unassignedTrainerPrograms = programs.filter(p => !p.trainerId || !state.getTrainerById(p.trainerId));
   const unassignedCandidatePrograms = programs.filter(p => !p.candidateIds || p.candidateIds.length === 0);
 
   container.innerHTML = `

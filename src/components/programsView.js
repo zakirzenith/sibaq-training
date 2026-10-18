@@ -339,7 +339,7 @@ export function renderProgramsView(container, navigateTo) {
                   ${allTrainers
                     .map(
                       t => `
-                    <option value="${t.id}" ${program.trainerId === t.id ? 'selected' : ''}>
+                    <option value="${t.id}" ${String(program.trainerId || '').trim() === String(t.id).trim() ? 'selected' : ''}>
                       ${t.name} (${t.expertise})
                     </option>
                   `
@@ -418,7 +418,10 @@ export function renderProgramsView(container, navigateTo) {
         const cid = btn.getAttribute('data-cid');
         openCandidateProfileModal({
           candidateId: cid,
-          onUpdate: () => renderLeftList()
+          onUpdate: () => {
+            renderLeftList();
+            renderRightDetail(program.id);
+          }
         });
       });
     });
@@ -432,6 +435,7 @@ export function renderProgramsView(container, navigateTo) {
           state.removeCandidateFromProgram(program.id, cid);
           toast.info(`Removed ${cand?.name} from ${program.name}`);
           renderLeftList();
+          renderRightDetail(program.id);
         }
       });
     });
@@ -440,7 +444,10 @@ export function renderProgramsView(container, navigateTo) {
     programDetailContainer.querySelector('#btnOpenCandidateModalBox').addEventListener('click', () => {
       openCandidateSelectModal({
         program,
-        onAdd: () => renderLeftList()
+        onAdd: () => {
+          renderLeftList();
+          renderRightDetail(program.id);
+        }
       });
     });
 
@@ -448,7 +455,7 @@ export function renderProgramsView(container, navigateTo) {
     const trainerDropdown = programDetailContainer.querySelector('#trainerDropdown');
     const btnSaveTrainer = programDetailContainer.querySelector('#btnSaveTrainer');
     btnSaveTrainer.addEventListener('click', () => {
-      const newTrainerId = trainerDropdown.value || null;
+      const newTrainerId = trainerDropdown.value ? trainerDropdown.value.trim() : null;
       state.assignTrainerToProgram(program.id, newTrainerId);
       const trn = newTrainerId ? state.getTrainerById(newTrainerId) : null;
       toast.success(
@@ -457,6 +464,7 @@ export function renderProgramsView(container, navigateTo) {
           : `Unassigned trainer from ${program.name}`
       );
       renderLeftList();
+      renderRightDetail(program.id);
     });
 
     // 8. Unassign Trainer button
@@ -466,6 +474,7 @@ export function renderProgramsView(container, navigateTo) {
         state.assignTrainerToProgram(program.id, null);
         toast.info(`Removed trainer from ${program.name}`);
         renderLeftList();
+        renderRightDetail(program.id);
       });
     }
   }
@@ -529,4 +538,17 @@ export function renderProgramsView(container, navigateTo) {
   // Initial render
   populateCategories();
   renderLeftList();
+
+  // Live cross-device synchronization
+  const unsubscribeState = state.subscribe(() => {
+    if (!document.body.contains(container)) {
+      unsubscribeState();
+      return;
+    }
+    populateCategories();
+    renderLeftList();
+    if (selectedProgramId) {
+      renderRightDetail(selectedProgramId);
+    }
+  });
 }

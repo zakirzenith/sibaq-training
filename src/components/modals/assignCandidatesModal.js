@@ -182,7 +182,7 @@ export function openAssignCandidatesModal({ programId, onSave = () => {} }) {
     const opt = document.createElement('option');
     opt.value = t.id;
     opt.textContent = `${t.name} • ${t.expertise}`;
-    if (t.id === selectedTrainerId) opt.selected = true;
+    if (String(t.id).trim() === String(selectedTrainerId || '').trim()) opt.selected = true;
     modalTrainerSelect.appendChild(opt);
   });
 
@@ -431,10 +431,11 @@ export function openAssignCandidatesModal({ programId, onSave = () => {} }) {
 
   // Save changes
   btnSaveAssignments.addEventListener('click', () => {
-    // Save candidates
-    state.assignCandidatesToProgram(program.id, Array.from(assignedIds));
-    // Save trainer
-    state.assignTrainerToProgram(program.id, selectedTrainerId || null);
+    // Save candidates and trainer atomically in one update
+    state.assignProgramRoster(program.id, {
+      candidateIds: Array.from(assignedIds),
+      trainerId: selectedTrainerId ? selectedTrainerId.trim() : null
+    });
 
     toast.success(`Updated assignments for "${program.name}" (${assignedIds.size} candidates).`);
     close();

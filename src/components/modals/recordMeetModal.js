@@ -370,6 +370,15 @@ export function openRecordMeetModal({ candidateId, programId = null, trainerId =
     }
   });
 
+  // When selected program changes, auto-switch to its designated trainer
+  progSelect.addEventListener('change', () => {
+    const selectedPid = progSelect.value;
+    const assignedTrn = getProgramTrainer(selectedPid);
+    if (assignedTrn) {
+      trnSelect.value = assignedTrn.id;
+    }
+  });
+
   // Initial draw
   updateGraphVisuals(currentPercentage);
 

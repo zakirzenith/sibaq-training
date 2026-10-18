@@ -97,7 +97,12 @@ class StateService {
       if (stored) {
         const parsed = JSON.parse(stored);
         this.candidates = Array.isArray(parsed.candidates) ? parsed.candidates : [];
-        this.programs = Array.isArray(parsed.programs) ? parsed.programs : [];
+        this.programs = (Array.isArray(parsed.programs) ? parsed.programs : []).map(p => ({
+          ...p,
+          id: String(p.id || '').trim(),
+          trainerId: p.trainerId && String(p.trainerId).trim() ? String(p.trainerId).trim() : null,
+          candidateIds: Array.isArray(p.candidateIds) ? p.candidateIds.map(id => String(id).trim()).filter(Boolean) : []
+        }));
         this.trainers = Array.isArray(parsed.trainers) ? parsed.trainers : [];
         this.dailyMeets = Array.isArray(parsed.dailyMeets) ? parsed.dailyMeets : [];
         return;
@@ -173,31 +178,37 @@ class StateService {
 
     // Real-time snapshot listeners for each collection
     const unsubCandidates = firebaseService.subscribe('candidates', (items) => {
-      if (items.length > 0 || this.candidates.length === 0) {
-        this.candidates = items;
-        this.saveState();
-      }
+      this.candidates = items.map(c => ({
+        ...c,
+        id: String(c.id || '').trim()
+      }));
+      this.saveState();
     });
 
     const unsubPrograms = firebaseService.subscribe('programs', (items) => {
-      if (items.length > 0 || this.programs.length === 0) {
-        this.programs = items;
-        this.saveState();
-      }
+      this.programs = items.map(p => ({
+        ...p,
+        id: String(p.id || '').trim(),
+        trainerId: p.trainerId && String(p.trainerId).trim() ? String(p.trainerId).trim() : null,
+        candidateIds: Array.isArray(p.candidateIds) ? p.candidateIds.map(id => String(id).trim()).filter(Boolean) : []
+      }));
+      this.saveState();
     });
 
     const unsubTrainers = firebaseService.subscribe('trainers', (items) => {
-      if (items.length > 0 || this.trainers.length === 0) {
-        this.trainers = items;
-        this.saveState();
-      }
+      this.trainers = items.map(t => ({
+        ...t,
+        id: String(t.id || '').trim()
+      }));
+      this.saveState();
     });
 
     const unsubMeets = firebaseService.subscribe('dailyMeets', (items) => {
-      if (items.length > 0 || this.dailyMeets.length === 0) {
-        this.dailyMeets = items;
-        this.saveState();
-      }
+      this.dailyMeets = items.map(m => ({
+        ...m,
+        id: String(m.id || '').trim()
+      }));
+      this.saveState();
     });
 
     this.cloudUnsubscribers.push(unsubCandidates, unsubPrograms, unsubTrainers, unsubMeets);
@@ -249,7 +260,9 @@ class StateService {
   }
 
   getCandidateById(id) {
-    return this.candidates.find(c => c.id === id) || null;
+    if (!id) return null;
+    const cleanId = String(id).trim();
+    return this.candidates.find(c => String(c.id).trim() === cleanId) || null;
   }
 
   getCandidateByAdNo(adNo) {
@@ -260,7 +273,7 @@ class StateService {
 
   addCandidate(candidateData) {
     const newCandidate = {
-      id: candidateData.id || `cnd-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+      id: candidateData.id ? String(candidateData.id).trim() : `cnd-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
       adNo: String(candidateData.adNo || '').trim(),
       name: String(candidateData.name || '').trim(),
       category: String(candidateData.category || 'General').trim(),
@@ -279,7 +292,8 @@ class StateService {
   }
 
   updateCandidate(id, updateData) {
-    const index = this.candidates.findIndex(c => c.id === id);
+    const cleanId = String(id).trim();
+    const index = this.candidates.findIndex(c => String(c.id).trim() === cleanId);
     if (index === -1) return null;
 
     this.candidates[index] = {
@@ -294,23 +308,37 @@ class StateService {
     this.saveState();
 
     if (firebaseService.isInitialized) {
-      firebaseService.setDoc('candidates', id, this.candidates[index]).catch(e => console.warn(e));
+      firebaseService.setDoc('candidates', cleanId, this.candidates[index]).catch(e => console.warn(e));
     }
 
     return this.candidates[index];
   }
 
   deleteCandidate(id) {
-    this.candidates = this.candidates.filter(c => c.id !== id);
-    // Remove candidate from any assigned programs
-    this.programs = this.programs.map(prg => ({
-      ...prg,
-      candidateIds: (prg.candidateIds || []).filter(cId => cId !== id)
-    }));
+    if (!id) return;
+    const cleanId = String(id).trim();
+    this.candidates = this.candidates.filter(c => String(c.id).trim() !== cleanId);
+    
+    // Remove candidate from any assigned programs and sync those programs
+    const affectedPrograms = [];
+    this.programs = this.programs.map(prg => {
+      if (Array.isArray(prg.candidateIds) && prg.candidateIds.some(cId => String(cId).trim() === cleanId)) {
+        const updated = {
+          ...prg,
+          candidateIds: prg.candidateIds.filter(cId => String(cId).trim() !== cleanId)
+        };
+        affectedPrograms.push(updated);
+        return updated;
+      }
+      return prg;
+    });
     this.saveState();
 
     if (firebaseService.isInitialized) {
-      firebaseService.deleteDoc('candidates', id).catch(e => console.warn(e));
+      firebaseService.deleteDoc('candidates', cleanId).catch(e => console.warn(e));
+      affectedPrograms.forEach(p => {
+        firebaseService.setDoc('programs', p.id, p).catch(e => console.warn(e));
+      });
     }
   }
 
@@ -375,7 +403,9 @@ class StateService {
   }
 
   getProgramById(id) {
-    return this.programs.find(p => p.id === id) || null;
+    if (!id) return null;
+    const cleanId = String(id).trim();
+    return this.programs.find(p => String(p.id).trim() === cleanId) || null;
   }
 
   getProgramByCode(code) {
@@ -390,13 +420,13 @@ class StateService {
       : 'Stage';
 
     const newProgram = {
-      id: programData.id || `prg-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+      id: programData.id ? String(programData.id).trim() : `prg-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
       code: String(programData.code || '').trim().toUpperCase(),
       name: String(programData.name || '').trim(),
       category: String(programData.category || 'General').trim(),
       type: typeNormalized,
-      trainerId: programData.trainerId || null,
-      candidateIds: Array.isArray(programData.candidateIds) ? programData.candidateIds : [],
+      trainerId: programData.trainerId && String(programData.trainerId).trim() ? String(programData.trainerId).trim() : null,
+      candidateIds: Array.isArray(programData.candidateIds) ? programData.candidateIds.map(id => String(id).trim()).filter(Boolean) : [],
       createdAt: programData.createdAt || new Date().toISOString()
     };
 
@@ -411,7 +441,8 @@ class StateService {
   }
 
   updateProgram(id, updateData) {
-    const index = this.programs.findIndex(p => p.id === id);
+    const cleanId = String(id).trim();
+    const index = this.programs.findIndex(p => String(p.id).trim() === cleanId);
     if (index === -1) return null;
 
     let typeNormalized = this.programs[index].type;
@@ -421,10 +452,16 @@ class StateService {
         : 'Stage';
     }
 
+    let updatedTrainerId = this.programs[index].trainerId;
+    if (updateData.trainerId !== undefined) {
+      updatedTrainerId = updateData.trainerId && String(updateData.trainerId).trim() ? String(updateData.trainerId).trim() : null;
+    }
+
     this.programs[index] = {
       ...this.programs[index],
       ...updateData,
       type: typeNormalized,
+      trainerId: updatedTrainerId,
       code: updateData.code ? String(updateData.code).trim().toUpperCase() : this.programs[index].code,
       name: updateData.name ? String(updateData.name).trim() : this.programs[index].name,
       category: updateData.category ? String(updateData.category).trim() : this.programs[index].category
@@ -433,18 +470,20 @@ class StateService {
     this.saveState();
 
     if (firebaseService.isInitialized) {
-      firebaseService.setDoc('programs', id, this.programs[index]).catch(e => console.warn(e));
+      firebaseService.setDoc('programs', cleanId, this.programs[index]).catch(e => console.warn(e));
     }
 
     return this.programs[index];
   }
 
   deleteProgram(id) {
-    this.programs = this.programs.filter(p => p.id !== id);
+    if (!id) return;
+    const cleanId = String(id).trim();
+    this.programs = this.programs.filter(p => String(p.id).trim() !== cleanId);
     this.saveState();
 
     if (firebaseService.isInitialized) {
-      firebaseService.deleteDoc('programs', id).catch(e => console.warn(e));
+      firebaseService.deleteDoc('programs', cleanId).catch(e => console.warn(e));
     }
   }
 
@@ -510,52 +549,94 @@ class StateService {
   }
 
   assignTrainerToProgram(programId, trainerId) {
-    const program = this.programs.find(p => p.id === programId);
+    if (!programId) return false;
+    const cleanPid = String(programId).trim();
+    const program = this.programs.find(p => String(p.id).trim() === cleanPid);
     if (!program) return false;
-    program.trainerId = trainerId || null;
+
+    const cleanTid = trainerId && String(trainerId).trim() ? String(trainerId).trim() : null;
+    program.trainerId = cleanTid;
     this.saveState();
 
     if (firebaseService.isInitialized) {
-      firebaseService.setDoc('programs', programId, program).catch(e => console.warn(e));
+      firebaseService.setDoc('programs', program.id, {
+        ...program,
+        trainerId: cleanTid
+      }).catch(e => console.warn(e));
     }
 
     return true;
   }
 
   assignCandidatesToProgram(programId, candidateIds) {
-    const program = this.programs.find(p => p.id === programId);
+    if (!programId) return false;
+    const cleanPid = String(programId).trim();
+    const program = this.programs.find(p => String(p.id).trim() === cleanPid);
     if (!program) return false;
-    program.candidateIds = Array.from(new Set(candidateIds));
+
+    program.candidateIds = Array.from(new Set((candidateIds || []).map(id => String(id).trim()).filter(Boolean)));
     this.saveState();
 
     if (firebaseService.isInitialized) {
-      firebaseService.setDoc('programs', programId, program).catch(e => console.warn(e));
+      firebaseService.setDoc('programs', program.id, program).catch(e => console.warn(e));
+    }
+
+    return true;
+  }
+
+  assignProgramRoster(programId, { candidateIds, trainerId }) {
+    if (!programId) return false;
+    const cleanPid = String(programId).trim();
+    const program = this.programs.find(p => String(p.id).trim() === cleanPid);
+    if (!program) return false;
+
+    if (candidateIds !== undefined) {
+      program.candidateIds = Array.from(new Set((candidateIds || []).map(id => String(id).trim()).filter(Boolean)));
+    }
+    if (trainerId !== undefined) {
+      program.trainerId = trainerId && String(trainerId).trim() ? String(trainerId).trim() : null;
+    }
+
+    this.saveState();
+
+    if (firebaseService.isInitialized) {
+      firebaseService.setDoc('programs', program.id, program).catch(e => console.warn(e));
     }
 
     return true;
   }
 
   addCandidateToProgram(programId, candidateId) {
-    const program = this.programs.find(p => p.id === programId);
+    if (!programId || !candidateId) return false;
+    const cleanPid = String(programId).trim();
+    const cleanCid = String(candidateId).trim();
+    const program = this.programs.find(p => String(p.id).trim() === cleanPid);
     if (!program) return false;
-    if (!program.candidateIds.includes(candidateId)) {
-      program.candidateIds.push(candidateId);
+
+    if (!Array.isArray(program.candidateIds)) program.candidateIds = [];
+    if (!program.candidateIds.some(id => String(id).trim() === cleanCid)) {
+      program.candidateIds.push(cleanCid);
       this.saveState();
       if (firebaseService.isInitialized) {
-        firebaseService.setDoc('programs', programId, program).catch(e => console.warn(e));
+        firebaseService.setDoc('programs', program.id, program).catch(e => console.warn(e));
       }
     }
     return true;
   }
 
   removeCandidateFromProgram(programId, candidateId) {
-    const program = this.programs.find(p => p.id === programId);
+    if (!programId || !candidateId) return false;
+    const cleanPid = String(programId).trim();
+    const cleanCid = String(candidateId).trim();
+    const program = this.programs.find(p => String(p.id).trim() === cleanPid);
     if (!program) return false;
-    program.candidateIds = program.candidateIds.filter(id => id !== candidateId);
-    this.saveState();
 
-    if (firebaseService.isInitialized) {
-      firebaseService.setDoc('programs', programId, program).catch(e => console.warn(e));
+    if (Array.isArray(program.candidateIds)) {
+      program.candidateIds = program.candidateIds.filter(id => String(id).trim() !== cleanCid);
+      this.saveState();
+      if (firebaseService.isInitialized) {
+        firebaseService.setDoc('programs', program.id, program).catch(e => console.warn(e));
+      }
     }
 
     return true;
@@ -567,7 +648,9 @@ class StateService {
   }
 
   getTrainerById(id) {
-    return this.trainers.find(t => t.id === id) || null;
+    if (!id) return null;
+    const cleanId = String(id).trim();
+    return this.trainers.find(t => String(t.id).trim() === cleanId) || null;
   }
 
   addTrainer(trainerData) {
@@ -575,7 +658,7 @@ class StateService {
     const randomColor = palette[Math.floor(Math.random() * palette.length)];
 
     const newTrainer = {
-      id: trainerData.id || `trn-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
+      id: trainerData.id ? String(trainerData.id).trim() : `trn-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
       name: String(trainerData.name || '').trim(),
       expertise: String(trainerData.expertise || 'General Coach').trim(),
       experience: String(trainerData.experience || '3+ Years').trim(),
@@ -595,7 +678,8 @@ class StateService {
   }
 
   updateTrainer(id, updateData) {
-    const index = this.trainers.findIndex(t => t.id === id);
+    const cleanId = String(id).trim();
+    const index = this.trainers.findIndex(t => String(t.id).trim() === cleanId);
     if (index === -1) return null;
 
     this.trainers[index] = {
@@ -609,25 +693,34 @@ class StateService {
     this.saveState();
 
     if (firebaseService.isInitialized) {
-      firebaseService.setDoc('trainers', id, this.trainers[index]).catch(e => console.warn(e));
+      firebaseService.setDoc('trainers', cleanId, this.trainers[index]).catch(e => console.warn(e));
     }
 
     return this.trainers[index];
   }
 
   deleteTrainer(id) {
-    this.trainers = this.trainers.filter(t => t.id !== id);
-    // Unassign trainer from programs
+    if (!id) return;
+    const cleanId = String(id).trim();
+    this.trainers = this.trainers.filter(t => String(t.id).trim() !== cleanId);
+    
+    // Unassign trainer from programs in memory AND update in Firestore
+    const affectedPrograms = [];
     this.programs = this.programs.map(p => {
-      if (p.trainerId === id) {
-        return { ...p, trainerId: null };
+      if (p.trainerId && String(p.trainerId).trim() === cleanId) {
+        const updated = { ...p, trainerId: null };
+        affectedPrograms.push(updated);
+        return updated;
       }
       return p;
     });
     this.saveState();
 
     if (firebaseService.isInitialized) {
-      firebaseService.deleteDoc('trainers', id).catch(e => console.warn(e));
+      firebaseService.deleteDoc('trainers', cleanId).catch(e => console.warn(e));
+      affectedPrograms.forEach(p => {
+        firebaseService.setDoc('programs', p.id, p).catch(e => console.warn(e));
+      });
     }
   }
 
@@ -641,20 +734,24 @@ class StateService {
   }
 
   getCandidatePrograms(candidateId) {
+    if (!candidateId) return [];
+    const cId = String(candidateId).trim();
     return this.programs.filter(
-      p => Array.isArray(p.candidateIds) && p.candidateIds.includes(candidateId)
+      p => Array.isArray(p.candidateIds) && p.candidateIds.some(id => String(id).trim() === cId)
     );
   }
 
   getTrainerPrograms(trainerId) {
-    return this.programs.filter(p => p.trainerId === trainerId);
+    if (!trainerId) return [];
+    const tId = String(trainerId).trim();
+    return this.programs.filter(p => p.trainerId && String(p.trainerId).trim() === tId);
   }
 
   getTrainerMentees(trainerId) {
     const programs = this.getTrainerPrograms(trainerId);
     const candidateIdSet = new Set();
     programs.forEach(prg => {
-      (prg.candidateIds || []).forEach(id => candidateIdSet.add(id));
+      (prg.candidateIds || []).forEach(id => candidateIdSet.add(String(id).trim()));
     });
 
     return Array.from(candidateIdSet)
@@ -670,7 +767,7 @@ class StateService {
     const stagePrograms = this.programs.filter(p => p.type === 'Stage').length;
     const nonStagePrograms = this.programs.filter(p => p.type === 'Non-Stage').length;
 
-    const assignedProgramCount = this.programs.filter(p => p.trainerId !== null).length;
+    const assignedProgramCount = this.programs.filter(p => Boolean(p.trainerId && this.getTrainerById(p.trainerId))).length;
     const unassignedProgramCount = totalPrograms - assignedProgramCount;
 
     const totalEnrollments = this.programs.reduce(

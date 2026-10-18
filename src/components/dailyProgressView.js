@@ -286,14 +286,14 @@ export function renderDailyProgressView(container, navigateTo) {
           : meets.filter(m => m.programId === targetPid)
         ).sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
 
-        const progTrainer = prog && prog.trainerId ? state.getTrainerById(prog.trainerId) : (item.trainers[0] || null);
+        const progTrainer = prog && prog.trainerId ? state.getTrainerById(prog.trainerId) : null;
 
         if (progMeets.length === 0) {
           return `
             <div class="compact-empty-strip">
               <span class="text-xs text-muted">
                 ⏳ No check-ins recorded ${prog ? `for <strong>[${prog.code}] ${prog.name}</strong>` : ''} today (${selectedDate}).
-                ${progTrainer ? `• Mentor: <strong>${progTrainer.name}</strong>` : ''}
+                ${prog ? (progTrainer ? `• Mentor: <strong>${progTrainer.name}</strong>` : '• Mentor: <span class="text-muted font-semibold">Unassigned</span>') : ''}
               </span>
               <button type="button" class="btn-compact-add btn-drawer-record-meet" data-cid="${c.id}" data-pid="${prog ? prog.id : ''}" data-tid="${progTrainer ? progTrainer.id : ''}">
                 ${getIcon('plus')} Record Meet 1 for ${prog ? prog.code : 'Program'}
@@ -504,7 +504,7 @@ export function renderDailyProgressView(container, navigateTo) {
       const updateRecordButtonTarget = (pid) => {
         if (!mainRecordBtn) return;
         const targetProg = pid !== 'ALL' ? state.getProgramById(pid) : item.programs[0];
-        const targetTrn = targetProg && targetProg.trainerId ? state.getTrainerById(targetProg.trainerId) : (item.trainers[0] || null);
+        const targetTrn = targetProg && targetProg.trainerId ? state.getTrainerById(targetProg.trainerId) : null;
         mainRecordBtn.setAttribute('data-pid', targetProg ? targetProg.id : '');
         mainRecordBtn.setAttribute('data-tid', targetTrn ? targetTrn.id : '');
         mainRecordBtn.innerHTML = `${getIcon('plus')} Record Meet ${targetProg ? `for ${targetProg.code}` : ''}`;

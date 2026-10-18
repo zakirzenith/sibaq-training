@@ -74,7 +74,7 @@ export function openProgramFormModal({ program = null, onSave = () => {} }) {
               ${trainers
                 .map(
                   t => `
-                <option value="${t.id}" ${program && program.trainerId === t.id ? 'selected' : ''}>
+                <option value="${t.id}" ${program && String(program.trainerId || '').trim() === String(t.id).trim() ? 'selected' : ''}>
                   ${t.name} (${t.expertise})
                 </option>
               `

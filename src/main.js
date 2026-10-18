@@ -22,9 +22,18 @@ class App {
     this.initSidebarShortcuts();
     this.updateBadges();
 
-    // Subscribe to state changes to keep badges in sync
+    // Subscribe to state changes to keep badges and views in sync across all devices
     state.subscribe(() => {
       this.updateBadges();
+      
+      // Auto-refresh views when changes arrive from Cloud Firestore
+      const activeModal = document.querySelector('.modal-backdrop');
+      const isTyping = document.activeElement && 
+        (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA');
+
+      if (!activeModal && !isTyping && this.currentView !== 'programs') {
+        this.render();
+      }
     });
 
     // Render initial view

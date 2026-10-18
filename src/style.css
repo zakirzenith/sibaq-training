@@ -1192,11 +1192,16 @@ code, .ad-badge, .program-code-pill, .program-code-badge {
   grid-template-columns: 310px 1fr;
   gap: 20px;
   align-items: flex-start;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  min-width: 0;
 }
 
 @media (max-width: 1080px) {
   .programs-split-layout {
     grid-template-columns: 1fr;
+    gap: 16px;
   }
 }
 
@@ -1618,6 +1623,9 @@ code, .ad-badge, .program-code-pill, .program-code-badge {
   flex-direction: column;
   gap: 20px;
   min-width: 0;
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
 }
 
 .prog-detail-banner {
@@ -6974,13 +6982,23 @@ code, .ad-badge, .program-code-pill, .program-code-badge {
   .programs-split-layout {
     display: flex !important;
     flex-direction: column !important;
-    gap: 12px !important;
+    gap: 10px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    min-width: 0 !important;
+    overflow-x: hidden !important;
   }
 
   .programs-left-col {
     position: static !important;
     max-height: none !important;
     border-radius: 16px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    min-width: 0 !important;
+    overflow-x: hidden !important;
   }
 
   .programs-split-layout.mobile-show-detail .programs-left-col {
@@ -6991,6 +7009,18 @@ code, .ad-badge, .program-code-pill, .program-code-badge {
     display: none !important;
   }
 
+  .programs-right-col,
+  #programDetailContainer {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 10px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    min-width: 0 !important;
+    overflow-x: hidden !important;
+  }
+
   /* ==========================================================================
      PROGRAM DETAIL TOP ACTION BAR (SINGLE UNIFIED ROW)
      ========================================================================== */
@@ -6999,14 +7029,16 @@ code, .ad-badge, .program-code-pill, .program-code-badge {
     align-items: center !important;
     justify-content: space-between !important;
     gap: 6px !important;
-    padding: 8px 10px !important;
+    padding: 7px 8px !important;
     background: #ffffff !important;
     border: 1px solid #e2e8f0 !important;
-    border-radius: 14px !important;
-    margin-bottom: 8px !important;
+    border-radius: 12px !important;
+    margin-bottom: 6px !important;
     box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02) !important;
     width: 100% !important;
+    max-width: 100% !important;
     box-sizing: border-box !important;
+    min-width: 0 !important;
     flex-wrap: wrap !important;
   }
 
@@ -7014,12 +7046,12 @@ code, .ad-badge, .program-code-pill, .program-code-badge {
     display: inline-flex !important;
     align-items: center !important;
     gap: 4px !important;
-    padding: 6px 10px !important;
+    padding: 5px 8px !important;
     background: #eef2ff !important;
     border: 1px solid #c7d2fe !important;
     border-radius: 8px !important;
     color: #4338ca !important;
-    font-size: 12px !important;
+    font-size: 11.5px !important;
     font-weight: 700 !important;
     cursor: pointer !important;
     flex-shrink: 0 !important;
@@ -7039,6 +7071,18 @@ code, .ad-badge, .program-code-pill, .program-code-badge {
     justify-content: flex-start !important;
   }
 
+  .pdt-badges .program-code-pill {
+    font-size: 11px !important;
+    padding: 2px 6px !important;
+    flex-shrink: 0 !important;
+  }
+
+  .pdt-badges .badge {
+    font-size: 11px !important;
+    padding: 2px 7px !important;
+    flex-shrink: 0 !important;
+  }
+
   .pdt-actions {
     display: flex !important;
     align-items: center !important;
@@ -7052,9 +7096,14 @@ code, .ad-badge, .program-code-pill, .program-code-badge {
     display: none !important;
   }
 
+  .pdt-actions .desktop-only-inline {
+    display: none !important;
+  }
+
   .pdt-actions .saas-pill-btn-sm {
     display: inline-flex !important;
     align-items: center !important;
+    justify-content: center !important;
     gap: 4px !important;
     padding: 5px 8px !important;
     font-size: 11.5px !important;
@@ -7064,6 +7113,8 @@ code, .ad-badge, .program-code-pill, .program-code-badge {
     background: #ffffff !important;
     color: #334155 !important;
     cursor: pointer !important;
+    height: 30px !important;
+    box-sizing: border-box !important;
   }
 
   .pdt-actions .saas-circle-btn-sm {
@@ -7077,18 +7128,26 @@ code, .ad-badge, .program-code-pill, .program-code-badge {
     border: 1px solid #fecaca !important;
     background: #fef2f2 !important;
     cursor: pointer !important;
+    box-sizing: border-box !important;
   }
 
   .program-detail-title-card {
-    padding: 4px 2px 10px 2px !important;
+    padding: 2px 0 6px 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
   }
 
   .program-detail-title-card .sdb-title {
-    font-size: 1.25rem !important;
+    font-size: 1.15rem !important;
     font-weight: 800 !important;
     color: #0f172a !important;
     margin: 0 !important;
     line-height: 1.3 !important;
+    word-break: break-word !important;
+    overflow-wrap: break-word !important;
+    max-width: 100% !important;
   }
 
   /* Selection Sub-bar in Programs Column */
@@ -7366,84 +7425,168 @@ code, .ad-badge, .program-code-pill, .program-code-badge {
   .candidate-management-panel {
     width: 100% !important;
     max-width: 100% !important;
-    padding: 14px 12px !important;
+    padding: 12px 12px !important;
     border-radius: 14px !important;
     box-sizing: border-box !important;
     margin-bottom: 12px !important;
     overflow: hidden !important;
+    min-width: 0 !important;
   }
 
   .trainer-assignment-wrap {
     width: 100% !important;
+    max-width: 100% !important;
     box-sizing: border-box !important;
+    min-width: 0 !important;
   }
 
   .choose-trainer-field-btn {
-    padding: 10px 12px !important;
+    padding: 10px 10px !important;
     border-radius: 12px !important;
-    gap: 10px !important;
+    gap: 8px !important;
     width: 100% !important;
+    max-width: 100% !important;
     box-sizing: border-box !important;
+    min-width: 0 !important;
+    overflow: hidden !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+  }
+
+  .ctfb-left {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+    min-width: 0 !important;
+    flex: 1 1 auto !important;
+    overflow: hidden !important;
   }
 
   .ctfb-icon {
-    width: 36px !important;
-    height: 36px !important;
+    width: 34px !important;
+    height: 34px !important;
     border-radius: 10px !important;
+    flex-shrink: 0 !important;
+  }
+
+  .ctfb-text {
+    min-width: 0 !important;
+    flex: 1 1 auto !important;
+    overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 1px !important;
   }
 
   .ctfb-label {
     font-size: 13px !important;
+    font-weight: 700 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
   }
 
   .ctfb-hint {
-    font-size: 11px !important;
+    font-size: 10.5px !important;
+    color: #64748b !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    max-width: 100% !important;
+    display: block !important;
+  }
+
+  .ctfb-right {
+    display: flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+    flex-shrink: 0 !important;
+    margin-left: auto !important;
   }
 
   .ctfb-badge {
     font-size: 11px !important;
+    font-weight: 700 !important;
     padding: 3px 8px !important;
+    border-radius: 999px !important;
+    flex-shrink: 0 !important;
   }
 
   .assigned-trainer-profile-card {
-    padding: 10px 12px !important;
+    padding: 10px 10px !important;
     border-radius: 12px !important;
     gap: 8px !important;
     width: 100% !important;
+    max-width: 100% !important;
     box-sizing: border-box !important;
+    min-width: 0 !important;
+    flex-wrap: wrap !important;
   }
 
   .atpc-avatar {
-    width: 38px !important;
-    height: 38px !important;
-    font-size: 13px !important;
+    width: 36px !important;
+    height: 36px !important;
+    font-size: 12px !important;
+    flex-shrink: 0 !important;
+  }
+
+  .atpc-info {
+    min-width: 0 !important;
+    flex: 1 1 140px !important;
+    overflow: hidden !important;
   }
 
   .atpc-name {
-    font-size: 13.5px !important;
+    font-size: 13px !important;
+    font-weight: 700 !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
   }
 
   .atpc-meta {
-    gap: 6px !important;
+    gap: 4px !important;
+    flex-wrap: wrap !important;
+  }
+
+  .atpc-actions {
+    display: flex !important;
+    align-items: center !important;
+    gap: 5px !important;
+    flex-shrink: 0 !important;
+    margin-left: auto !important;
   }
 
   .btn-change-trainer-pill {
-    padding: 5px 10px !important;
-    font-size: 11.5px !important;
+    padding: 5px 8px !important;
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    border-radius: 8px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 3px !important;
   }
 
   .btn-unassign-trainer-pill {
-    width: 30px !important;
-    height: 30px !important;
+    width: 28px !important;
+    height: 28px !important;
+    border-radius: 8px !important;
+    flex-shrink: 0 !important;
   }
 
   .candidate-management-panel .ssc-head {
     display: flex !important;
     align-items: center !important;
     justify-content: space-between !important;
+    flex-wrap: wrap !important;
     gap: 8px !important;
     width: 100% !important;
+    max-width: 100% !important;
     box-sizing: border-box !important;
+    padding-bottom: 8px !important;
+    margin-bottom: 10px !important;
+    border-bottom: 1px solid #f1f5f9 !important;
   }
 
   .candidate-management-panel .ssc-head-title {
@@ -7451,21 +7594,32 @@ code, .ad-badge, .program-code-pill, .program-code-badge {
     align-items: center !important;
     gap: 6px !important;
     min-width: 0 !important;
+    flex-wrap: wrap !important;
+    font-size: 13px !important;
+    font-weight: 700 !important;
   }
 
   .candidate-management-panel #btnOpenCandidateModalBox {
-    padding: 6px 12px !important;
-    font-size: 12px !important;
+    padding: 6px 10px !important;
+    font-size: 11.5px !important;
+    font-weight: 700 !important;
     flex-shrink: 0 !important;
-    height: 34px !important;
+    margin-left: auto !important;
+    height: 32px !important;
     border-radius: 8px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+    white-space: nowrap !important;
   }
 
   .empty-enrolled-box {
-    padding: 18px 12px !important;
+    padding: 16px 10px !important;
     border-radius: 12px !important;
     width: 100% !important;
+    max-width: 100% !important;
     box-sizing: border-box !important;
+    overflow: hidden !important;
   }
 
   /* Form Trainer Picker Trigger on Mobile */

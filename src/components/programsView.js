@@ -521,7 +521,7 @@ export function renderProgramsView(container, navigateTo) {
             <span class="saas-badge-pill">${assignedCandidates.length} Enrolled</span>
           </div>
           <button id="btnOpenCandidateModalBox" class="btn-saas-primary btn-sm">
-            ${getIcon('plus')} Add Candidates
+            ${getIcon('plus')} <span>Add Candidates</span>
           </button>
         </div>
 

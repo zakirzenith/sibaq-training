@@ -347,10 +347,10 @@ export function renderDailyProgressView(container, navigateTo) {
 
         if (progMeets.length === 0) {
           return `
-            <div class="compact-empty-strip" style="padding: 12px; background: #f8fafc; border-radius: 8px; text-align: center;">
-              <span class="text-xs text-muted" style="display: block; margin-bottom: 8px;">
+            <div class="compact-empty-strip">
+              <span class="ces-text">
                 ⏳ No check-ins recorded ${prog ? `for <strong>[${prog.code}] ${prog.name}</strong>` : ''} today (${selectedDate}).
-                ${prog ? (progTrainer ? `• Mentor: <strong>${progTrainer.name}</strong>` : '• Mentor: <span class="text-muted font-semibold">Unassigned</span>') : ''}
+                ${prog ? (progTrainer ? `<br><span class="text-xs text-muted">• Mentor: <strong>${progTrainer.name}</strong></span>` : '<br><span class="text-xs text-muted">• Mentor: <span class="font-semibold">Unassigned</span></span>') : ''}
               </span>
               <button type="button" class="btn-compact-add btn-drawer-record-meet btn-saas-primary btn-sm" data-cid="${c.id}" data-pid="${prog ? prog.id : ''}" data-tid="${progTrainer ? progTrainer.id : ''}">
                 ${getIcon('plus')} Record Meet 1 for ${prog ? prog.code : 'Program'}
@@ -494,11 +494,13 @@ export function renderDailyProgressView(container, navigateTo) {
                 ` : ''}
               </div>
 
-              <div class="dcn-action-group">
-                <button type="button" class="btn-compact-record btn-drawer-record-meet btn-saas-primary btn-xs" data-cid="${c.id}" data-pid="${defaultDrawerPid !== 'ALL' ? defaultDrawerPid : (item.programs[0]?.id || '')}" data-tid="${item.trainers[0]?.id || ''}">
-                  ${getIcon('plus')} Record Meet
-                </button>
-              </div>
+              ${meets.length > 0 ? `
+                <div class="dcn-action-group">
+                  <button type="button" class="btn-compact-record btn-drawer-record-meet btn-saas-primary btn-xs" data-cid="${c.id}" data-pid="${defaultDrawerPid !== 'ALL' ? defaultDrawerPid : (item.programs[0]?.id || '')}" data-tid="${item.trainers[0]?.id || ''}">
+                    ${getIcon('plus')} Record Meet
+                  </button>
+                </div>
+              ` : ''}
             </div>
 
             <!-- Compact Sessions Content Container -->

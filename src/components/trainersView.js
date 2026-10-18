@@ -3,6 +3,8 @@ import { toast } from './toast.js';
 import { getIcon } from './icons.js';
 import { openTrainerFormModal } from './modals/trainerFormModal.js';
 import { openAssignCandidatesModal } from './modals/assignCandidatesModal.js';
+import { openExcelUploadModal } from './modals/excelUploadModal.js';
+import { excelService } from '../services/excelService.js';
 import { createFilterBar } from './filterEngine.js';
 
 export function renderTrainersView(container, navigateTo) {
@@ -19,6 +21,12 @@ export function renderTrainersView(container, navigateTo) {
       </div>
 
       <div class="saas-header-actions">
+        <button id="btnBulkUploadTrainers" class="saas-pill-btn" title="Bulk import trainers via Excel/CSV">
+          ${getIcon('upload')} Bulk Upload
+        </button>
+        <button id="btnExportTrainers" class="saas-pill-btn desktop-only-btn" title="Export all trainers to Excel">
+          ${getIcon('download')} Export
+        </button>
         <button id="btnAddTrainer" class="btn-saas-primary">
           ${getIcon('plus')} Add Trainer
         </button>
@@ -253,6 +261,31 @@ export function renderTrainersView(container, navigateTo) {
   container.querySelector('#btnAddTrainer').addEventListener('click', () => {
     openTrainerFormModal({ onSave: renderGrid });
   });
+
+  const btnBulkUploadTrainers = container.querySelector('#btnBulkUploadTrainers');
+  if (btnBulkUploadTrainers) {
+    btnBulkUploadTrainers.addEventListener('click', () => {
+      openExcelUploadModal({
+        type: 'trainers',
+        onComplete: () => {
+          renderGrid();
+        }
+      });
+    });
+  }
+
+  const btnExportTrainers = container.querySelector('#btnExportTrainers');
+  if (btnExportTrainers) {
+    btnExportTrainers.addEventListener('click', () => {
+      const allTrainers = state.getTrainers();
+      if (allTrainers.length === 0) {
+        toast.info('No trainers in the faculty roster to export.');
+        return;
+      }
+      excelService.exportTrainers(allTrainers, state);
+      toast.info('Exported trainers roster to Excel.');
+    });
+  }
 
   renderGrid();
 

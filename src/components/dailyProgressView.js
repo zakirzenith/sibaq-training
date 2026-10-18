@@ -45,14 +45,9 @@ export function renderDailyProgressView(container, navigateTo) {
       </div>
     </div>
 
-    <!-- Unified Minimalist Metric Ribbon -->
-    <div class="saas-metric-ribbon" id="dailyMetricRibbon">
-      <!-- Injected dynamically -->
-    </div>
-
-    <!-- Quick Status Filter Pills Row -->
-    <div class="saas-quick-status-tabs" id="statusTabBar" style="display: flex; gap: 8px; margin-bottom: 12px; overflow-x: auto; padding-bottom: 4px;">
-      <!-- Injected dynamically -->
+    <!-- Unified Interactive Daily Check-In Command Hub -->
+    <div class="daily-checkin-hub" id="dailyCheckinHub">
+      <!-- Injected dynamically with progress ring, stats capsule, and interactive status tabs -->
     </div>
 
     <!-- Modern Notion/Linear Filter Engine -->
@@ -74,9 +69,8 @@ export function renderDailyProgressView(container, navigateTo) {
   `;
 
   const datePicker = container.querySelector('#dailyDatePicker');
-  const metricRibbon = container.querySelector('#dailyMetricRibbon');
+  const dailyCheckinHub = container.querySelector('#dailyCheckinHub');
   const rosterGrid = container.querySelector('#dailyCandidatesRoster');
-  const statusTabBar = container.querySelector('#statusTabBar');
   const btnToday = container.querySelector('#btnDateToday');
   const btnYesterday = container.querySelector('#btnDateYesterday');
   const filterBarContainer = container.querySelector('#dailyProgressFilterBar');
@@ -165,59 +159,62 @@ export function renderDailyProgressView(container, navigateTo) {
     btnYesterday.classList.toggle('active', isYesterday);
     datePicker.value = selectedDate;
 
-    // Render Clean Minimalist Metric Ribbon
-    const readinessStatus = summary.avgScore > 0 ? getProgressStatus(summary.avgScore) : null;
+    // Render Unified Interactive Daily Check-In Command Hub
+    const total = summary.totalScheduled || 0;
+    const met = summary.metCount || 0;
+    const pending = summary.pendingCount || 0;
+    const missed = summary.missedCount || 0;
+    const metPct = total > 0 ? Math.round((met / total) * 100) : 0;
+    const readiness = summary.avgScore || 0;
+    const readinessStatus = readiness > 0 ? getProgressStatus(readiness) : { label: 'Not Evaluated', badgeClass: 'badge-neutral', color: '#64748b' };
 
-    metricRibbon.innerHTML = `
-      <div class="smr-item">
-        <span class="smr-val">${summary.totalScheduled}</span>
-        <span class="smr-lbl">Candidates</span>
+    dailyCheckinHub.innerHTML = `
+      <div class="dch-top-row">
+        <div class="dch-progress-wrap">
+          <div class="dch-progress-meta">
+            <span class="dch-progress-title">
+              <strong>${met}</strong> of <strong>${total}</strong> Candidates Evaluated
+            </span>
+            <span class="dch-progress-pct">${metPct}% Complete</span>
+          </div>
+          <div class="dch-progress-track">
+            <div class="dch-progress-bar-fill" style="width: ${metPct}%;"></div>
+          </div>
+        </div>
+
+        <div class="dch-readiness-wrap">
+          <div class="dch-readiness-val" style="color: ${readinessStatus.color || '#3b82f6'};">${readiness}%</div>
+          <div class="dch-readiness-info">
+            <span class="dch-readiness-label">Average Score</span>
+            <span class="badge ${readinessStatus.badgeClass} dch-readiness-badge">${readinessStatus.label}</span>
+          </div>
+        </div>
       </div>
-      <span class="smr-divider"></span>
 
-      <div class="smr-item">
-        <span class="smr-val text-emerald">${summary.metCount}</span>
-        <span class="smr-lbl">Completed</span>
-        ${summary.multiMeetCount > 0 ? `<span class="saas-tag-pill saas-tag-emerald desktop-only-btn">${summary.multiMeetCount} multi</span>` : ''}
-      </div>
-      <span class="smr-divider"></span>
-
-      <div class="smr-item">
-        <span class="smr-val text-amber">${summary.pendingCount}</span>
-        <span class="smr-lbl">Pending</span>
-      </div>
-      <span class="smr-divider"></span>
-
-      <div class="smr-item">
-        <span class="smr-val text-danger">${summary.missedCount}</span>
-        <span class="smr-lbl">Missed</span>
-      </div>
-      <span class="smr-divider"></span>
-
-      <div class="smr-item">
-        <span class="smr-val text-primary">${summary.avgScore}%</span>
-        <span class="smr-lbl">Readiness</span>
-        ${readinessStatus ? `<span class="saas-tag-pill ${readinessStatus.badgeClass} desktop-only-btn">${readinessStatus.label}</span>` : ''}
+      <div class="dch-filter-tabs">
+        <button type="button" class="dch-tab-btn ${statusTabFilter === 'ALL' ? 'active' : ''}" data-status="ALL">
+          <span>All</span>
+          <span class="dch-tab-badge">${total}</span>
+        </button>
+        <button type="button" class="dch-tab-btn dch-tab-met ${statusTabFilter === 'MET' ? 'active' : ''}" data-status="MET">
+          <span class="saas-dot dot-emerald"></span>
+          <span>Met</span>
+          <span class="dch-tab-badge badge-emerald">${met}</span>
+        </button>
+        <button type="button" class="dch-tab-btn dch-tab-pending ${statusTabFilter === 'PENDING' ? 'active' : ''}" data-status="PENDING">
+          <span class="saas-dot dot-amber"></span>
+          <span>Pending</span>
+          <span class="dch-tab-badge badge-amber">${pending}</span>
+        </button>
+        <button type="button" class="dch-tab-btn dch-tab-missed ${statusTabFilter === 'MISSED' ? 'active' : ''}" data-status="MISSED">
+          <span class="saas-dot dot-danger"></span>
+          <span>Missed</span>
+          <span class="dch-tab-badge badge-danger">${missed}</span>
+        </button>
       </div>
     `;
 
-    // Render Segmented Status Filter Tabs
-    statusTabBar.innerHTML = `
-      <button class="saas-tab-pill ${statusTabFilter === 'ALL' ? 'active' : ''}" data-status="ALL">
-        All <span class="stp-count">${summary.totalScheduled}</span>
-      </button>
-      <button class="saas-tab-pill ${statusTabFilter === 'MET' ? 'active' : ''}" data-status="MET">
-        <span class="saas-dot dot-emerald"></span> Met <span class="stp-count">${summary.metCount}</span>
-      </button>
-      <button class="saas-tab-pill ${statusTabFilter === 'PENDING' ? 'active' : ''}" data-status="PENDING">
-        <span class="saas-dot dot-amber"></span> Pending <span class="stp-count">${summary.pendingCount}</span>
-      </button>
-      <button class="saas-tab-pill ${statusTabFilter === 'MISSED' ? 'active' : ''}" data-status="MISSED">
-        <span class="saas-dot dot-danger"></span> Missed <span class="stp-count">${summary.missedCount}</span>
-      </button>
-    `;
-
-    statusTabBar.querySelectorAll('.saas-tab-pill').forEach(btn => {
+    dailyCheckinHub.querySelectorAll('.dch-tab-btn').forEach(btn => {
       btn.addEventListener('click', () => {
         statusTabFilter = btn.getAttribute('data-status');
         renderView();

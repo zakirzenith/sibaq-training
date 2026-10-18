@@ -132,30 +132,32 @@ export function openRecordMeetModal({ candidateId, programId = null, trainerId =
                 </linearGradient>
               </defs>
 
-              <!-- Range Background Zones (0-40, 40-60, 60-75, 75-90, 90-100) -->
-              <!-- 90-100% Event Ready -->
-              <rect x="0" y="0" width="500" height="24" fill="#10b981" fill-opacity="0.08"/>
-              <!-- 75-89% Proficient -->
-              <rect x="0" y="24" width="500" height="36" fill="#06b6d4" fill-opacity="0.07"/>
-              <!-- 60-74% Progressing -->
-              <rect x="0" y="60" width="500" height="36" fill="#3b82f6" fill-opacity="0.06"/>
-              <!-- 40-59% Need Improvement -->
-              <rect x="0" y="96" width="500" height="36" fill="#f59e0b" fill-opacity="0.07"/>
-              <!-- 0-39% Need Focus -->
-              <rect x="0" y="132" width="500" height="28" fill="#ef4444" fill-opacity="0.08"/>
+              <!-- Range Background Zones & Text Labels (Hidden on mobile for sleek minimalist line) -->
+              <g class="graph-zone-decorations">
+                <!-- 90-100% Event Ready -->
+                <rect x="0" y="0" width="500" height="24" fill="#10b981" fill-opacity="0.08"/>
+                <!-- 75-89% Proficient -->
+                <rect x="0" y="24" width="500" height="36" fill="#06b6d4" fill-opacity="0.07"/>
+                <!-- 60-74% Progressing -->
+                <rect x="0" y="60" width="500" height="36" fill="#3b82f6" fill-opacity="0.06"/>
+                <!-- 40-59% Need Improvement -->
+                <rect x="0" y="96" width="500" height="36" fill="#f59e0b" fill-opacity="0.07"/>
+                <!-- 0-39% Need Focus -->
+                <rect x="0" y="132" width="500" height="28" fill="#ef4444" fill-opacity="0.08"/>
 
-              <!-- Grid reference lines -->
-              <line x1="0" y1="24" x2="500" y2="24" stroke="rgba(16, 185, 129, 0.25)" stroke-dasharray="3,3" stroke-width="1"/>
-              <line x1="0" y1="60" x2="500" y2="60" stroke="rgba(6, 182, 212, 0.25)" stroke-dasharray="3,3" stroke-width="1"/>
-              <line x1="0" y1="96" x2="500" y2="96" stroke="rgba(59, 130, 246, 0.25)" stroke-dasharray="3,3" stroke-width="1"/>
-              <line x1="0" y1="132" x2="500" y2="132" stroke="rgba(245, 158, 11, 0.25)" stroke-dasharray="3,3" stroke-width="1"/>
+                <!-- Grid reference lines -->
+                <line x1="0" y1="24" x2="500" y2="24" stroke="rgba(16, 185, 129, 0.25)" stroke-dasharray="3,3" stroke-width="1"/>
+                <line x1="0" y1="60" x2="500" y2="60" stroke="rgba(6, 182, 212, 0.25)" stroke-dasharray="3,3" stroke-width="1"/>
+                <line x1="0" y1="96" x2="500" y2="96" stroke="rgba(59, 130, 246, 0.25)" stroke-dasharray="3,3" stroke-width="1"/>
+                <line x1="0" y1="132" x2="500" y2="132" stroke="rgba(245, 158, 11, 0.25)" stroke-dasharray="3,3" stroke-width="1"/>
 
-              <!-- Zone Labels on Right -->
-              <text x="495" y="16" text-anchor="end" fill="#059669" font-size="9" font-weight="600">Event Ready (90-100%)</text>
-              <text x="495" y="46" text-anchor="end" fill="#0891b2" font-size="9" font-weight="600">Proficient (75-89%)</text>
-              <text x="495" y="80" text-anchor="end" fill="#2563eb" font-size="9" font-weight="600">Progressing (60-74%)</text>
-              <text x="495" y="116" text-anchor="end" fill="#d97706" font-size="9" font-weight="600">Need Improvement (40-59%)</text>
-              <text x="495" y="148" text-anchor="end" fill="#dc2626" font-size="9" font-weight="600">Need Focus (0-39%)</text>
+                <!-- Zone Labels on Right -->
+                <text x="495" y="16" text-anchor="end" fill="#059669" font-size="9" font-weight="600">Event Ready (90-100%)</text>
+                <text x="495" y="46" text-anchor="end" fill="#0891b2" font-size="9" font-weight="600">Proficient (75-89%)</text>
+                <text x="495" y="80" text-anchor="end" fill="#2563eb" font-size="9" font-weight="600">Progressing (60-74%)</text>
+                <text x="495" y="116" text-anchor="end" fill="#d97706" font-size="9" font-weight="600">Need Improvement (40-59%)</text>
+                <text x="495" y="148" text-anchor="end" fill="#dc2626" font-size="9" font-weight="600">Need Focus (0-39%)</text>
+              </g>
 
               <!-- Dynamic Filled Area under Curve -->
               <path id="svgAreaPath" d="" fill="url(#curveGradient)"></path>

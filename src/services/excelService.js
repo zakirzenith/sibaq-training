@@ -12,6 +12,57 @@ function cleanKey(str) {
     .replace(/[^a-z0-9]/g, '');
 }
 
+// Helper to intelligently classify Stage vs Non-Stage
+export function inferProgramType(rawType = '', code = '', name = '') {
+  const cleanVal = String(rawType || '').trim().toLowerCase();
+
+  // 1. Explicit cell value matched
+  if (['stage', 'on stage', 'on-stage', 'onstage', 's', 'yes', 'true', '1', 'stg'].includes(cleanVal)) {
+    return 'Stage';
+  }
+  if (cleanVal.includes('non') || cleanVal.includes('off') || ['no', 'false', '0', 'ns', 'nn'].includes(cleanVal)) {
+    return 'Non-Stage';
+  }
+  if (cleanVal === 'stage' || (cleanVal.includes('stage') && !cleanVal.includes('non') && !cleanVal.includes('off'))) {
+    return 'Stage';
+  }
+
+  // 2. Sibaq Code Prefix Heuristic
+  const c = String(code || '').trim().toUpperCase();
+  // Bidaya Stage: BS, BST; Ula Stage: US, UST; Thanawiyyah Stage: TS, TST; Aliyah Stage: AS, AST
+  if (/^(BS|UST|US|TST|TS|AST|AS|BST)\d+/i.test(c) || c.includes('STG') || c.includes('STAGE') || c.includes('ONSTAGE')) {
+    return 'Stage';
+  }
+  // Bidaya Non-Stage: BNN, BN; Ula Non-Stage: UNN, UN; etc.
+  if (/^(BNN|UNN|TNN|ANN|BN|UN|TN|AN|NST)\d+/i.test(c) || c.includes('NON') || c.includes('OFF') || c.includes('NN')) {
+    return 'Non-Stage';
+  }
+
+  // 3. Program Title / Name Heuristics
+  const n = String(name || '').trim().toLowerCase();
+  const stageKeywords = [
+    'speech', 'elocution', 'debate', 'qira', 'qirat', 'qur\'an', 'quran', 'hifz', 'hifdh',
+    'nasheed', 'song', 'duff', 'quiz', 'extempore', 'public address', 'mono act', 'mime',
+    'choral', 'ghazal', 'gazal', 'recitation', 'anchor', 'anchoring', 'mushaira', 'drama',
+    'skit', 'talk', 'presentation', 'story telling', 'story-telling', 'vocal', 'anthem'
+  ];
+  if (stageKeywords.some(kw => n.includes(kw))) {
+    return 'Stage';
+  }
+
+  const nonStageKeywords = [
+    'writing', 'essay', 'story writing', 'paragraph', 'diary', 'drawing', 'pencil', 'painting',
+    'calligraphy', 'poster', 'versification', 'translation', 'review', 'caption', 'water color',
+    'watercolour', 'embroidery', 'origami', 'collage', 'scrap book'
+  ];
+  if (nonStageKeywords.some(kw => n.includes(kw))) {
+    return 'Non-Stage';
+  }
+
+  // Default fallback
+  return cleanVal.includes('stage') ? 'Stage' : 'Non-Stage';
+}
+
 export const excelService = {
   /**
    * Parse Candidates Excel/CSV File
@@ -96,11 +147,18 @@ export const excelService = {
       throw new Error('The uploaded spreadsheet appears to be empty.');
     }
 
+    const allowedStageHeaders = [
+      'type', 'programtype', 'stageornonstage', 'stagenonstage', 'stageornonstageitem',
+      'stage', 'stagetype', 'itemtype', 'eventtype', 'nature', 'venue', 'mode',
+      'stageoffstage', 'stageoroffstage', 'stageitem', 'isstage', 'stagecategory',
+      'type(stageornonstage)', 'typestageornonstage', 'typestagenonstage'
+    ];
+
     const parsedList = rawRows.map((row, index) => {
       let code = '';
       let name = '';
       let category = 'General';
-      let type = 'Non-Stage';
+      let rawType = '';
 
       // Match columns dynamically
       for (const [key, val] of Object.entries(row)) {
@@ -113,8 +171,19 @@ export const excelService = {
           name = strVal;
         } else if (['category', 'cat', 'group', 'division'].includes(cleaned)) {
           category = strVal || 'General';
-        } else if (['type', 'programtype', 'stageornonstage', 'stageornonstageitem', 'stage', 'stagetype'].includes(cleaned)) {
-          type = strVal;
+        } else if (allowedStageHeaders.includes(cleaned) || cleaned.includes('stage')) {
+          rawType = strVal;
+        }
+      }
+
+      // Check all cell values in row if rawType not identified yet
+      if (!rawType) {
+        for (const val of Object.values(row)) {
+          const s = String(val).trim().toLowerCase();
+          if (['stage', 'non-stage', 'non stage', 'off-stage', 'off stage', 'on stage'].includes(s)) {
+            rawType = s;
+            break;
+          }
         }
       }
 
@@ -125,12 +194,12 @@ export const excelService = {
           code = String(values[0] || '').trim().toUpperCase();
           name = String(values[1] || '').trim();
           if (values[2]) category = String(values[2]).trim();
-          if (values[3]) type = String(values[3]).trim();
+          if (values[3]) rawType = String(values[3]).trim();
         }
       }
 
-      // Normalize Type
-      const normalizedType = String(type || '').toLowerCase().includes('non') ? 'Non-Stage' : 'Stage';
+      // Intelligently infer Stage vs Non-Stage
+      const normalizedType = inferProgramType(rawType, code, name);
 
       const isValid = Boolean(code && name);
       const errors = [];
@@ -143,6 +212,66 @@ export const excelService = {
         name,
         category: category || 'General',
         type: normalizedType,
+        isValid,
+        error: errors.join(', ')
+      };
+    });
+
+    return parsedList;
+  },
+
+  /**
+   * Parse Trainers Excel/CSV File
+   * Accepts File object and returns parsed & validated rows
+   */
+  async parseTrainersFile(file) {
+    const arrayBuffer = await file.arrayBuffer();
+    const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+    const firstSheetName = workbook.SheetNames[0];
+    const worksheet = workbook.Sheets[firstSheetName];
+
+    const rawRows = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
+
+    if (!rawRows || rawRows.length === 0) {
+      throw new Error('The uploaded spreadsheet appears to be empty.');
+    }
+
+    const parsedList = rawRows.map((row, index) => {
+      let name = '';
+      let expertise = 'General Mentor';
+      let experience = '3+ Years';
+
+      for (const [key, val] of Object.entries(row)) {
+        const cleaned = cleanKey(key);
+        const strVal = String(val).trim();
+
+        if (['name', 'trainername', 'fullname', 'mentor', 'trainer', 'mentorname'].includes(cleaned)) {
+          name = strVal;
+        } else if (['expertise', 'department', 'subject', 'specialization', 'field', 'role', 'domain', 'skill'].includes(cleaned)) {
+          expertise = strVal || 'General Mentor';
+        } else if (['experience', 'exp', 'years', 'duration', 'trackrecord'].includes(cleaned)) {
+          experience = strVal || '3+ Years';
+        }
+      }
+
+      if (!name) {
+        const values = Object.values(row);
+        if (values.length >= 1) {
+          name = String(values[0] || '').trim();
+          if (values[1]) expertise = String(values[1]).trim();
+          if (values[2]) experience = String(values[2]).trim();
+        }
+      }
+
+      const isValid = Boolean(name);
+      const errors = [];
+      if (!name) errors.push('Missing Trainer Name');
+
+      return {
+        rowNumber: index + 2,
+        name,
+        expertise: expertise || 'General Mentor',
+        experience: experience || '3+ Years',
         isValid,
         error: errors.join(', ')
       };
@@ -258,6 +387,66 @@ export const excelService = {
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Programs');
     XLSX.writeFile(workbook, 'programs_sample_template.xlsx');
+  },
+
+  /**
+   * Generate & Download Trainers Sample Excel Template
+   */
+  downloadTrainersTemplate() {
+    const sampleData = [
+      {
+        'Trainer Name': 'JANISH NEHYAN HUDAWI',
+        'Expertise / Field': 'Technical & Presentation',
+        'Experience': '5+ Years'
+      },
+      {
+        'Trainer Name': 'RSHID AT HUDAWI',
+        'Expertise / Field': 'English & Speech',
+        'Experience': '4+ Years'
+      },
+      {
+        'Trainer Name': 'ALI REZA HUDAWI',
+        'Expertise / Field': 'Writing & Literature',
+        'Experience': '3+ Years'
+      },
+      {
+        'Trainer Name': 'ALTAF RAZA AMJADI',
+        'Expertise / Field': 'Fiqh & Urdu Expert',
+        'Experience': '6+ Years'
+      }
+    ];
+
+    const worksheet = XLSX.utils.json_to_sheet(sampleData);
+    worksheet['!cols'] = [{ wch: 28 }, { wch: 28 }, { wch: 18 }];
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Trainers Template');
+    XLSX.writeFile(workbook, 'trainers_sample_template.xlsx');
+  },
+
+  /**
+   * Export all Trainers to formatted Excel
+   */
+  exportTrainers(trainers, state) {
+    const data = trainers.map(t => {
+      const assigned = state ? state.getTrainerPrograms(t.id) : [];
+      const mentees = state ? state.getTrainerMentees(t.id) : [];
+      return {
+        'Trainer Name': t.name,
+        'Expertise': t.expertise,
+        'Experience': t.experience,
+        'Status': t.status || 'Active',
+        'Assigned Programs Count': assigned.length,
+        'Assigned Programs': assigned.map(p => `[${p.code}] ${p.name}`).join('; '),
+        'Total Mentees Count': mentees.length
+      };
+    });
+
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    worksheet['!cols'] = [{ wch: 26 }, { wch: 24 }, { wch: 16 }, { wch: 12 }, { wch: 22 }, { wch: 40 }, { wch: 18 }];
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Trainers Roster');
+    const today = new Date().toISOString().split('T')[0];
+    XLSX.writeFile(workbook, `Trainers_Roster_${today}.xlsx`);
   },
 
   /**

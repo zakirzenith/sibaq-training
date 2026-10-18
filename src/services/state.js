@@ -8,6 +8,7 @@ import {
   SAMPLE_DEMO_TRAINERS 
 } from '../data/initialData.js';
 import { firebaseService } from './firebase.js';
+import { inferProgramType } from './excelService.js';
 
 // Clear legacy demo storage key to wipe default mock records
 try {
@@ -105,6 +106,11 @@ class StateService {
         }));
         this.trainers = Array.isArray(parsed.trainers) ? parsed.trainers : [];
         this.dailyMeets = Array.isArray(parsed.dailyMeets) ? parsed.dailyMeets : [];
+
+        // Auto-fix if all programs are currently marked Non-Stage
+        if (this.programs.length > 0 && this.programs.every(p => p.type === 'Non-Stage')) {
+          this.reclassifyProgramsStageType(false);
+        }
         return;
       }
     } catch (e) {
@@ -598,6 +604,29 @@ class StateService {
     return { addedCount, updatedCount, skippedCount, totalProcessed: list.length };
   }
 
+  reclassifyProgramsStageType(triggerNotify = true) {
+    let reclassifiedCount = 0;
+    const updatedPrograms = [];
+
+    this.programs.forEach(p => {
+      const currentType = p.type;
+      const detectedType = inferProgramType('', p.code, p.name);
+      if (detectedType && detectedType !== currentType) {
+        p.type = detectedType;
+        updatedPrograms.push(p);
+        reclassifiedCount++;
+      }
+    });
+
+    if (reclassifiedCount > 0) {
+      this.saveState(triggerNotify);
+      if (firebaseService.isInitialized) {
+        firebaseService.batchSync('programs', updatedPrograms).catch(e => console.warn(e));
+      }
+    }
+    return { reclassifiedCount, total: this.programs.length };
+  }
+
   assignTrainerToProgram(programId, trainerId) {
     if (!programId) return false;
     const cleanPid = String(programId).trim();
@@ -775,6 +804,62 @@ class StateService {
         firebaseService.setDoc('programs', p.id, p).catch(e => console.warn(e));
       });
     }
+  }
+
+  addTrainersBulk(list, overwriteExisting = false) {
+    let addedCount = 0;
+    let updatedCount = 0;
+    let skippedCount = 0;
+    const newOrUpdated = [];
+    const palette = ['#8b5cf6', '#06b6d4', '#ec4899', '#10b981', '#f59e0b', '#3b82f6'];
+
+    list.forEach(item => {
+      const name = String(item.name || '').trim();
+      if (!name) {
+        skippedCount++;
+        return;
+      }
+
+      const existingIndex = this.trainers.findIndex(
+        t => t.name.toLowerCase() === name.toLowerCase()
+      );
+
+      if (existingIndex >= 0) {
+        if (overwriteExisting) {
+          this.trainers[existingIndex] = {
+            ...this.trainers[existingIndex],
+            expertise: String(item.expertise || this.trainers[existingIndex].expertise || 'General Mentor').trim(),
+            experience: String(item.experience || this.trainers[existingIndex].experience || '3+ Years').trim()
+          };
+          newOrUpdated.push(this.trainers[existingIndex]);
+          updatedCount++;
+        } else {
+          skippedCount++;
+        }
+      } else {
+        const randomColor = palette[Math.floor(Math.random() * palette.length)];
+        const newObj = {
+          id: `trn-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
+          name,
+          expertise: String(item.expertise || 'General Mentor').trim(),
+          experience: String(item.experience || '3+ Years').trim(),
+          status: 'Active',
+          color: randomColor,
+          createdAt: new Date().toISOString()
+        };
+        this.trainers.push(newObj);
+        newOrUpdated.push(newObj);
+        addedCount++;
+      }
+    });
+
+    this.saveState();
+
+    if (firebaseService.isInitialized && newOrUpdated.length > 0) {
+      firebaseService.batchSync('trainers', newOrUpdated).catch(e => console.warn(e));
+    }
+
+    return { addedCount, updatedCount, skippedCount, totalProcessed: list.length };
   }
 
   // --- COMPUTED & RELATIONSHIPS ---

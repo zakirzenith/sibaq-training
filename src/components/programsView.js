@@ -73,6 +73,9 @@ export function renderProgramsView(container, navigateTo) {
           <button id="btnBulkUploadPrograms" class="saas-pill-btn" title="Bulk upload programs from Excel">
             ${getIcon('upload')} Bulk Upload
           </button>
+          <button id="btnAutoFixStageTypes" class="saas-pill-btn" title="Auto-detect Stage vs Non-Stage items based on Sibaq codes and titles">
+            ${getIcon('refresh')} Fix Stage Types
+          </button>
         </div>
 
         <button id="btnAddProgram" class="btn-saas-primary">
@@ -95,6 +98,9 @@ export function renderProgramsView(container, navigateTo) {
               <span class="programs-count-pill" id="progCountDisplay">-- Programs</span>
             </div>
             <div class="psb-right">
+              <button type="button" id="btnAutoFixStageTypesMobile" class="btn-select-toggle" title="Auto-correct Stage vs Non-Stage based on codes and names">
+                ${getIcon('refresh')} <span>Fix Stage</span>
+              </button>
               <button type="button" id="btnToggleProgramSelectMode" class="btn-select-toggle" title="Multi-select programs for bulk actions">
                 ${getIcon('checkSquare')} <span>Multi-Select</span>
               </button>
@@ -782,6 +788,27 @@ export function renderProgramsView(container, navigateTo) {
       }
     });
   });
+
+  const handleAutoFix = () => {
+    const { reclassifiedCount, total } = state.reclassifyProgramsStageType(true);
+    if (reclassifiedCount > 0) {
+      toast.success(`Auto-corrected ${reclassifiedCount} of ${total} programs to their proper Stage / Non-Stage classification!`);
+      renderLeftList();
+      if (selectedProgramId) renderRightDetail(selectedProgramId);
+    } else {
+      toast.info(`All ${total} programs are already accurately classified based on codes and keywords.`);
+    }
+  };
+
+  const btnAutoFixStageTypes = container.querySelector('#btnAutoFixStageTypes');
+  if (btnAutoFixStageTypes) {
+    btnAutoFixStageTypes.addEventListener('click', handleAutoFix);
+  }
+
+  const btnAutoFixStageTypesMobile = container.querySelector('#btnAutoFixStageTypesMobile');
+  if (btnAutoFixStageTypesMobile) {
+    btnAutoFixStageTypesMobile.addEventListener('click', handleAutoFix);
+  }
 
   // Initial render
   renderLeftList();

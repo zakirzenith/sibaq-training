@@ -4,12 +4,24 @@ import { toast } from '../toast.js';
 import { getIcon } from '../icons.js';
 
 export function openExcelUploadModal({ type = 'candidates', onComplete = () => {} }) {
-  // type can be 'candidates' or 'programs'
+  // type can be 'candidates', 'programs', or 'trainers'
   const isCandidates = type === 'candidates';
-  const title = isCandidates ? 'Bulk Upload Candidates' : 'Bulk Upload Programs';
-  const subtitle = isCandidates
-    ? 'Upload an Excel (.xlsx, .xls) or CSV file with Admission No, Name, Category, and Class.'
-    : 'Upload an Excel (.xlsx, .xls) or CSV file with Program Code, Program Name, Category, and Type (Stage/Non-Stage).';
+  const isTrainers = type === 'trainers';
+  const isPrograms = type === 'programs';
+
+  let title = 'Bulk Upload Candidates';
+  let subtitle = 'Upload an Excel (.xlsx, .xls) or CSV file with Admission No, Name, Category, and Class.';
+  let badgeName = 'Candidates Registry';
+
+  if (isPrograms) {
+    title = 'Bulk Upload Programs';
+    subtitle = 'Upload an Excel (.xlsx, .xls) or CSV file with Program Code, Program Name, Category, and Stage Type.';
+    badgeName = 'Programs Roster';
+  } else if (isTrainers) {
+    title = 'Bulk Upload Trainers';
+    subtitle = 'Upload an Excel (.xlsx, .xls) or CSV file with Trainer Name, Expertise / Field, and Experience.';
+    badgeName = 'Trainers Faculty';
+  }
 
   let parsedRows = [];
   let selectedFile = null;
@@ -21,7 +33,7 @@ export function openExcelUploadModal({ type = 'candidates', onComplete = () => {
     <div class="modal-dialog modal-lg">
       <div class="modal-header">
         <div>
-          <div class="modal-badge">${isCandidates ? 'Candidates Registry' : 'Programs Roster'}</div>
+          <div class="modal-badge">${badgeName}</div>
           <h2 class="modal-title">${title}</h2>
           <p class="modal-subtitle">${subtitle}</p>
         </div>
@@ -39,7 +51,7 @@ export function openExcelUploadModal({ type = 'candidates', onComplete = () => {
             </div>
           </div>
           <button id="btnDownloadTemplate" class="btn btn-outline btn-sm">
-            ${getIcon('download')} Download ${isCandidates ? 'Candidates' : 'Programs'} Template (.xlsx)
+            ${getIcon('download')} Download ${isCandidates ? 'Candidates' : isTrainers ? 'Trainers' : 'Programs'} Template (.xlsx)
           </button>
         </div>
 
@@ -75,7 +87,7 @@ export function openExcelUploadModal({ type = 'candidates', onComplete = () => {
             </div>
             <label class="checkbox-label">
               <input type="checkbox" id="chkOverwrite" checked />
-              <span>Update existing records if Ad No / Code matches</span>
+              <span>Update existing records if matching identifier found</span>
             </label>
           </div>
 
@@ -92,13 +104,21 @@ export function openExcelUploadModal({ type = 'candidates', onComplete = () => {
                         <th>Category</th>
                         <th>Class</th>
                       </tr>`
+                    : isTrainers
+                    ? `<tr>
+                        <th>Status</th>
+                        <th>Row</th>
+                        <th>Trainer Name</th>
+                        <th>Expertise / Department</th>
+                        <th>Experience</th>
+                      </tr>`
                     : `<tr>
                         <th>Status</th>
                         <th>Row</th>
                         <th>Program Code</th>
                         <th>Program Name</th>
                         <th>Category</th>
-                        <th>Type</th>
+                        <th>Stage Type (Click to Toggle)</th>
                       </tr>`
                 }
               </thead>
@@ -149,6 +169,9 @@ export function openExcelUploadModal({ type = 'candidates', onComplete = () => {
     if (isCandidates) {
       excelService.downloadCandidatesTemplate();
       toast.info('Downloading sample candidates Excel template...');
+    } else if (isTrainers) {
+      excelService.downloadTrainersTemplate();
+      toast.info('Downloading sample trainers Excel template...');
     } else {
       excelService.downloadProgramsTemplate();
       toast.info('Downloading sample programs Excel template...');
@@ -200,6 +223,8 @@ export function openExcelUploadModal({ type = 'candidates', onComplete = () => {
     try {
       if (isCandidates) {
         parsedRows = await excelService.parseCandidatesFile(file);
+      } else if (isTrainers) {
+        parsedRows = await excelService.parseTrainersFile(file);
       } else {
         parsedRows = await excelService.parseProgramsFile(file);
       }
@@ -230,7 +255,7 @@ export function openExcelUploadModal({ type = 'candidates', onComplete = () => {
     if (validRows.length > 0) {
       btnConfirmImport.disabled = false;
       btnConfirmImport.innerHTML = `${getIcon('check')} Import ${validRows.length} ${
-        isCandidates ? 'Candidates' : 'Programs'
+        isCandidates ? 'Candidates' : isTrainers ? 'Trainers' : 'Programs'
       }`;
     } else {
       btnConfirmImport.disabled = true;
@@ -239,7 +264,7 @@ export function openExcelUploadModal({ type = 'candidates', onComplete = () => {
 
     // Render preview slice (first 30 rows for smooth UI)
     const displayRows = rows.slice(0, 30);
-    displayRows.forEach(row => {
+    displayRows.forEach((row, idx) => {
       const tr = document.createElement('tr');
       if (!row.isValid) tr.className = 'row-error';
 
@@ -258,6 +283,20 @@ export function openExcelUploadModal({ type = 'candidates', onComplete = () => {
           <td><span class="badge badge-neutral">${row.category}</span></td>
           <td>${row.class || '-'}</td>
         `;
+      } else if (isTrainers) {
+        tr.innerHTML = `
+          <td>
+            ${
+              row.isValid
+                ? `<span class="badge badge-success-subtle">${getIcon('check')} Valid</span>`
+                : `<span class="badge badge-danger-subtle" title="${row.error}">${getIcon('x')} Invalid</span>`
+            }
+          </td>
+          <td>${row.rowNumber}</td>
+          <td><strong>${row.name || '-'}</strong></td>
+          <td><span class="badge badge-primary-subtle">${row.expertise}</span></td>
+          <td>${row.experience || '-'}</td>
+        `;
       } else {
         tr.innerHTML = `
           <td>
@@ -272,11 +311,19 @@ export function openExcelUploadModal({ type = 'candidates', onComplete = () => {
           <td><strong>${row.name || '-'}</strong></td>
           <td><span class="badge badge-neutral">${row.category}</span></td>
           <td>
-            <span class="badge ${row.type === 'Stage' ? 'badge-stage' : 'badge-nonstage'}">
-              ${row.type}
-            </span>
+            <button type="button" class="btn-toggle-preview-type badge ${row.type === 'Stage' ? 'badge-stage' : 'badge-nonstage'}" data-idx="${idx}" title="Click to toggle between Stage and Non-Stage" style="cursor: pointer; border: none;">
+              ${row.type === 'Stage' ? getIcon('stage') : getIcon('nonStage')} ${row.type} ⇄
+            </button>
           </td>
         `;
+
+        const toggleBtn = tr.querySelector('.btn-toggle-preview-type');
+        if (toggleBtn) {
+          toggleBtn.addEventListener('click', () => {
+            row.type = row.type === 'Stage' ? 'Non-Stage' : 'Stage';
+            renderPreview(rows);
+          });
+        }
       }
       previewTableBody.appendChild(tr);
     });
@@ -299,6 +346,11 @@ export function openExcelUploadModal({ type = 'candidates', onComplete = () => {
 
     if (isCandidates) {
       const res = state.addCandidatesBulk(validRows, overwrite);
+      toast.success(
+        `Bulk import complete! Added: ${res.addedCount}, Updated: ${res.updatedCount}, Skipped: ${res.skippedCount}`
+      );
+    } else if (isTrainers) {
+      const res = state.addTrainersBulk(validRows, overwrite);
       toast.success(
         `Bulk import complete! Added: ${res.addedCount}, Updated: ${res.updatedCount}, Skipped: ${res.skippedCount}`
       );

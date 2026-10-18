@@ -182,11 +182,11 @@ export function openCandidateProfileModal({ candidateId, onUpdate = () => {} }) 
         <!-- Daily Mentorship & Progress History -->
         <div class="profile-section mt-3">
           <div class="profile-section-title">
-            <div style="display: flex; align-items: center; gap: 8px;">
+            <div class="pst-title-wrap">
               <span>${getIcon('trendingUp')} Daily Mentorship & Check-in History</span>
               <span class="badge badge-primary-subtle text-xs">${state.getCandidateMeets(candidate.id).length} Logged Meets</span>
             </div>
-            <button id="btnProfileRecordMeet" class="btn btn-sm btn-primary">
+            <button id="btnProfileRecordMeet" class="btn btn-sm btn-primary btn-record-meet-profile">
               ${getIcon('plus')} Record Today's Meet
             </button>
           </div>

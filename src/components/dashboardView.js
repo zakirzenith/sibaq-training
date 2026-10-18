@@ -99,11 +99,17 @@ export function renderDashboardView(container, navigateTo) {
         <button id="btnDashAddTrainer" class="btn btn-sm btn-outline">
           ${getIcon('plus')} New Trainer
         </button>
+        <button id="btnDashUploadTrainers" class="btn btn-sm btn-outline">
+          ${getIcon('upload')} Upload Trainers
+        </button>
         <button id="btnDashDownloadCandTemplate" class="btn btn-sm btn-text">
-          ${getIcon('fileSpreadsheet')} Candidates Excel Template
+          ${getIcon('fileSpreadsheet')} Candidates Template
         </button>
         <button id="btnDashDownloadProgTemplate" class="btn btn-sm btn-text">
-          ${getIcon('fileSpreadsheet')} Programs Excel Template
+          ${getIcon('fileSpreadsheet')} Programs Template
+        </button>
+        <button id="btnDashDownloadTrnTemplate" class="btn btn-sm btn-text">
+          ${getIcon('fileSpreadsheet')} Trainers Template
         </button>
       </div>
     </div>
@@ -252,6 +258,20 @@ export function renderDashboardView(container, navigateTo) {
   container.querySelector('#btnDashDownloadProgTemplate').addEventListener('click', () => {
     excelService.downloadProgramsTemplate();
   });
+
+  const btnDashDownloadTrnTemplate = container.querySelector('#btnDashDownloadTrnTemplate');
+  if (btnDashDownloadTrnTemplate) {
+    btnDashDownloadTrnTemplate.addEventListener('click', () => {
+      excelService.downloadTrainersTemplate();
+    });
+  }
+
+  const btnDashUploadTrainers = container.querySelector('#btnDashUploadTrainers');
+  if (btnDashUploadTrainers) {
+    btnDashUploadTrainers.addEventListener('click', () => {
+      openExcelUploadModal({ type: 'trainers', onComplete: () => renderDashboardView(container, navigateTo) });
+    });
+  }
 
   const btnViewAllTrainers = container.querySelector('#btnViewAllTrainers');
   if (btnViewAllTrainers) {

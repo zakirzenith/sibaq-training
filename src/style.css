@@ -4406,150 +4406,100 @@ code,
   color: #991b1b;
 }
 
-/* Multi-Program Per-Item Status Checklist & Chips */
-.src-prog-multiple-wrap {
+/* Program Code Rectangles in Expanded Drawer (Green = Complete, Red = Incomplete) */
+.dcn-rects-group {
   display: flex;
-  flex-direction: column;
-  gap: 5px;
-  width: 100%;
-}
-
-.prog-checklist-strip {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 5px;
   align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
-.prog-chip {
+.prog-code-rect {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
-  padding: 2.5px 8px;
-  border-radius: var(--radius-full);
-  font-size: 11px;
-  font-weight: 600;
-  border: 1px solid #e2e8f0;
-  background: #f8fafc;
-  color: #334155;
-  transition: all var(--transition-fast);
-}
-
-.prog-chip-met {
-  background: #f0fdf4;
-  border-color: #bbf7d0;
-  color: #15803d;
-}
-
-.prog-chip-met .chip-status-icon {
-  color: #16a34a;
-  font-weight: 800;
-  font-size: 11px;
-}
-
-.prog-chip-met .chip-code {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  background: #dcfce7;
-  padding: 0 4px;
-  border-radius: 4px;
-  color: #166534;
-  font-weight: 700;
-}
-
-.prog-chip-met .chip-score {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  font-weight: 700;
-  color: #15803d;
-  background: #ffffff;
-  padding: 0 4px;
-  border-radius: 4px;
-  border: 1px solid #bbf7d0;
-}
-
-.prog-chip-pending {
-  background: #fffbeb;
-  border-color: #fde68a;
-  color: #92400e;
-}
-
-.prog-chip-pending .chip-status-icon {
-  color: #d97706;
-  font-weight: 800;
-  font-size: 10px;
-}
-
-.prog-chip-pending .chip-code {
-  font-family: var(--font-mono);
-  font-size: 10px;
-  background: #fef3c7;
-  padding: 0 4px;
-  border-radius: 4px;
-  color: #92400e;
-  font-weight: 700;
-}
-
-.btn-prog-chip-action {
-  background: #4f46e5;
-  color: #ffffff;
-  border: none;
-  border-radius: 4px;
-  padding: 1px 6px;
-  font-size: 10px;
+  gap: 6px;
+  padding: 6px 12px;
+  border-radius: 8px;
+  font-size: 12px;
   font-weight: 700;
   cursor: pointer;
   transition: all var(--transition-fast);
-  line-height: 1.3;
+  border: 1.5px solid transparent;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
 }
 
-.btn-prog-chip-action:hover {
-  background: #4338ca;
-  transform: scale(1.04);
+.prog-code-rect .pcr-code {
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
 }
 
-.src-prog-mentors-summary {
-  display: flex;
-  align-items: center;
-  gap: 5px;
+.prog-code-rect .pcr-status {
   font-size: 11px;
-  color: #64748b;
-  flex-wrap: wrap;
-}
-
-.spm-label {
   font-weight: 600;
-  font-size: 10px;
-  color: #94a3b8;
-  text-transform: uppercase;
+  opacity: 0.95;
 }
 
-.spm-mentor-name {
-  font-size: 11px;
+/* Green Rectangle: Completed Today */
+.prog-code-rect.rect-green {
+  background: #10b981;
+  border-color: #059669;
+  color: #ffffff;
 }
 
-.spm-sep {
-  color: #cbd5e1;
-  font-size: 9px;
+.prog-code-rect.rect-green:hover {
+  background: #059669;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(16, 185, 129, 0.35);
 }
 
-.prog-chip-single-tag {
-  font-size: 11px;
-  font-weight: 700;
-  padding: 1px 7px;
-  border-radius: var(--radius-full);
+.prog-code-rect.rect-green.active-rect {
+  background: #047857;
+  border-color: #064e3b;
+  outline: 2px solid #10b981;
+  outline-offset: 2px;
+  box-shadow: 0 2px 6px rgba(16, 185, 129, 0.4);
 }
 
-.prog-chip-single-tag.met {
-  background: #dcfce7;
-  color: #15803d;
-  border: 1px solid #bbf7d0;
+/* Red Rectangle: Incomplete / Pending Check-in Today */
+.prog-code-rect.rect-red {
+  background: #ef4444;
+  border-color: #dc2626;
+  color: #ffffff;
 }
 
-.prog-chip-single-tag.pending {
-  background: #fef3c7;
-  color: #b45309;
-  border: 1px solid #fde68a;
+.prog-code-rect.rect-red:hover {
+  background: #dc2626;
+  transform: translateY(-1px);
+  box-shadow: 0 3px 8px rgba(239, 68, 68, 0.35);
+}
+
+.prog-code-rect.rect-red.active-rect {
+  background: #b91c1c;
+  border-color: #7f1d1d;
+  outline: 2px solid #ef4444;
+  outline-offset: 2px;
+  box-shadow: 0 2px 6px rgba(239, 68, 68, 0.4);
+}
+
+/* All Programs Tab Rectangle */
+.prog-code-rect.rect-all {
+  background: #334155;
+  border-color: #1e293b;
+  color: #ffffff;
+}
+
+.prog-code-rect.rect-all:hover {
+  background: #1e293b;
+  transform: translateY(-1px);
+}
+
+.prog-code-rect.rect-all.active-rect {
+  background: #0f172a;
+  border-color: #020617;
+  outline: 2px solid #64748b;
+  outline-offset: 2px;
 }
 
 .saas-meet-pill {

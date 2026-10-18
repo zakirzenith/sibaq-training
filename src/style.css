@@ -5440,104 +5440,309 @@ code, .ad-badge, .program-code-pill, .program-code-badge {
     color: #a5b4fc;
   }
 
-  /* Popover positioning on mobile */
-  .sfe-popover-dropdown {
-    position: fixed;
-    top: auto;
-    bottom: 70px;
-    left: 14px;
-    right: 14px;
-    width: auto;
-    max-height: 55vh;
+  /* ==========================================================================
+     MOBILE FILTER POPOVER & BACKDROP (BOTTOM SHEET)
+     ========================================================================== */
+  .sfe-backdrop {
+    display: block !important;
+    position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    background: rgba(15, 23, 42, 0.45) !important;
+    backdrop-filter: blur(4px) !important;
+    -webkit-backdrop-filter: blur(4px) !important;
+    z-index: 10050 !important;
   }
 
-  /* Cards on Phone View */
+  .sfe-popover-dropdown {
+    position: fixed !important;
+    bottom: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    top: auto !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    border-radius: 24px 24px 0 0 !important;
+    background: #ffffff !important;
+    z-index: 10100 !important;
+    box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.25) !important;
+    max-height: 80vh !important;
+    display: flex !important;
+    flex-direction: column !important;
+    padding-bottom: env(safe-area-inset-bottom, 16px) !important;
+    animation: sfeSlideUpMobile 0.25s cubic-bezier(0.16, 1, 0.3, 1) !important;
+    overflow: hidden !important;
+  }
+
+  @keyframes sfeSlideUpMobile {
+    from {
+      transform: translateY(100%);
+      opacity: 0.5;
+    }
+    to {
+      transform: translateY(0);
+      opacity: 1;
+    }
+  }
+
+  .sfe-sheet-handle-bar {
+    width: 38px;
+    height: 4px;
+    background: #cbd5e1;
+    border-radius: 999px;
+    margin: 10px auto 4px auto;
+    flex-shrink: 0;
+  }
+
+  .sfe-popover-header {
+    padding: 12px 18px !important;
+    border-bottom: 1px solid #f1f5f9 !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    background: #ffffff !important;
+  }
+
+  .sfe-ph-title {
+    font-size: 14px !important;
+    font-weight: 800 !important;
+    color: #0f172a !important;
+  }
+
+  .sfe-ph-close {
+    font-size: 20px !important;
+    padding: 4px 8px !important;
+    line-height: 1 !important;
+  }
+
+  .sfe-val-search-wrap {
+    padding: 10px 16px !important;
+    border-bottom: 1px solid #f1f5f9 !important;
+    position: relative !important;
+    background: #fafafa !important;
+  }
+
+  .sfe-val-search-icon {
+    position: absolute;
+    left: 28px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #94a3b8;
+    pointer-events: none;
+  }
+
+  .sfe-val-search-input {
+    width: 100% !important;
+    height: 40px !important;
+    padding: 0 12px 0 36px !important;
+    border-radius: 10px !important;
+    border: 1px solid #e2e8f0 !important;
+    font-size: 13.5px !important;
+    background: #ffffff !important;
+    outline: none !important;
+  }
+
+  .sfe-val-search-input:focus {
+    border-color: var(--primary) !important;
+  }
+
+  .sfe-fields-list,
+  .sfe-values-list {
+    padding: 10px 16px !important;
+    overflow-y: auto !important;
+    max-height: 52vh !important;
+    -webkit-overflow-scrolling: touch !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 4px !important;
+  }
+
+  .sfe-field-item,
+  .sfe-val-item {
+    min-height: 48px !important;
+    padding: 12px 14px !important;
+    border-radius: 12px !important;
+    font-size: 14px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+  }
+
+  .sfe-fi-left {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .sfe-val-right {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  /* Filter main row on phone */
+  .sfe-main-row {
+    display: flex !important;
+    gap: 8px !important;
+    width: 100% !important;
+  }
+
+  .sfe-search-box {
+    flex: 1 !important;
+    min-width: 0 !important;
+  }
+
+  .sfe-search-input {
+    height: 42px !important;
+    font-size: 13px !important;
+  }
+
+  .btn-sfe-add-filter {
+    flex-shrink: 0 !important;
+    height: 42px !important;
+    padding: 0 14px !important;
+  }
+
+  .sfe-chips-bar {
+    margin-top: 8px !important;
+    gap: 6px !important;
+  }
+
+  .sfe-filter-chip {
+    font-size: 11.5px !important;
+    padding: 4px 10px !important;
+  }
+
+  /* ==========================================================================
+     PHONE CARDS & LAYOUTS
+     ========================================================================== */
   .saas-table-card,
   .saas-section-card {
-    padding: 14px;
-    border-radius: 14px;
+    padding: 12px !important;
+    border-radius: 16px !important;
   }
 
-  /* Hide huge table on phone, show mobile cards */
   .desktop-table-view {
     display: none !important;
   }
 
   .mobile-cards-view {
     display: flex !important;
-    flex-direction: column;
-    gap: 10px;
+    flex-direction: column !important;
+    gap: 10px !important;
   }
 
   /* Mobile Candidate Touch Card */
   .mobile-candidate-card {
-    background: #ffffff;
-    border: 1px solid #eef2f6;
-    border-radius: 14px;
-    padding: 12px 14px;
-    display: flex;
-    flex-direction: column;
-    gap: 10px;
-    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
-    cursor: pointer;
-    transition: transform 0.12s ease, border-color 0.12s ease;
-  }
-
-  .mobile-candidate-card:active {
-    transform: scale(0.99);
-    border-color: #cbd5e1;
+    background: #ffffff !important;
+    border: 1px solid #eef2f6 !important;
+    border-radius: 16px !important;
+    padding: 14px !important;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 10px !important;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02) !important;
   }
 
   .mcc-top {
-    display: flex;
-    align-items: center;
-    gap: 10px;
+    display: flex !important;
+    align-items: flex-start !important;
+    gap: 10px !important;
   }
 
   .mcc-meta {
-    display: flex;
-    flex-direction: column;
-    gap: 2px;
-    flex: 1;
-    min-width: 0;
+    flex: 1 !important;
+    min-width: 0 !important;
+  }
+
+  .mcc-name-btn {
+    background: none !important;
+    border: none !important;
+    padding: 0 !important;
+    text-align: left !important;
+    cursor: pointer !important;
+    display: block !important;
+    width: 100% !important;
   }
 
   .mcc-name {
-    font-size: 14px;
-    color: #0f172a;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    font-size: 15px !important;
+    font-weight: 700 !important;
+    color: #0f172a !important;
+    display: block !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
   }
 
   .mcc-sub {
-    display: flex;
-    align-items: center;
-    gap: 6px;
+    display: flex !important;
+    align-items: center !important;
+    gap: 6px !important;
+    margin-top: 4px !important;
+    flex-wrap: wrap !important;
+  }
+
+  .mcc-actions {
+    display: flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+    flex-shrink: 0 !important;
   }
 
   .mcc-programs-strip {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 4px;
-    border-top: 1px solid #f1f5f9;
-    padding-top: 8px;
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 4px !important;
+    border-top: 1px solid #f1f5f9 !important;
+    padding-top: 8px !important;
+    align-items: center !important;
   }
 
-  /* Mobile Programs Master-Detail Experience */
+  .mcc-prog-label {
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    color: #94a3b8 !important;
+    margin-right: 2px !important;
+  }
+
+  .mcc-profile-bar-btn {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    width: 100% !important;
+    padding: 9px 12px !important;
+    background: #f8fafc !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 10px !important;
+    font-size: 12px !important;
+    font-weight: 700 !important;
+    color: #4338ca !important;
+    cursor: pointer !important;
+    transition: background 0.15s ease !important;
+  }
+
+  .mcc-profile-bar-btn:active {
+    background: #eef2ff !important;
+  }
+
+  /* ==========================================================================
+     PROGRAMS MASTER-DETAIL ON PHONE
+     ========================================================================== */
   .programs-split-layout {
-    display: flex;
-    flex-direction: column;
-    gap: 14px;
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 12px !important;
   }
 
   .programs-left-col {
-    position: static;
-    max-height: none;
-    border-radius: 16px;
+    position: static !important;
+    max-height: none !important;
+    border-radius: 16px !important;
   }
 
-  /* In mobile view, control visibility of list vs detail */
   .programs-split-layout.mobile-show-detail .programs-left-col {
     display: none !important;
   }
@@ -5546,193 +5751,71 @@ code, .ad-badge, .program-code-pill, .program-code-badge {
     display: none !important;
   }
 
-  /* Mobile Programs Navigation Header */
   .mobile-programs-back-bar {
     display: flex !important;
-    align-items: center;
-    gap: 8px;
-    padding: 10px 14px;
-    background: #eef2ff;
-    border: 1px solid #c7d2fe;
-    border-radius: 12px;
-    margin-bottom: 12px;
-    color: #4338ca;
-    font-weight: 700;
-    font-size: 13px;
-    cursor: pointer;
-  }
-
-  /* Mobile Modals (Bottom sheet style) */
-  .modal-dialog {
-    max-width: 100% !important;
-    width: 100% !important;
-    margin: 0 !important;
-    max-height: 90vh !important;
-    border-radius: 20px 20px 0 0 !important;
-    position: fixed !important;
-    bottom: 0 !important;
-  }
-
-  .modal-backdrop {
-    align-items: flex-end !important;
-    padding: 0 !important;
-  }
-
-  /* Daily Progress Candidate Rows on Mobile */
-  .saas-table-head {
-    display: none !important;
-  }
-
-  .saas-candidate-row {
-    padding: 14px !important;
-    border-radius: 16px !important;
-    margin-bottom: 10px !important;
-  }
-
-  .saas-row-master {
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: stretch !important;
-    padding: 0 !important;
-    gap: 10px !important;
-    min-height: auto !important;
-  }
-
-  .src-col {
-    width: 100% !important;
-    min-width: 0 !important;
-  }
-
-  .src-student {
-    display: flex !important;
     align-items: center !important;
-    gap: 10px !important;
-  }
-
-  .src-program {
-    flex-direction: row !important;
-    justify-content: space-between !important;
-    align-items: center !important;
-    background: #f8fafc !important;
-    padding: 8px 12px !important;
-    border-radius: 10px !important;
-  }
-
-  .src-status {
-    width: 100% !important;
-  }
-
-  .src-action {
-    display: flex !important;
     gap: 8px !important;
-    width: 100% !important;
-  }
-
-  .src-action .btn-record-meet {
-    flex: 2 !important;
-    height: 42px !important;
-    justify-content: center !important;
-    font-size: 13px !important;
+    padding: 12px 14px !important;
+    background: #eef2ff !important;
+    border: 1px solid #c7d2fe !important;
+    border-radius: 12px !important;
+    margin-bottom: 12px !important;
+    color: #4338ca !important;
     font-weight: 700 !important;
-    border-radius: 10px !important;
+    font-size: 13.5px !important;
+    cursor: pointer !important;
   }
 
-  .src-action .btn-toggle-drawer {
-    flex: 1 !important;
-    height: 42px !important;
-    justify-content: center !important;
-    border-radius: 10px !important;
+  .mobile-programs-back-bar:active {
+    background: #e0e7ff !important;
   }
 
-  /* Metric ribbon on mobile */
-  .saas-metric-ribbon {
+  .mobile-assigned-cand-item {
     display: flex !important;
-    overflow-x: auto !important;
-    gap: 8px !important;
-    padding: 10px !important;
-    -webkit-overflow-scrolling: touch !important;
-    scrollbar-width: none !important;
-  }
-
-  .saas-metric-ribbon::-webkit-scrollbar {
-    display: none;
-  }
-
-  .smr-divider {
-    display: none !important;
-  }
-
-  .smr-item {
-    flex: 0 0 auto !important;
-    min-width: 85px !important;
-    padding: 6px 12px !important;
+    align-items: center !important;
+    justify-content: space-between !important;
     background: #ffffff !important;
     border: 1px solid #eef2f6 !important;
     border-radius: 12px !important;
-    text-align: center !important;
+    padding: 10px 12px !important;
+    gap: 8px !important;
   }
 
-  .smr-val {
-    font-size: 18px !important;
-  }
-
-  .smr-lbl {
-    font-size: 10.5px !important;
-  }
-
-  /* Trainers Grid on Mobile */
-  .trainers-cards-grid {
-    grid-template-columns: 1fr !important;
-    gap: 12px !important;
-  }
-
-  .saas-trainer-card {
-    padding: 14px !important;
-    border-radius: 16px !important;
-  }
-
-  /* Filter popover on mobile: modern bottom sheet style */
-  .sfe-popover-dropdown {
-    position: fixed !important;
-    top: auto !important;
-    bottom: 74px !important;
-    left: 12px !important;
-    right: 12px !important;
-    width: auto !important;
-    min-width: 0 !important;
-    max-height: 60vh !important;
-    border-radius: 20px !important;
-    box-shadow: 0 -10px 35px rgba(0, 0, 0, 0.2) !important;
-    z-index: 9999 !important;
-    animation: sfeSlideUpMobile 0.22s cubic-bezier(0.16, 1, 0.3, 1) !important;
-  }
-
-  @keyframes sfeSlideUpMobile {
-    from {
-      transform: translateY(30px);
-      opacity: 0;
-    }
-    to {
-      transform: translateY(0);
-      opacity: 1;
-    }
-  }
-
-  /* Date segmented controls on mobile */
-  .saas-date-segmented {
-    width: 100% !important;
-    justify-content: space-between !important;
-  }
-
-  .saas-date-btn {
+  .maci-left {
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
     flex: 1 !important;
-    text-align: center !important;
-    padding: 6px 8px !important;
-    font-size: 12px !important;
+    min-width: 0 !important;
   }
 
-  .saas-date-input-wrap {
-    flex: 1.2 !important;
+  .maci-info {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 2px !important;
+    flex: 1 !important;
+    min-width: 0 !important;
+  }
+
+  .maci-name {
+    background: none !important;
+    border: none !important;
+    padding: 0 !important;
+    font-size: 13.5px !important;
+    font-weight: 700 !important;
+    color: #0f172a !important;
+    text-align: left !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    cursor: pointer !important;
+  }
+
+  .maci-pills {
+    display: flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+    flex-wrap: wrap !important;
   }
 
   /* Program Detail banner on mobile */
@@ -5750,12 +5833,13 @@ code, .ad-badge, .program-code-pill, .program-code-badge {
 
   .trainer-card-content-grid {
     grid-template-columns: 1fr !important;
-    gap: 14px !important;
+    gap: 12px !important;
   }
 
   .trainer-assign-input-group {
     flex-direction: column !important;
     width: 100% !important;
+    gap: 8px !important;
   }
 
   .trainer-assign-input-group .saas-select-pill,
@@ -5764,8 +5848,227 @@ code, .ad-badge, .program-code-pill, .program-code-badge {
     height: 42px !important;
   }
 
-  /* Stats grid on mobile */
+  /* ==========================================================================
+     DAILY PROGRESS (CHECK-IN) ON PHONE
+     ========================================================================== */
+  .saas-table-head {
+    display: none !important;
+  }
 
+  /* 2x2 Grid for Metric Ribbon on phone */
+  .saas-metric-ribbon {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 8px !important;
+    padding: 10px !important;
+    background: #ffffff !important;
+    border: 1px solid #e2e8f0 !important;
+    border-radius: 16px !important;
+  }
+
+  .smr-item {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 8px 10px !important;
+    background: #f8fafc !important;
+    border-radius: 12px !important;
+    border: 1px solid #f1f5f9 !important;
+    text-align: center !important;
+  }
+
+  .smr-item:last-child {
+    grid-column: span 2 !important;
+  }
+
+  .smr-val {
+    font-size: 19px !important;
+    font-weight: 800 !important;
+  }
+
+  .smr-lbl {
+    font-size: 11px !important;
+    color: #64748b !important;
+    font-weight: 600 !important;
+  }
+
+  .smr-divider {
+    display: none !important;
+  }
+
+  /* 4-Tab Segmented Status Switcher */
+  .saas-quick-status-tabs {
+    display: grid !important;
+    grid-template-columns: repeat(4, 1fr) !important;
+    gap: 6px !important;
+    width: 100% !important;
+  }
+
+  .saas-tab-pill {
+    padding: 8px 4px !important;
+    font-size: 11px !important;
+    justify-content: center !important;
+    border-radius: 10px !important;
+    width: 100% !important;
+    text-align: center !important;
+  }
+
+  .saas-tab-pill .stp-count {
+    font-size: 10px !important;
+    padding: 1px 4px !important;
+  }
+
+  /* Student Check-in Candidate Row Stack on Mobile */
+  .saas-candidate-row {
+    padding: 14px !important;
+    border-radius: 16px !important;
+    margin-bottom: 12px !important;
+    border: 1px solid #e2e8f0 !important;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.03) !important;
+  }
+
+  .saas-row-master {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    padding: 0 !important;
+    gap: 12px !important;
+    min-height: auto !important;
+  }
+
+  .src-col {
+    width: 100% !important;
+    min-width: 0 !important;
+  }
+
+  .src-student {
+    display: flex !important;
+    align-items: center !important;
+    gap: 12px !important;
+  }
+
+  .src-student-info {
+    flex: 1 !important;
+    min-width: 0 !important;
+  }
+
+  .saas-student-name {
+    font-size: 15px !important;
+    font-weight: 800 !important;
+    color: #0f172a !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    text-align: left !important;
+  }
+
+  .src-program {
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    background: #f8fafc !important;
+    padding: 10px 12px !important;
+    border-radius: 12px !important;
+    gap: 6px !important;
+  }
+
+  .src-prog-top {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+  }
+
+  .saas-prog-name {
+    font-size: 13px !important;
+    font-weight: 700 !important;
+    color: #1e293b !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  .src-prog-bottom {
+    display: flex !important;
+    align-items: center !important;
+    gap: 8px !important;
+  }
+
+  .src-status {
+    display: flex !important;
+    width: 100% !important;
+  }
+
+  .saas-status-capsule {
+    width: 100% !important;
+    justify-content: space-between !important;
+    padding: 8px 12px !important;
+    border-radius: 10px !important;
+  }
+
+  .src-action {
+    display: flex !important;
+    gap: 8px !important;
+    width: 100% !important;
+  }
+
+  .src-action .btn-record-meet {
+    flex: 2 !important;
+    height: 44px !important;
+    font-size: 13.5px !important;
+    font-weight: 700 !important;
+    border-radius: 12px !important;
+    justify-content: center !important;
+  }
+
+  .src-action .btn-toggle-drawer {
+    flex: 1 !important;
+    height: 44px !important;
+    border-radius: 12px !important;
+    justify-content: center !important;
+    font-size: 12px !important;
+  }
+
+  /* Date segmented controls on mobile */
+  .saas-date-segmented {
+    width: 100% !important;
+    display: flex !important;
+    gap: 4px !important;
+  }
+
+  .saas-date-btn {
+    flex: 1 !important;
+    text-align: center !important;
+    padding: 7px 6px !important;
+    font-size: 12px !important;
+    border-radius: 8px !important;
+  }
+
+  .saas-date-input-wrap {
+    flex: 1.3 !important;
+  }
+
+  .saas-date-input {
+    width: 100% !important;
+    font-size: 12px !important;
+  }
+
+  /* ==========================================================================
+     TRAINERS VIEW ON PHONE
+     ========================================================================== */
+  .trainers-cards-grid {
+    grid-template-columns: 1fr !important;
+    gap: 12px !important;
+  }
+
+  .saas-trainer-card {
+    padding: 14px !important;
+    border-radius: 16px !important;
+  }
+
+  /* ==========================================================================
+     DASHBOARD & STATS ON PHONE
+     ========================================================================== */
   .stats-grid {
     grid-template-columns: 1fr 1fr !important;
     gap: 10px !important;
@@ -5773,6 +6076,7 @@ code, .ad-badge, .program-code-pill, .program-code-badge {
 
   .stat-card {
     padding: 12px !important;
+    border-radius: 14px !important;
   }
 
   .stat-icon-wrap {
@@ -5791,10 +6095,77 @@ code, .ad-badge, .program-code-pill, .program-code-badge {
   .quick-banner-buttons .btn {
     width: 100% !important;
   }
+
+  /* ==========================================================================
+     MODALS (BOTTOM SHEET STYLE ON PHONE)
+     ========================================================================== */
+  .modal-backdrop {
+    z-index: 10000 !important;
+    padding: 0 !important;
+    align-items: flex-end !important;
+  }
+
+  .modal-dialog {
+    max-width: 100% !important;
+    width: 100% !important;
+    margin: 0 !important;
+    max-height: 88vh !important;
+    border-radius: 24px 24px 0 0 !important;
+    position: relative !important;
+    bottom: 0 !important;
+    box-shadow: 0 -12px 40px rgba(0, 0, 0, 0.25) !important;
+  }
+
+  .modal-body {
+    padding: 16px !important;
+    max-height: calc(88vh - 130px) !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  .modal-footer {
+    padding: 12px 16px !important;
+    flex-wrap: wrap !important;
+  }
+
+  .form-row {
+    flex-direction: column !important;
+    gap: 12px !important;
+  }
+
+  .profile-stats-strip {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 8px !important;
+  }
+
+  .profile-stat-card {
+    padding: 10px !important;
+    text-align: center !important;
+    background: #f8fafc !important;
+    border: 1px solid #f1f5f9 !important;
+    border-radius: 12px !important;
+  }
+
+  .p-stat-number {
+    font-size: 20px !important;
+    font-weight: 800 !important;
+  }
+
+  .p-stat-label {
+    font-size: 10.5px !important;
+  }
 }
 
-
 @media (min-width: 769px) {
+  .sfe-backdrop {
+    display: none !important;
+  }
+
+  .sfe-sheet-handle-bar {
+    display: none !important;
+  }
+
   .mobile-cards-view {
     display: none !important;
   }
@@ -5807,6 +6178,7 @@ code, .ad-badge, .program-code-pill, .program-code-badge {
     display: block !important;
   }
 }
+
 
 
 

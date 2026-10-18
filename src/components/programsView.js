@@ -17,19 +17,24 @@ export function renderProgramsView(container, navigateTo) {
     const programs = state.getPrograms();
     return programs.filter(p => {
       const q = currentSearchQuery.toLowerCase().trim();
-      const matchesSearch =
-        !q ||
-        p.name.toLowerCase().includes(q) ||
-        p.code.toLowerCase().includes(q) ||
-        (p.category && p.category.toLowerCase().includes(q));
+      const pName = String(p.name || '').toLowerCase();
+      const pCode = String(p.code || '').toLowerCase();
+      const pCat = String(p.category || '').toLowerCase();
 
+      const matchesSearch = !q || pName.includes(q) || pCode.includes(q) || pCat.includes(q);
       if (!matchesSearch) return false;
 
       // Filter: Type
-      if (activeFilters.type && p.type !== activeFilters.type) return false;
+      if (activeFilters.type) {
+        if (String(p.type || '').trim().toLowerCase() !== String(activeFilters.type).trim().toLowerCase()) return false;
+      }
 
       // Filter: Category
-      if (activeFilters.category && p.category !== activeFilters.category) return false;
+      if (activeFilters.category) {
+        const itemCat = String(p.category || 'General').trim().toLowerCase();
+        const targetCat = String(activeFilters.category).trim().toLowerCase();
+        if (itemCat !== targetCat) return false;
+      }
 
       // Filter: Trainer Assignment
       if (activeFilters.trainer) {
@@ -129,7 +134,7 @@ export function renderProgramsView(container, navigateTo) {
           const progs = state.getPrograms();
           const counts = {};
           progs.forEach(p => {
-            const cat = p.category || 'General';
+            const cat = String(p.category || 'General').trim();
             counts[cat] = (counts[cat] || 0) + 1;
           });
           return Object.keys(counts).sort().map(cat => ({
@@ -181,7 +186,7 @@ export function renderProgramsView(container, navigateTo) {
 
     if (list.length === 0) {
       programsListContainer.innerHTML = `
-        <div class="empty-state-card py-4" style="text-align: center; padding: 32px 16px;">
+        <div class="empty-state-card py-4" style="text-align: center; padding: 36px 16px;">
           <div class="empty-icon">${getIcon('programs')}</div>
           <h4 style="margin: 8px 0 4px; font-size: 15px;">No matching programs</h4>
           <p class="text-xs text-muted">Try clearing or adjusting your active filters.</p>
@@ -237,8 +242,9 @@ export function renderProgramsView(container, navigateTo) {
 
       item.addEventListener('click', () => {
         selectedProgramId = p.id;
-        // On phone view, switch to detail view
+        // On phone view, switch to detail view and scroll to top
         splitLayout.classList.add('mobile-show-detail');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
         renderLeftList();
         renderRightDetail(p);
       });
@@ -255,10 +261,10 @@ export function renderProgramsView(container, navigateTo) {
 
     if (!program) {
       programDetailContainer.innerHTML = `
-        <div class="empty-state-box py-5">
+        <div class="empty-state-box py-5 text-center" style="padding: 40px 16px;">
           <div class="empty-icon">${getIcon('programs')}</div>
           <h3>Select a program from the list</h3>
-          <p class="text-muted">You will be able to assign candidates, assign trainers, and view candidate profiles.</p>
+          <p class="text-muted text-xs">You will be able to assign candidates, assign trainers, and view candidate profiles.</p>
         </div>
       `;
       return;
@@ -272,7 +278,7 @@ export function renderProgramsView(container, navigateTo) {
     programDetailContainer.innerHTML = `
       <!-- Mobile Only Back Button to Return to Program List -->
       <div class="mobile-programs-back-bar" id="btnMobileBackToPrograms">
-        ${getIcon('chevronLeft')} <span>Back to Programs</span>
+        ${getIcon('chevronLeft')} <span>Back to All Programs</span>
       </div>
 
       <!-- Program Header Strip -->
@@ -302,7 +308,7 @@ export function renderProgramsView(container, navigateTo) {
       </div>
 
       <!-- 1. DEDICATED TRAINER & MENTOR PANEL -->
-      <div class="saas-section-card trainer-management-panel" style="margin-bottom: 20px;">
+      <div class="saas-section-card trainer-management-panel" style="margin-bottom: 16px;">
         <div class="ssc-head" style="margin-bottom: 12px; border-bottom: 1px solid #f1f5f9; padding-bottom: 10px;">
           <div class="ssc-head-title">
             <span>${getIcon('trainers')} Program Trainer & Mentor</span>
@@ -322,7 +328,7 @@ export function renderProgramsView(container, navigateTo) {
                 ? `
               <div class="saas-trainer-mini-card">
                 <div class="stc-avatar" style="background: ${assignedTrainer.color || '#6366f1'}">
-                  ${assignedTrainer.name.split(' ').map(n => n[0]).slice(0, 2).join('')}
+                  ${(assignedTrainer.name || 'T').split(' ').map(n => n[0]).slice(0, 2).join('')}
                 </div>
                 <div class="stc-info">
                   <strong class="stc-name">${assignedTrainer.name}</strong>
@@ -337,7 +343,7 @@ export function renderProgramsView(container, navigateTo) {
               </div>
             `
                 : `
-              <div class="saas-empty-trainer-placeholder" style="display: flex; align-items: center; gap: 10px; text-align: left; padding: 12px 16px;">
+              <div class="saas-empty-trainer-placeholder" style="display: flex; align-items: center; gap: 10px; text-align: left; padding: 12px 14px; background: #f8fafc; border-radius: 12px;">
                 <div class="empty-icon-sm" style="color: #f59e0b; flex-shrink: 0;">${getIcon('info')}</div>
                 <div>
                   <strong class="text-xs text-main" style="display: block;">No trainer assigned yet</strong>
@@ -386,8 +392,8 @@ export function renderProgramsView(container, navigateTo) {
           </button>
         </div>
 
-        <!-- Candidates List for this Program -->
-        <div class="saas-table-responsive" style="margin-top: 14px;">
+        <!-- Desktop Table View (>= 769px) -->
+        <div class="saas-table-responsive desktop-table-view" style="margin-top: 14px;">
           ${
             assignedCandidates.length === 0
               ? `
@@ -412,7 +418,7 @@ export function renderProgramsView(container, navigateTo) {
                   ${assignedCandidates
                     .map(
                       cand => {
-                        const initials = cand.name.split(' ').map(n => n[0]).slice(0, 2).join('');
+                        const initials = (cand.name || 'C').split(' ').map(n => n[0]).slice(0, 2).join('');
                         return `
                     <tr class="saas-table-row">
                       <td>
@@ -441,6 +447,45 @@ export function renderProgramsView(container, navigateTo) {
             `
           }
         </div>
+
+        <!-- Mobile Touch List (< 769px) - Zero Scrolling, Nothing Hidden -->
+        <div class="mobile-assigned-candidates-list mobile-cards-view" style="margin-top: 12px; gap: 8px;">
+          ${
+            assignedCandidates.length === 0
+              ? `
+              <div class="no-assigned-placeholder text-center py-4 text-muted">
+                <div class="empty-icon-sm mb-1">${getIcon('candidates')}</div>
+                <strong class="text-xs text-main">No candidates assigned yet</strong>
+                <p class="text-xs mt-1">Tap "+ Add Candidates" above to enroll students.</p>
+              </div>
+            `
+              : assignedCandidates
+                  .map(cand => {
+                    const initials = (cand.name || 'C').split(' ').map(n => n[0]).slice(0, 2).join('');
+                    return `
+                <div class="mobile-assigned-cand-item" data-cid="${cand.id}">
+                  <div class="maci-left">
+                    <div class="saas-avatar-soft" style="width: 38px; height: 38px; font-size: 13px;">${initials}</div>
+                    <div class="maci-info">
+                      <button type="button" class="candidate-name-btn btn-open-cand-profile maci-name" data-cid="${cand.id}">
+                        <strong>${cand.name}</strong>
+                      </button>
+                      <div class="maci-pills">
+                        <span class="saas-adno-pill">${cand.adNo}</span>
+                        <span class="saas-class-pill">${cand.class || '-'}</span>
+                        <span class="saas-tag-pill p-neutral">${cand.category}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <button type="button" class="saas-circle-btn text-danger btn-remove-assigned-cand" data-cid="${cand.id}" title="Remove candidate">
+                    ${getIcon('trash')}
+                  </button>
+                </div>
+              `;
+                  })
+                  .join('')
+          }
+        </div>
       </div>
     `;
 
@@ -449,6 +494,7 @@ export function renderProgramsView(container, navigateTo) {
     if (btnMobileBack) {
       btnMobileBack.addEventListener('click', () => {
         splitLayout.classList.remove('mobile-show-detail');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
       });
     }
 
@@ -476,6 +522,7 @@ export function renderProgramsView(container, navigateTo) {
       if (confirm(`Delete program [${program.code}] "${program.name}"?`)) {
         state.deleteProgram(program.id);
         toast.info(`Program [${program.code}] deleted.`);
+        splitLayout.classList.remove('mobile-show-detail');
         renderLeftList();
       }
     });
@@ -497,9 +544,10 @@ export function renderProgramsView(container, navigateTo) {
       });
     });
 
-    // 5. Remove assigned candidate
+    // 5. Remove assigned candidate (Desktop and Mobile)
     programDetailContainer.querySelectorAll('.btn-remove-assigned-cand').forEach(btn => {
-      btn.addEventListener('click', () => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
         const cid = btn.getAttribute('data-cid');
         const cand = state.getCandidateById(cid);
         if (confirm(`Remove ${cand?.name} from ${program.name}?`)) {

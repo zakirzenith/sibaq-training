@@ -6,6 +6,7 @@ import { openExcelUploadModal } from './modals/excelUploadModal.js';
 import { openProgramFormModal } from './modals/programFormModal.js';
 import { openCandidateProfileModal } from './modals/candidateProfileModal.js';
 import { openCandidateSelectModal } from './modals/candidateSelectModal.js';
+import { openTrainerPickerModal } from './modals/trainerPickerModal.js';
 import { createFilterBar } from './filterEngine.js';
 
 export function renderProgramsView(container, navigateTo) {
@@ -483,29 +484,40 @@ export function renderProgramsView(container, navigateTo) {
                     ${state.getTrainerMentees(assignedTrainer.id).length} Mentees Coached
                   </div>
                 </div>
-                <button id="btnUnassignTrainer" class="btn btn-outline btn-xs text-danger" title="Unassign Trainer from this program" style="white-space: nowrap; flex-shrink: 0; padding: 6px 12px; display: inline-flex; align-items: center; gap: 4px;">
-                  ${getIcon('trash')} Unassign
-                </button>
+                <div class="stc-card-actions" style="display: flex; gap: 6px; align-items: center; flex-shrink: 0;">
+                  <button id="btnSearchChangeTrainer" class="btn btn-secondary btn-xs" title="Search & change trainer" style="white-space: nowrap; padding: 6px 10px; display: inline-flex; align-items: center; gap: 4px; border-radius: 8px;">
+                    ${getIcon('search')} Change
+                  </button>
+                  <button id="btnUnassignTrainer" class="btn btn-outline btn-xs text-danger" title="Unassign Trainer from this program" style="white-space: nowrap; padding: 6px 10px; display: inline-flex; align-items: center; gap: 4px; border-radius: 8px;">
+                    ${getIcon('trash')} Unassign
+                  </button>
+                </div>
               </div>
             `
                 : `
-              <div class="saas-empty-trainer-placeholder" style="display: flex; align-items: center; gap: 10px; text-align: left; padding: 12px 14px; background: #f8fafc; border-radius: 12px;">
-                <div class="empty-icon-sm" style="color: #f59e0b; flex-shrink: 0;">${getIcon('info')}</div>
-                <div>
-                  <strong class="text-xs text-main" style="display: block;">No trainer assigned yet</strong>
+              <div class="saas-empty-trainer-placeholder" style="display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 14px; background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 12px;">
+                <div style="display: flex; align-items: center; gap: 10px; min-width: 0;">
+                  <div class="empty-icon-sm" style="color: #6366f1; flex-shrink: 0;">${getIcon('trainers')}</div>
+                  <div style="min-width: 0;">
+                    <strong class="text-xs text-main" style="display: block;">No trainer assigned yet</strong>
+                    <span class="text-xs text-muted">Assign a mentor to guide candidates</span>
+                  </div>
                 </div>
+                <button id="btnSearchAssignTrainer" class="btn-saas-primary btn-sm" style="white-space: nowrap; flex-shrink: 0; padding: 6px 12px; display: inline-flex; align-items: center; gap: 5px;">
+                  ${getIcon('search')} Select Trainer
+                </button>
               </div>
             `
             }
           </div>
 
-          <!-- Assign or Change Trainer Workspace -->
+          <!-- Quick Dropdown & Search Option Row -->
           <div class="trainer-action-column">
             <label class="form-label text-xs font-semibold mb-1" style="display: block;">
-              ${assignedTrainer ? 'Change Trainer:' : 'Assign Trainer:'}
+              ${assignedTrainer ? 'Change Trainer:' : 'Quick Select Trainer:'}
             </label>
             <div class="trainer-assign-input-group">
-              <select id="trainerDropdown" class="saas-select-pill flex-1">
+              <select id="trainerDropdown" class="saas-select-pill">
                 <option value="">-- Choose Trainer --</option>
                 ${allTrainers
                   .map(
@@ -517,6 +529,9 @@ export function renderProgramsView(container, navigateTo) {
                   )
                   .join('')}
               </select>
+              <button id="btnOpenTrainerSearchPicker" type="button" class="btn btn-secondary btn-sm" title="Search faculty directory" style="flex-shrink: 0; height: 38px; display: inline-flex; align-items: center; gap: 4px; padding: 0 10px; border-radius: 10px;">
+                ${getIcon('search')} Search
+              </button>
               <button id="btnSaveTrainer" class="btn-saas-primary btn-sm btn-assign-trainer-action">
                 ${getIcon('check')} ${assignedTrainer ? 'Update' : 'Assign'}
               </button>
@@ -740,7 +755,30 @@ export function renderProgramsView(container, navigateTo) {
     trainerDropdown.addEventListener('change', handleTrainerSave);
     btnSaveTrainer.addEventListener('click', handleTrainerSave);
 
-    // 8. Unassign Trainer button
+    // 8. Searchable Trainer Picker Modal
+    const openTrainerPicker = () => {
+      openTrainerPickerModal({
+        currentTrainerId: program.trainerId,
+        title: 'Assign Trainer & Mentor',
+        subtitle: `Select a mentor for [${program.code}] ${program.name}`,
+        onSelect: (trn) => {
+          state.assignTrainerToProgram(program.id, trn ? trn.id : null);
+          toast.success(
+            trn
+              ? `Assigned trainer "${trn.name}" to ${program.name}`
+              : `Unassigned trainer from ${program.name}`
+          );
+          renderLeftList();
+          renderRightDetail(program.id);
+        }
+      });
+    };
+
+    programDetailContainer.querySelector('#btnSearchChangeTrainer')?.addEventListener('click', openTrainerPicker);
+    programDetailContainer.querySelector('#btnSearchAssignTrainer')?.addEventListener('click', openTrainerPicker);
+    programDetailContainer.querySelector('#btnOpenTrainerSearchPicker')?.addEventListener('click', openTrainerPicker);
+
+    // 9. Unassign Trainer button
     const btnUnassignTrainer = programDetailContainer.querySelector('#btnUnassignTrainer');
     if (btnUnassignTrainer) {
       btnUnassignTrainer.addEventListener('click', () => {

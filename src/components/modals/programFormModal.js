@@ -1,6 +1,7 @@
 import { state } from '../../services/state.js';
 import { toast } from '../toast.js';
 import { getIcon } from '../icons.js';
+import { openTrainerPickerModal } from './trainerPickerModal.js';
 
 export function openProgramFormModal({ program = null, onSave = () => {} }) {
   const isEdit = Boolean(program);
@@ -69,18 +70,23 @@ export function openProgramFormModal({ program = null, onSave = () => {} }) {
 
           <div class="form-group flex-1">
             <label class="form-label" for="selProgTrainer">Assign Trainer</label>
-            <select id="selProgTrainer" class="form-select">
-              <option value="">-- Unassigned --</option>
-              ${trainers
-                .map(
-                  t => `
-                <option value="${t.id}" ${program && String(program.trainerId || '').trim() === String(t.id).trim() ? 'selected' : ''}>
-                  ${t.name} (${t.expertise})
-                </option>
-              `
-                )
-                .join('')}
-            </select>
+            <div style="display: flex; gap: 6px; align-items: center;">
+              <select id="selProgTrainer" class="form-select" style="flex: 1; min-width: 0;">
+                <option value="">-- Unassigned --</option>
+                ${trainers
+                  .map(
+                    t => `
+                  <option value="${t.id}" ${program && String(program.trainerId || '').trim() === String(t.id).trim() ? 'selected' : ''}>
+                    ${t.name} (${t.expertise})
+                  </option>
+                `
+                  )
+                  .join('')}
+              </select>
+              <button type="button" id="btnSearchTrainerInForm" class="btn btn-secondary btn-sm" title="Search faculty list" style="height: 38px; padding: 0 10px; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; border-radius: 8px;">
+                ${getIcon('search')}
+              </button>
+            </div>
           </div>
         </div>
       </form>
@@ -112,7 +118,21 @@ export function openProgramFormModal({ program = null, onSave = () => {} }) {
   const txtProgName = overlay.querySelector('#txtProgName');
   const selProgCategory = overlay.querySelector('#selProgCategory');
   const selProgTrainer = overlay.querySelector('#selProgTrainer');
+  const btnSearchTrainer = overlay.querySelector('#btnSearchTrainerInForm');
   const btnSubmit = overlay.querySelector('#btnSubmitProgram');
+
+  if (btnSearchTrainer) {
+    btnSearchTrainer.addEventListener('click', () => {
+      openTrainerPickerModal({
+        currentTrainerId: selProgTrainer.value,
+        title: 'Select Program Trainer',
+        subtitle: 'Search faculty directory by name or domain expertise',
+        onSelect: (t) => {
+          selProgTrainer.value = t ? t.id : '';
+        }
+      });
+    });
+  }
 
   btnSubmit.addEventListener('click', e => {
     e.preventDefault();

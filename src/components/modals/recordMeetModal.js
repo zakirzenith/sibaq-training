@@ -1,6 +1,7 @@
 import { state, getProgressStatus } from '../../services/state.js';
 import { getIcon } from '../icons.js';
 import { toast } from '../toast.js';
+import { openTrainerPickerModal } from './trainerPickerModal.js';
 
 /**
  * Record Daily Meet Modal with Interactive Line Graph & Status Ranges
@@ -96,13 +97,18 @@ export function openRecordMeetModal({ candidateId, programId = null, trainerId =
             <label class="smm-select-label" for="meetTrainerSelect">
               ${getIcon('trainers')} Evaluating Trainer
             </label>
-            <select id="meetTrainerSelect" class="saas-select-pill smm-select">
-              ${state.getTrainers().map(t => `
-                <option value="${t.id}" ${t.id === selectedTrainerId ? 'selected' : ''}>
-                  ${t.name} (${t.expertise})
-                </option>
-              `).join('')}
-            </select>
+            <div style="display: flex; gap: 6px; align-items: center;">
+              <select id="meetTrainerSelect" class="saas-select-pill smm-select" style="flex: 1; min-width: 0;">
+                ${state.getTrainers().map(t => `
+                  <option value="${t.id}" ${t.id === selectedTrainerId ? 'selected' : ''}>
+                    ${t.name} (${t.expertise})
+                  </option>
+                `).join('')}
+              </select>
+              <button type="button" id="btnSearchMeetTrainer" class="btn btn-secondary btn-sm" title="Search trainer" style="height: 38px; padding: 0 10px; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; border-radius: 999px;">
+                ${getIcon('search')}
+              </button>
+            </div>
           </div>
         </div>
 
@@ -273,6 +279,20 @@ export function openRecordMeetModal({ candidateId, programId = null, trainerId =
     if (trn) {
       trnSelect.value = trn.id;
     }
+  });
+
+  // Searchable Trainer Picker Modal
+  overlay.querySelector('#btnSearchMeetTrainer')?.addEventListener('click', () => {
+    openTrainerPickerModal({
+      currentTrainerId: trnSelect.value,
+      title: 'Select Evaluating Trainer',
+      subtitle: `Evaluating session for ${candidate.name}`,
+      onSelect: (t) => {
+        if (t) {
+          trnSelect.value = t.id;
+        }
+      }
+    });
   });
 
   // Calculate SVG curve and update visuals based on percentage

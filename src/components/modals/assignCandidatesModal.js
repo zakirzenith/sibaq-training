@@ -2,6 +2,7 @@ import { state } from '../../services/state.js';
 import { excelService } from '../../services/excelService.js';
 import { toast } from '../toast.js';
 import { getIcon } from '../icons.js';
+import { openTrainerPickerModal } from './trainerPickerModal.js';
 
 export function openAssignCandidatesModal({ programId, onSave = () => {} }) {
   const program = state.getProgramById(programId);
@@ -43,9 +44,14 @@ export function openAssignCandidatesModal({ programId, onSave = () => {} }) {
               <span>${getIcon('trainers')} Designated Trainer</span>
             </div>
             <div class="trainer-select-row" style="display: flex; flex-direction: column; gap: 10px;">
-              <select id="modalTrainerSelect" class="saas-select-pill" style="width: 100%;">
-                <option value="">-- No Trainer Assigned --</option>
-              </select>
+              <div style="display: flex; gap: 6px; align-items: center;">
+                <select id="modalTrainerSelect" class="saas-select-pill" style="flex: 1; min-width: 0;">
+                  <option value="">-- No Trainer Assigned --</option>
+                </select>
+                <button type="button" id="btnSearchAssignTrainer" class="saas-pill-btn" title="Search faculty list" style="padding: 6px 12px; display: inline-flex; align-items: center; gap: 4px; flex-shrink: 0;">
+                  ${getIcon('search')} Search
+                </button>
+              </div>
               <div id="trainerDetailsPreview" class="trainer-details-preview"></div>
             </div>
           </div>
@@ -214,6 +220,21 @@ export function openAssignCandidatesModal({ programId, onSave = () => {} }) {
     updateTrainerPreview();
   });
   updateTrainerPreview();
+
+  // Searchable Trainer Picker Trigger
+  overlay.querySelector('#btnSearchAssignTrainer')?.addEventListener('click', () => {
+    openTrainerPickerModal({
+      currentTrainerId: modalTrainerSelect.value,
+      title: 'Select Designated Trainer',
+      subtitle: `Assign trainer for [${program.code}] ${program.name}`,
+      onSelect: (t) => {
+        const tid = t ? t.id : '';
+        modalTrainerSelect.value = tid;
+        selectedTrainerId = tid;
+        updateTrainerPreview();
+      }
+    });
+  });
 
   // Populate Filter Selects
   const allCandidates = state.getCandidates();

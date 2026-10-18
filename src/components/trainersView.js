@@ -37,8 +37,8 @@ export function renderTrainersView(container, navigateTo) {
     <div id="trainersFilterBar"></div>
 
     <!-- Trainers Count & Grid Container -->
-    <div class="saas-table-card" style="padding: 16px;">
-      <div class="saas-table-head-strip" style="margin-bottom: 16px;">
+    <div class="saas-table-card trainers-table-card">
+      <div class="saas-table-head-strip" style="margin-bottom: 14px;">
         <div class="sth-left">
           <span class="sth-title">Active Faculty Network</span>
           <span id="trainersCountBadge" class="saas-badge-pill">0</span>
@@ -210,7 +210,7 @@ export function renderTrainersView(container, navigateTo) {
               <span class="stc-lbl">Mentees</span>
             </div>
             <div class="stc-stat-pill">
-              <span class="stc-val">${t.experience || '5+ Yrs'}</span>
+              <span class="stc-val">${String(t.experience || '5+ Yrs').replace(/Years?/i, 'Yrs')}</span>
               <span class="stc-lbl">Exp</span>
             </div>
           </div>

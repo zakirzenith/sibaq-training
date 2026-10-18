@@ -739,11 +739,18 @@ class StateService {
     const palette = ['#8b5cf6', '#06b6d4', '#ec4899', '#10b981', '#f59e0b', '#3b82f6'];
     const randomColor = palette[Math.floor(Math.random() * palette.length)];
 
+    const name = String(trainerData.name || '').trim();
+    const defaultUsername = name.toLowerCase().replace(/[^a-z0-9]/g, '');
+
     const newTrainer = {
       id: trainerData.id ? String(trainerData.id).trim() : `trn-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-      name: String(trainerData.name || '').trim(),
+      name,
       expertise: String(trainerData.expertise || 'General Coach').trim(),
       experience: String(trainerData.experience || '3+ Years').trim(),
+      username: String(trainerData.username || defaultUsername).trim().toLowerCase(),
+      password: String(trainerData.password || '123456').trim(),
+      phone: String(trainerData.phone || '').trim(),
+      email: String(trainerData.email || '').trim(),
       status: trainerData.status || 'Active',
       color: trainerData.color || randomColor,
       createdAt: trainerData.createdAt || new Date().toISOString()
@@ -764,12 +771,17 @@ class StateService {
     const index = this.trainers.findIndex(t => String(t.id).trim() === cleanId);
     if (index === -1) return null;
 
+    const current = this.trainers[index];
     this.trainers[index] = {
-      ...this.trainers[index],
+      ...current,
       ...updateData,
-      name: updateData.name ? String(updateData.name).trim() : this.trainers[index].name,
-      expertise: updateData.expertise ? String(updateData.expertise).trim() : this.trainers[index].expertise,
-      experience: updateData.experience ? String(updateData.experience).trim() : this.trainers[index].experience
+      name: updateData.name ? String(updateData.name).trim() : current.name,
+      expertise: updateData.expertise ? String(updateData.expertise).trim() : current.expertise,
+      experience: updateData.experience ? String(updateData.experience).trim() : current.experience,
+      username: updateData.username !== undefined ? String(updateData.username).trim().toLowerCase() : (current.username || current.name.toLowerCase().replace(/[^a-z0-9]/g, '')),
+      password: updateData.password !== undefined ? String(updateData.password).trim() : (current.password || '123456'),
+      phone: updateData.phone !== undefined ? String(updateData.phone).trim() : (current.phone || ''),
+      email: updateData.email !== undefined ? String(updateData.email).trim() : (current.email || '')
     };
 
     this.saveState();
@@ -779,6 +791,111 @@ class StateService {
     }
 
     return this.trainers[index];
+  }
+
+  // --- TRAINER AUTHENTICATION & SESSION ---
+  authenticateTrainer(usernameOrEmail, password) {
+    const query = String(usernameOrEmail || '').trim().toLowerCase();
+    const pwd = String(password || '').trim();
+
+    if (!query || !pwd) {
+      return { success: false, error: 'Please enter both username and password.' };
+    }
+
+    const trainer = this.trainers.find(t => {
+      const u = String(t.username || t.name.toLowerCase().replace(/[^a-z0-9]/g, '')).toLowerCase();
+      const em = String(t.email || '').toLowerCase();
+      const nm = String(t.name || '').toLowerCase();
+      return u === query || em === query || nm === query;
+    });
+
+    if (!trainer) {
+      return { success: false, error: 'Trainer account not found with this username.' };
+    }
+
+    const validPassword = String(trainer.password || '123456').trim();
+    if (validPassword !== pwd) {
+      return { success: false, error: 'Incorrect password. Please verify credentials.' };
+    }
+
+    this.setActiveTrainer(trainer.id);
+    return { success: true, trainer };
+  }
+
+  getActiveTrainer() {
+    const tid = localStorage.getItem('mentorflow_active_trainer_id');
+    if (!tid) return null;
+    return this.getTrainerById(tid);
+  }
+
+  setActiveTrainer(trainerId) {
+    if (trainerId) {
+      localStorage.setItem('mentorflow_active_trainer_id', String(trainerId).trim());
+    } else {
+      localStorage.removeItem('mentorflow_active_trainer_id');
+    }
+  }
+
+  clearActiveTrainer() {
+    localStorage.removeItem('mentorflow_active_trainer_id');
+  }
+
+  getTrainerDetailedRoster(trainerId) {
+    if (!trainerId) return [];
+    const cleanTid = String(trainerId).trim();
+    const programs = this.getTrainerPrograms(cleanTid);
+    const candidateMap = new Map();
+
+    programs.forEach(prg => {
+      (prg.candidateIds || []).forEach(cid => {
+        const cleanCid = String(cid).trim();
+        const cand = this.getCandidateById(cleanCid);
+        if (!cand) return;
+
+        if (!candidateMap.has(cand.id)) {
+          candidateMap.set(cand.id, {
+            candidate: cand,
+            programs: [],
+            meets: [],
+            latestMeet: null,
+            readiness: 0,
+            hasEvaluation: false,
+            readinessStatus: null
+          });
+        }
+
+        const entry = candidateMap.get(cand.id);
+        if (!entry.programs.some(p => p.id === prg.id)) {
+          entry.programs.push(prg);
+        }
+      });
+    });
+
+    candidateMap.forEach(entry => {
+      const allMeets = this.getCandidateMeets(entry.candidate.id);
+      const progIds = new Set(entry.programs.map(p => p.id));
+      entry.meets = allMeets.filter(
+        m => (m.trainerId && String(m.trainerId).trim() === cleanTid) || (m.programId && progIds.has(m.programId))
+      );
+
+      if (entry.meets.length > 0) {
+        entry.latestMeet = entry.meets[entry.meets.length - 1];
+        entry.readiness = entry.latestMeet.percentage;
+        entry.hasEvaluation = true;
+        entry.readinessStatus = getProgressStatus(entry.readiness);
+      } else {
+        entry.readiness = 0;
+        entry.hasEvaluation = false;
+        entry.readinessStatus = {
+          label: 'Not Evaluated',
+          key: 'not-evaluated',
+          color: '#64748b',
+          badgeClass: 'badge-neutral'
+        };
+      }
+    });
+
+    return Array.from(candidateMap.values());
   }
 
   deleteTrainer(id) {

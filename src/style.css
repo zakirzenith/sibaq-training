@@ -9095,3 +9095,80 @@ code,
     justify-content: space-between !important;
   }
 }
+
+/* ==========================================================================
+   TRAINER PORTAL STYLES & RESPONSIVE BEHAVIOR
+   ========================================================================== */
+
+.desktop-table-view {
+  display: block;
+}
+
+.mobile-cards-view {
+  display: none;
+}
+
+.trainer-hero-card {
+  transition: all var(--transition-fast, 0.2s ease);
+}
+
+.t-stat-card {
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.t-stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.06);
+}
+
+.btn-open-trainer-portal:hover {
+  background: #e0e7ff !important;
+  border-color: #a5b4fc !important;
+}
+
+@media (max-width: 768px) {
+  .desktop-table-view {
+    display: none !important;
+  }
+
+  .mobile-cards-view {
+    display: flex !important;
+  }
+
+  .trainer-stats-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 8px !important;
+  }
+
+  .thc-top-row {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 12px !important;
+  }
+
+  .thc-actions {
+    width: 100% !important;
+  }
+
+  .thc-actions button {
+    width: 100% !important;
+    justify-content: center !important;
+  }
+
+  .trb-filter-strip {
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+
+  .trb-filter-strip .sfe-search-box,
+  .trb-filter-strip .form-select {
+    width: 100% !important;
+    min-width: 100% !important;
+  }
+}
+
+@media (max-width: 480px) {
+  .trainer-stats-grid {
+    grid-template-columns: 1fr !important;
+  }
+}

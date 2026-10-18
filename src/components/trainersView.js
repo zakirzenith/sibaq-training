@@ -22,6 +22,9 @@ export function renderTrainersView(container, navigateTo) {
       </div>
 
       <div class="saas-header-actions">
+        <button id="btnHeaderTrainerPortalLogin" class="saas-pill-btn" title="Sign in to Trainer Panel">
+          ${getIcon('lock')} Trainer Portal Login
+        </button>
         <button id="btnBulkUploadTrainers" class="saas-pill-btn" title="Bulk import trainers via Excel/CSV">
           ${getIcon('upload')} Bulk Upload
         </button>
@@ -244,6 +247,17 @@ export function renderTrainersView(container, navigateTo) {
               }
             </div>
           </div>
+
+          <!-- Portal Quick Access Bar -->
+          <div style="display: flex; align-items: center; justify-content: space-between; border-top: 1px solid #f1f5f9; padding-top: 10px; margin-top: 4px;">
+            <div style="display: flex; align-items: center; gap: 4px; font-size: 11.5px; color: #64748b;">
+              <span>Login:</span>
+              <code style="background: #f1f5f9; padding: 1px 5px; border-radius: 4px; font-size: 11px; color: #4338ca;">@${t.username || t.name.toLowerCase().replace(/[^a-z0-9]/g, '')}</code>
+            </div>
+            <button type="button" class="btn-open-trainer-portal" data-tid="${t.id}" style="display: inline-flex; align-items: center; gap: 4px; padding: 4px 10px; background: #eef2ff; color: #4f46e5; border: 1px solid #c7d2fe; border-radius: 6px; font-size: 11.5px; font-weight: 700; cursor: pointer; transition: all 0.15s ease;">
+              <span>Open Portal &rarr;</span>
+            </button>
+          </div>
         </div>
       `;
 
@@ -257,6 +271,18 @@ export function renderTrainersView(container, navigateTo) {
       card.querySelector('.stc-avatar-wrap').addEventListener('click', openProfile);
       card.querySelector('.stc-title').addEventListener('click', openProfile);
       card.querySelector('.btn-view-trainer-profile').addEventListener('click', openProfile);
+
+      // Open Trainer Portal directly
+      const btnPortal = card.querySelector('.btn-open-trainer-portal');
+      if (btnPortal) {
+        btnPortal.addEventListener('click', (e) => {
+          e.stopPropagation();
+          state.setActiveTrainer(t.id);
+          if (window.appInstance) {
+            window.appInstance.switchPortal('trainer', t);
+          }
+        });
+      }
 
       // Edit trainer
       card.querySelector('.btn-edit-trainer').addEventListener('click', () => {
@@ -276,6 +302,16 @@ export function renderTrainersView(container, navigateTo) {
       });
 
       trainersGrid.appendChild(card);
+    });
+  }
+
+  // Header Trainer Portal Login
+  const btnHeaderPortal = container.querySelector('#btnHeaderTrainerPortalLogin');
+  if (btnHeaderPortal) {
+    btnHeaderPortal.addEventListener('click', () => {
+      if (typeof window.openTrainerLogin === 'function') {
+        window.openTrainerLogin();
+      }
     });
   }
 

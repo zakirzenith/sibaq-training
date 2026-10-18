@@ -1184,8 +1184,8 @@ code, .ad-badge, .program-code-pill, .program-code-badge {
 
 .programs-split-layout {
   display: grid;
-  grid-template-columns: 380px 1fr;
-  gap: 22px;
+  grid-template-columns: 310px 1fr;
+  gap: 20px;
   align-items: flex-start;
 }
 
@@ -1348,18 +1348,60 @@ code, .ad-badge, .program-code-pill, .program-code-badge {
   gap: 8px;
 }
 
-/* 2 Side Sections: Candidates (Section 1) & Trainer (Section 2) */
-.prog-detail-sections-grid {
-  display: grid;
-  grid-template-columns: 1.2fr 0.95fr;
-  gap: 20px;
-  align-items: flex-start;
+/* Program Trainer & Mentor Panel Styling */
+.trainer-management-panel {
+  background: var(--bg-card);
+  border: 1px solid var(--border-card);
+  border-radius: var(--radius-lg);
+  padding: 16px 20px;
+  box-shadow: var(--shadow-sm);
 }
 
-@media (max-width: 1200px) {
-  .prog-detail-sections-grid {
+.trainer-card-content-grid {
+  display: grid;
+  grid-template-columns: minmax(280px, 1.1fr) minmax(280px, 1fr);
+  gap: 20px;
+  align-items: center;
+}
+
+@media (max-width: 960px) {
+  .trainer-card-content-grid {
     grid-template-columns: 1fr;
+    gap: 14px;
   }
+}
+
+.trainer-status-column {
+  min-width: 0;
+}
+
+.trainer-action-column {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.trainer-assign-input-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+}
+
+.trainer-assign-input-group select,
+.trainer-assign-input-group .saas-select-pill {
+  flex: 1;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.btn-assign-trainer-action {
+  flex-shrink: 0;
+  white-space: nowrap;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 16px;
 }
 
 .detail-section-card {
@@ -3044,6 +3086,44 @@ code, .ad-badge, .program-code-pill, .program-code-badge {
   display: flex;
   align-items: center;
   gap: 10px;
+  white-space: nowrap;
+}
+
+.candidate-name-btn {
+  background: transparent;
+  border: none;
+  padding: 0;
+  margin: 0;
+  text-align: left;
+  cursor: pointer;
+  color: #0f172a;
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 600;
+  transition: color 0.15s ease;
+  white-space: nowrap;
+}
+
+.candidate-name-btn:hover {
+  color: var(--primary);
+  text-decoration: underline;
+}
+
+.assigned-candidates-table th {
+  padding: 10px 14px;
+  font-size: 11.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #64748b;
+  border-bottom: 1px solid #e2e8f0;
+}
+
+.assigned-candidates-table td {
+  padding: 12px 14px;
+  font-size: 13px;
+  vertical-align: middle;
+  border-bottom: 1px solid #f1f5f9;
 }
 
 .saas-student-info {

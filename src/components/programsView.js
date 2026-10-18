@@ -242,117 +242,22 @@ export function renderProgramsView(container, navigateTo) {
         </div>
       </div>
 
-      <!-- TWO SECTIONS ON THE RIGHT: 1. CANDIDATES & 2. TRAINER -->
-      <div class="prog-detail-sections-grid">
-        
-        <!-- SECTION 1: CANDIDATES SECTION -->
-        <div class="saas-section-card candidate-management-panel">
-          <div class="ssc-head">
-            <div class="ssc-head-title">
-              <span>${getIcon('candidates')} Candidates in Program</span>
-              <span class="saas-badge-pill">${assignedCandidates.length} Enrolled</span>
-            </div>
-            <!-- OPENS POPUP MODAL BOX INSTEAD OF BOTTOM PANEL -->
-            <button id="btnOpenCandidateModalBox" class="btn-saas-primary btn-sm">
-              ${getIcon('plus')} Add Candidates
-            </button>
-          </div>
-
-          <!-- Candidates List for this Program -->
-          <div class="saas-table-responsive" style="margin-top: 12px;">
+      <!-- 1. DEDICATED TRAINER & MENTOR PANEL (HERO STRIP) -->
+      <div class="saas-section-card trainer-management-panel" style="margin-bottom: 20px;">
+        <div class="ssc-head" style="margin-bottom: 12px; border-bottom: 1px solid #f1f5f9; padding-bottom: 10px;">
+          <div class="ssc-head-title">
+            <span>${getIcon('trainers')} Program Trainer & Mentor</span>
             ${
-              assignedCandidates.length === 0
-                ? `
-                <div class="no-assigned-placeholder text-center py-4 text-muted">
-                  <div class="empty-icon-sm mb-2">${getIcon('candidates')}</div>
-                  <strong class="text-main">No candidates assigned yet</strong>
-                  <p class="text-xs">Click "Add Candidates" above to select candidates from the directory.</p>
-                </div>
-              `
-                : `
-                <table class="saas-data-table assigned-candidates-table">
-                  <thead>
-                    <tr>
-                      <th>Candidate Name</th>
-                      <th>Admission No</th>
-                      <th>Category</th>
-                      <th>Class</th>
-                      <th style="width: 44px; text-align: right;">Action</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    ${assignedCandidates
-                      .map(
-                        cand => {
-                          const initials = cand.name.split(' ').map(n => n[0]).slice(0, 2).join('');
-                          return `
-                      <tr class="saas-table-row">
-                        <td>
-                          <!-- CLICKING CANDIDATE NAME OPENS PROFILE MODAL -->
-                          <div class="saas-student-cell">
-                            <div class="saas-avatar-soft">${initials}</div>
-                            <button class="candidate-name-btn btn-open-cand-profile" data-cid="${cand.id}" title="Click to view candidate profile with all assigned programs and trainers">
-                              <strong>${cand.name}</strong>
-                            </button>
-                          </div>
-                        </td>
-                        <td><span class="saas-adno-pill">${cand.adNo}</span></td>
-                        <td><span class="saas-tag-pill p-neutral">${cand.category}</span></td>
-                        <td><span class="saas-class-pill">${cand.class || '-'}</span></td>
-                        <td style="text-align: right;">
-                          <button class="saas-circle-btn text-danger btn-remove-assigned-cand" data-cid="${cand.id}" title="Remove candidate from this program">
-                            ${getIcon('x')}
-                          </button>
-                        </td>
-                      </tr>
-                    `;
-                        }
-                      )
-                      .join('')}
-                  </tbody>
-                </table>
-              `
+              assignedTrainer
+                ? `<span class="saas-tag-pill p-stage">${getIcon('check')} Assigned</span>`
+                : `<span class="saas-tag-pill p-neutral">Not Assigned</span>`
             }
           </div>
         </div>
 
-        <!-- SECTION 2: TRAINER SECTION (COMPACT / SHORT PLACE) -->
-        <div class="saas-section-card trainer-management-panel">
-          <div class="ssc-head">
-            <div class="ssc-head-title">
-              <span>${getIcon('trainers')} Program Trainer</span>
-              ${
-                assignedTrainer
-                  ? `<span class="saas-tag-pill p-stage">Assigned</span>`
-                  : `<span class="saas-tag-pill p-neutral">Unassigned</span>`
-              }
-            </div>
-          </div>
-
-          <!-- Compact Trainer Assignment Workspace -->
-          <div class="trainer-assignment-control" style="margin-top: 14px;">
-            <div class="form-group mb-3">
-              <label class="form-label text-xs">Assign Trainer:</label>
-              <div style="display: flex; gap: 8px; align-items: center;">
-                <select id="trainerDropdown" class="saas-select-pill flex-1">
-                  <option value="">-- No Trainer Assigned --</option>
-                  ${allTrainers
-                    .map(
-                      t => `
-                    <option value="${t.id}" ${String(program.trainerId || '').trim() === String(t.id).trim() ? 'selected' : ''}>
-                      ${t.name} (${t.expertise})
-                    </option>
-                  `
-                    )
-                    .join('')}
-                </select>
-                <button id="btnSaveTrainer" class="btn-saas-primary btn-sm">
-                  ${getIcon('check')} Assign
-                </button>
-              </div>
-            </div>
-
-            <!-- Compact Active Trainer Badge -->
+        <div class="trainer-card-content-grid">
+          <!-- Left: Current Trainer Information / Empty State -->
+          <div class="trainer-status-column">
             ${
               assignedTrainer
                 ? `
@@ -367,18 +272,118 @@ export function renderProgramsView(container, navigateTo) {
                     ${state.getTrainerMentees(assignedTrainer.id).length} Mentees Coached
                   </div>
                 </div>
-                <button id="btnUnassignTrainer" class="saas-circle-btn text-danger" title="Unassign Trainer">
-                  ${getIcon('trash')}
+                <button id="btnUnassignTrainer" class="btn btn-outline btn-xs text-danger" title="Unassign Trainer from this program" style="white-space: nowrap; flex-shrink: 0; padding: 6px 12px; display: inline-flex; align-items: center; gap: 4px;">
+                  ${getIcon('trash')} Unassign
                 </button>
               </div>
             `
                 : `
-              <div class="saas-empty-trainer-placeholder">
-                <span class="text-muted text-xs">Select a trainer from the dropdown to assign.</span>
+              <div class="saas-empty-trainer-placeholder" style="display: flex; align-items: center; gap: 10px; text-align: left; padding: 12px 16px;">
+                <div class="empty-icon-sm" style="color: #f59e0b; flex-shrink: 0;">${getIcon('info')}</div>
+                <div>
+                  <strong class="text-xs text-main" style="display: block;">No trainer assigned yet</strong>
+                  <span class="text-muted text-xs">Assign a trainer on the right to mentor candidates in this program.</span>
+                </div>
               </div>
             `
             }
           </div>
+
+          <!-- Right: Assign or Change Trainer Workspace -->
+          <div class="trainer-action-column">
+            <label class="form-label text-xs font-semibold mb-1" style="display: block;">
+              ${assignedTrainer ? 'Change Trainer:' : 'Assign Trainer:'}
+            </label>
+            <div class="trainer-assign-input-group">
+              <select id="trainerDropdown" class="saas-select-pill flex-1">
+                <option value="">-- Choose Trainer --</option>
+                ${allTrainers
+                  .map(
+                    t => `
+                  <option value="${t.id}" ${String(program.trainerId || '').trim() === String(t.id).trim() ? 'selected' : ''}>
+                    ${t.name} (${t.expertise})
+                  </option>
+                `
+                  )
+                  .join('')}
+              </select>
+              <button id="btnSaveTrainer" class="btn-saas-primary btn-sm btn-assign-trainer-action">
+                ${getIcon('check')} ${assignedTrainer ? 'Update' : 'Assign'}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2. CANDIDATES IN PROGRAM (FULL-WIDTH COMFORTABLE TABLE) -->
+      <div class="saas-section-card candidate-management-panel">
+        <div class="ssc-head">
+          <div class="ssc-head-title">
+            <span>${getIcon('candidates')} Candidates in Program</span>
+            <span class="saas-badge-pill">${assignedCandidates.length} Enrolled</span>
+          </div>
+          <!-- OPENS POPUP MODAL BOX INSTEAD OF BOTTOM PANEL -->
+          <button id="btnOpenCandidateModalBox" class="btn-saas-primary btn-sm">
+            ${getIcon('plus')} Add Candidates
+          </button>
+        </div>
+
+        <!-- Candidates List for this Program -->
+        <div class="saas-table-responsive" style="margin-top: 14px;">
+          ${
+            assignedCandidates.length === 0
+              ? `
+              <div class="no-assigned-placeholder text-center py-5 text-muted">
+                <div class="empty-icon-sm mb-2">${getIcon('candidates')}</div>
+                <strong class="text-main" style="font-size: 14px;">No candidates assigned yet</strong>
+                <p class="text-xs mt-1">Click "Add Candidates" above to select candidates from the directory.</p>
+              </div>
+            `
+              : `
+              <table class="saas-data-table assigned-candidates-table" style="width: 100%;">
+                <thead>
+                  <tr>
+                    <th>Candidate Name</th>
+                    <th>Admission No</th>
+                    <th>Category</th>
+                    <th>Class</th>
+                    <th style="width: 44px; text-align: right;">Action</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${assignedCandidates
+                    .map(
+                      cand => {
+                        const initials = cand.name.split(' ').map(n => n[0]).slice(0, 2).join('');
+                        return `
+                    <tr class="saas-table-row">
+                      <td>
+                        <!-- CLICKING CANDIDATE NAME OPENS PROFILE MODAL -->
+                        <div class="saas-student-cell">
+                          <div class="saas-avatar-soft">${initials}</div>
+                          <button class="candidate-name-btn btn-open-cand-profile" data-cid="${cand.id}" title="Click to view candidate profile with all assigned programs and trainers">
+                            <strong>${cand.name}</strong>
+                          </button>
+                        </div>
+                      </td>
+                      <td><span class="saas-adno-pill">${cand.adNo}</span></td>
+                      <td><span class="saas-tag-pill p-neutral">${cand.category}</span></td>
+                      <td><span class="saas-class-pill">${cand.class || '-'}</span></td>
+                      <td style="text-align: right;">
+                        <button class="saas-circle-btn text-danger btn-remove-assigned-cand" data-cid="${cand.id}" title="Remove candidate from this program">
+                          ${getIcon('x')}
+                        </button>
+                      </td>
+                    </tr>
+                  `;
+                      }
+                    )
+                    .join('')}
+                </tbody>
+              </table>
+            `
+          }
+        </div>
       </div>
     `;
 

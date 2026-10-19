@@ -10048,11 +10048,203 @@ body.auth-mode .main-view-container {
 }
 
 .prog-report-chip {
-  transition: transform 0.1s ease;
+  transition: all 0.12s ease;
 }
 
 .prog-report-chip:hover {
   transform: translateY(-1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+/* Quick Filter Pills Row */
+.reports-quick-pills {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  overflow-x: auto;
+  padding: 4px 1px 6px 1px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.reports-quick-pills::-webkit-scrollbar {
+  height: 4px;
+}
+
+.reports-quick-pills::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 4px;
+}
+
+.quick-pill-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 13px;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  white-space: nowrap;
+  user-select: none;
+  background: #ffffff;
+  border: 1.5px solid #e2e8f0;
+  color: #475569;
+  transition: all 0.16s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.02);
+}
+
+.quick-pill-btn:hover {
+  background: #f8fafc;
+  border-color: #cbd5e1;
+  color: #1e293b;
+  transform: translateY(-1px);
+}
+
+.quick-pill-btn.active {
+  background: #4f46e5 !important;
+  border-color: #4f46e5 !important;
+  color: #ffffff !important;
+  box-shadow: 0 2px 8px rgba(79, 70, 229, 0.3) !important;
+}
+
+.quick-pill-btn .qf-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  display: inline-block;
+  flex-shrink: 0;
+}
+
+.quick-pill-btn.active .qf-dot {
+  background: #ffffff !important;
+}
+
+.quick-pill-btn .qf-count {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 1px 7px;
+  border-radius: 9999px;
+  background: #f1f5f9;
+  color: #475569;
+  transition: all 0.16s ease;
+}
+
+.quick-pill-btn.active .qf-count {
+  background: rgba(255, 255, 255, 0.22) !important;
+  color: #ffffff !important;
+}
+
+/* Reports Table Container & Sticky Header */
+.reports-table-container {
+  position: relative;
+  border-radius: 14px;
+  background: #ffffff;
+  border: 1.5px solid #e2e8f0;
+  overflow-x: auto;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+}
+
+.reports-table-container::-webkit-scrollbar {
+  height: 6px;
+}
+
+.reports-table-container::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 6px;
+}
+
+.reports-table-container table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  background: #f8fafc;
+}
+
+/* Reports Command Bar & Search Box */
+.reports-search-box {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 260px;
+}
+
+.reports-search-box .search-input {
+  width: 100%;
+  padding-left: 36px;
+  padding-right: 32px;
+  height: 38px;
+  font-size: 13px;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 10px;
+  background: #f8fafc;
+  transition: all 0.15s ease;
+}
+
+.reports-search-box .search-input:focus {
+  background: #ffffff;
+  border-color: #6366f1;
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+  outline: none;
+}
+
+.reports-search-box .search-icon {
+  position: absolute;
+  left: 11px;
+  color: #94a3b8;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+}
+
+.reports-search-box .search-clear-btn {
+  position: absolute;
+  right: 10px;
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  cursor: pointer;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: color 0.15s ease;
+}
+
+.reports-search-box .search-clear-btn:hover {
+  color: #0f172a;
+}
+
+@media (max-width: 768px) {
+  .reports-view-header {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 12px !important;
+  }
+  .reports-tab-capsule {
+    width: 100% !important;
+  }
+  .reports-tab-capsule .reports-tab-btn {
+    flex: 1 !important;
+    justify-content: center !important;
+  }
+  .reports-stats-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 8px !important;
+  }
+  .reports-stats-grid .saas-stat-card {
+    padding: 10px 12px !important;
+  }
+  .reports-stats-grid .ssc-value {
+    font-size: 20px !important;
+  }
+  .reports-stats-grid .ssc-footer {
+    display: none !important;
+  }
 }
 
 /* Print Dossier Modal Rules */

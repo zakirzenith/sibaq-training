@@ -5,16 +5,29 @@ import { openTrainerProfileModal } from './modals/trainerProfileModal.js';
 import { excelService } from '../services/excelService.js';
 import { toast } from './toast.js';
 
+function formatChestNo(cand) {
+  if (cand.chestNo && cand.chestNo.trim()) return `#${cand.chestNo.trim()}`;
+  const idStr = String(cand.id || '');
+  if (idStr.includes('-')) {
+    const parts = idStr.split('-');
+    const lastPart = parts[parts.length - 1];
+    if (lastPart && /^\d+$/.test(lastPart)) return `#${lastPart}`;
+  }
+  return `#C-${idStr.slice(-4).toUpperCase()}`;
+}
+
 /**
- * Performance Reports & Dossiers View
+ * Enhanced Performance Reports & Dossiers View
  * Dual-tab central reports hub:
  * 1. Candidate Performance & Readiness Report with deep-dive dossier
  * 2. Trainer Mentorship & Evaluation Compliance Report
- * Complete with multi-filtering, sorting, print views, and Excel export.
+ * Complete with 1-click quick filter pills, expandable advanced filters,
+ * compact uniform row heights, mobile cards, and high-fidelity printing.
  */
 export function renderReportsView(container, navigateTo) {
   let activeTab = 'candidates'; // 'candidates' | 'trainers'
   let searchQuery = '';
+  let quickFilter = 'ALL'; // 'ALL', 'READY', 'PREPARING', 'AT_RISK', 'FULLY_MET', 'PENDING'
   let filterCategory = 'ALL';
   let filterProgType = 'ALL';
   let filterReadiness = 'ALL';
@@ -22,32 +35,33 @@ export function renderReportsView(container, navigateTo) {
   let filterMomentum = 'ALL';
   let filterProgramId = 'ALL';
   let filterTrainerId = 'ALL';
-  let sortBy = 'chest-asc'; // 'chest-asc', 'chest-desc', 'readiness-desc', 'readiness-asc', 'meets-desc', 'name-asc'
+  let sortBy = 'chest-asc';
+  let isAdvancedFiltersOpen = false;
 
   const allPrograms = state.getPrograms();
   const allTrainers = state.getTrainers();
-
-  // Extract unique categories
   const categories = Array.from(new Set(state.getCandidates().map(c => c.category).filter(Boolean)));
 
   container.innerHTML = `
     <!-- Top View Header -->
-    <div class="saas-view-header reports-view-header">
+    <div class="saas-view-header reports-view-header" style="margin-bottom: 16px;">
       <div class="svh-title-block">
         <h1 class="svh-title">Performance Reports & Dossiers</h1>
         <p class="svh-desc">
-          Comprehensive candidate readiness tracking, program-by-program meeting rates, trajectory momentum, and trainers' mentorship evaluation.
+          Official candidate readiness tracking, multi-program meeting rates, trajectory momentum, and trainers' mentorship evaluation.
         </p>
       </div>
 
       <div class="saas-header-actions">
         <!-- Sub-section Tab Switcher -->
         <div class="reports-tab-capsule" style="display: flex; background: #f1f5f9; padding: 3px; border-radius: 10px; border: 1px solid #e2e8f0;">
-          <button type="button" class="reports-tab-btn active" id="tabBtnCandidates" style="display: flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: 8px; border: none; font-size: 13px; font-weight: 700; cursor: pointer; background: #ffffff; color: #4338ca; box-shadow: 0 1px 3px rgba(0,0,0,0.06); transition: all 0.15s ease;">
+          <button type="button" class="reports-tab-btn active" id="tabBtnCandidates" style="display: flex; align-items: center; gap: 7px; padding: 7px 14px; border-radius: 8px; border: none; font-size: 13px; font-weight: 700; cursor: pointer; background: #ffffff; color: #4338ca; box-shadow: 0 1px 3px rgba(0,0,0,0.06); transition: all 0.15s ease;">
             ${getIcon('award')} <span>Candidate Reports</span>
+            <span id="tabBadgeCandidates" style="background: #e0e7ff; color: #4338ca; padding: 1px 7px; border-radius: 999px; font-size: 11px; font-weight: 800;">${state.getCandidates().length}</span>
           </button>
-          <button type="button" class="reports-tab-btn" id="tabBtnTrainers" style="display: flex; align-items: center; gap: 6px; padding: 7px 14px; border-radius: 8px; border: none; font-size: 13px; font-weight: 700; cursor: pointer; background: transparent; color: #64748b; transition: all 0.15s ease;">
+          <button type="button" class="reports-tab-btn" id="tabBtnTrainers" style="display: flex; align-items: center; gap: 7px; padding: 7px 14px; border-radius: 8px; border: none; font-size: 13px; font-weight: 700; cursor: pointer; background: transparent; color: #64748b; transition: all 0.15s ease;">
             ${getIcon('trainers')} <span>Trainer Reports</span>
+            <span id="tabBadgeTrainers" style="background: #e2e8f0; color: #64748b; padding: 1px 7px; border-radius: 999px; font-size: 11px; font-weight: 800;">${state.getTrainers().length}</span>
           </button>
         </div>
 
@@ -70,6 +84,8 @@ export function renderReportsView(container, navigateTo) {
   const contentWrapper = container.querySelector('#reportsContentWrapper');
   const tabBtnCandidates = container.querySelector('#tabBtnCandidates');
   const tabBtnTrainers = container.querySelector('#tabBtnTrainers');
+  const tabBadgeCandidates = container.querySelector('#tabBadgeCandidates');
+  const tabBadgeTrainers = container.querySelector('#tabBadgeTrainers');
   const btnPrint = container.querySelector('#btnPrintReportTable');
   const btnExport = container.querySelector('#btnExportReportExcel');
 
@@ -78,16 +94,32 @@ export function renderReportsView(container, navigateTo) {
       tabBtnCandidates.style.background = '#ffffff';
       tabBtnCandidates.style.color = '#4338ca';
       tabBtnCandidates.style.boxShadow = '0 1px 3px rgba(0,0,0,0.06)';
+      if (tabBadgeCandidates) {
+        tabBadgeCandidates.style.background = '#e0e7ff';
+        tabBadgeCandidates.style.color = '#4338ca';
+      }
       tabBtnTrainers.style.background = 'transparent';
       tabBtnTrainers.style.color = '#64748b';
       tabBtnTrainers.style.boxShadow = 'none';
+      if (tabBadgeTrainers) {
+        tabBadgeTrainers.style.background = '#e2e8f0';
+        tabBadgeTrainers.style.color = '#64748b';
+      }
     } else {
       tabBtnTrainers.style.background = '#ffffff';
       tabBtnTrainers.style.color = '#4338ca';
       tabBtnTrainers.style.boxShadow = '0 1px 3px rgba(0,0,0,0.06)';
+      if (tabBadgeTrainers) {
+        tabBadgeTrainers.style.background = '#e0e7ff';
+        tabBadgeTrainers.style.color = '#4338ca';
+      }
       tabBtnCandidates.style.background = 'transparent';
       tabBtnCandidates.style.color = '#64748b';
       tabBtnCandidates.style.boxShadow = 'none';
+      if (tabBadgeCandidates) {
+        tabBadgeCandidates.style.background = '#e2e8f0';
+        tabBadgeCandidates.style.color = '#64748b';
+      }
     }
   };
 
@@ -121,7 +153,7 @@ export function renderReportsView(container, navigateTo) {
   function renderCandidateReportSection() {
     const allDossiers = state.getAllCandidatesReportData();
 
-    // Calculate Summary Stats
+    // Summary Counts for Quick Filter Pills
     const totalCount = allDossiers.length;
     const evaluatedDossiers = allDossiers.filter(d => d.hasEvaluation);
     const avgReadiness = evaluatedDossiers.length > 0
@@ -129,16 +161,17 @@ export function renderReportsView(container, navigateTo) {
       : 0;
     const avgStatus = getProgressStatus(avgReadiness);
 
-    const fullyMetCount = allDossiers.filter(d => d.totalPrograms > 0 && d.metProgramsCount === d.totalPrograms).length;
-    const fullyMetPct = totalCount > 0 ? Math.round((fullyMetCount / totalCount) * 100) : 0;
-
+    const readyCount = allDossiers.filter(d => d.hasEvaluation && d.overallReadiness >= 80).length;
+    const preparingCount = allDossiers.filter(d => d.momentumKey === 'accelerating' || d.momentumKey === 'stage-ready').length;
     const atRiskCount = allDossiers.filter(
       d => d.momentumKey === 'at-risk' || d.momentumKey === 'stagnant' || d.momentumKey === 'not-started'
     ).length;
+    const fullyMetCount = allDossiers.filter(d => d.totalPrograms > 0 && d.metProgramsCount === d.totalPrograms).length;
+    const pendingCount = allDossiers.filter(d => d.metProgramsCount === 0).length;
 
     // Filter Logic
     let filtered = allDossiers.filter(d => {
-      // Search Query
+      // 1. Search Query
       if (searchQuery) {
         const q = searchQuery.toLowerCase();
         const cand = d.candidate;
@@ -149,18 +182,31 @@ export function renderReportsView(container, navigateTo) {
         if (!matchesName && !matchesChest && !matchesPhone && !matchesInst) return false;
       }
 
-      // Category
+      // 2. 1-Click Quick Filter
+      if (quickFilter === 'READY') {
+        if (!d.hasEvaluation || d.overallReadiness < 80) return false;
+      } else if (quickFilter === 'PREPARING') {
+        if (d.momentumKey !== 'accelerating' && d.momentumKey !== 'stage-ready') return false;
+      } else if (quickFilter === 'AT_RISK') {
+        if (d.momentumKey !== 'at-risk' && d.momentumKey !== 'stagnant' && d.momentumKey !== 'not-started') return false;
+      } else if (quickFilter === 'FULLY_MET') {
+        if (d.totalPrograms === 0 || d.metProgramsCount !== d.totalPrograms) return false;
+      } else if (quickFilter === 'PENDING') {
+        if (d.metProgramsCount > 0) return false;
+      }
+
+      // 3. Category Filter
       if (filterCategory !== 'ALL' && d.candidate.category !== filterCategory) {
         return false;
       }
 
-      // Program Type (Stage / Non-Stage)
+      // 4. Program Type (Stage / Non-Stage)
       if (filterProgType !== 'ALL') {
         const hasType = d.programs.some(p => p.type === filterProgType);
         if (!hasType) return false;
       }
 
-      // Readiness Status
+      // 5. Readiness Status
       if (filterReadiness !== 'ALL') {
         if (filterReadiness === 'READY' && (!d.hasEvaluation || d.overallReadiness < 80)) return false;
         if (filterReadiness === 'ON_TRACK' && (!d.hasEvaluation || d.overallReadiness < 60 || d.overallReadiness >= 80)) return false;
@@ -168,24 +214,24 @@ export function renderReportsView(container, navigateTo) {
         if (filterReadiness === 'NO_DATA' && d.hasEvaluation) return false;
       }
 
-      // Meeting Rate
+      // 6. Meeting Compliance
       if (filterMeetingRate !== 'ALL') {
         if (filterMeetingRate === 'FULLY_MET' && (d.totalPrograms === 0 || d.metProgramsCount !== d.totalPrograms)) return false;
         if (filterMeetingRate === 'PARTIAL' && (d.metProgramsCount === 0 || d.metProgramsCount >= d.totalPrograms)) return false;
         if (filterMeetingRate === 'ZERO' && d.metProgramsCount > 0) return false;
       }
 
-      // Preparation Momentum
+      // 7. Preparation Momentum
       if (filterMomentum !== 'ALL' && d.momentumKey !== filterMomentum) {
         return false;
       }
 
-      // Specific Program
+      // 8. Specific Program
       if (filterProgramId !== 'ALL') {
         if (!d.programs.some(p => p.id === filterProgramId)) return false;
       }
 
-      // Specific Trainer
+      // 9. Specific Trainer
       if (filterTrainerId !== 'ALL') {
         const hasTrainer = d.programs.some(p => String(p.trainerId || '').trim() === String(filterTrainerId).trim());
         if (!hasTrainer) return false;
@@ -217,9 +263,12 @@ export function renderReportsView(container, navigateTo) {
       return 0;
     });
 
+    const hasActiveDropdownFilters = filterCategory !== 'ALL' || filterProgType !== 'ALL' || filterReadiness !== 'ALL' ||
+      filterMeetingRate !== 'ALL' || filterMomentum !== 'ALL' || filterProgramId !== 'ALL' || filterTrainerId !== 'ALL';
+
     contentWrapper.innerHTML = `
       <!-- Executive Summary KPI Row -->
-      <div class="saas-stats-grid reports-stats-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 14px; margin-bottom: 18px;">
+      <div class="saas-stats-grid reports-stats-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 14px; margin-bottom: 16px;">
         
         <div class="saas-stat-card">
           <div class="ssc-top">
@@ -231,7 +280,7 @@ export function renderReportsView(container, navigateTo) {
             <span class="ssc-sub-badge badge-neutral">${allPrograms.length} Programs</span>
           </div>
           <div class="ssc-footer text-muted text-xs">
-            Assigned to specialized mentors
+            Assigned across competitions
           </div>
         </div>
 
@@ -256,10 +305,10 @@ export function renderReportsView(container, navigateTo) {
           </div>
           <div class="ssc-main">
             <span class="ssc-value">${fullyMetCount}</span>
-            <span class="badge badge-stage text-xs font-semibold">${fullyMetPct}% Complete</span>
+            <span class="badge badge-stage text-xs font-semibold">${totalCount > 0 ? Math.round((fullyMetCount/totalCount)*100) : 0}% Complete</span>
           </div>
           <div class="ssc-footer text-muted text-xs">
-            Met 100% of their assigned programs
+            Checked in for all assigned programs
           </div>
         </div>
 
@@ -273,25 +322,26 @@ export function renderReportsView(container, navigateTo) {
             <span class="badge badge-danger text-xs font-semibold">At Risk / Stagnant</span>
           </div>
           <div class="ssc-footer text-muted text-xs">
-            Zero meets or inactive >7 days
+            Score &lt;55% or inactive &gt;7 days
           </div>
         </div>
       </div>
 
-      <!-- Comprehensive Search & Filter Control Center -->
-      <div class="reports-filter-panel" style="background: #ffffff; border: 1.5px solid #e2e8f0; border-radius: 14px; padding: 14px 16px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
+      <!-- Modern Quick Navigation & Search Command Bar -->
+      <div class="reports-command-card" style="background: #ffffff; border: 1.5px solid #e2e8f0; border-radius: 14px; padding: 14px; margin-bottom: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
         
-        <!-- Search & Quick Actions -->
-        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap; margin-bottom: 12px;">
-          <div class="search-box" style="flex: 1; min-width: 240px; margin: 0;">
+        <!-- Search Row + Sorting + Advanced Toggle -->
+        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+          <div class="reports-search-box">
             <span class="search-icon">${getIcon('search')}</span>
             <input 
               type="text" 
               id="inpReportCandSearch" 
               class="search-input" 
-              placeholder="Search candidate by name, chest number, phone, institution..." 
+              placeholder="Search by candidate name, chest no, phone, institution..." 
               value="${searchQuery}" 
             />
+            ${searchQuery ? `<button type="button" id="btnClearCandSearch" class="search-clear-btn" title="Clear search">${getIcon('x')}</button>` : ''}
           </div>
 
           <div style="display: flex; align-items: center; gap: 8px;">
@@ -304,15 +354,53 @@ export function renderReportsView(container, navigateTo) {
               <option value="name-asc" ${sortBy === 'name-asc' ? 'selected' : ''}>Sort: Name (A → Z)</option>
             </select>
 
-            <button type="button" id="btnResetCandFilters" class="btn btn-sm btn-outline" style="height: 38px; padding: 0 12px; font-size: 12px; font-weight: 600; border-color: #cbd5e1;" title="Reset all filters">
-              ${getIcon('refresh')} <span>Reset</span>
+            <button type="button" id="btnToggleAdvancedFilters" class="btn btn-sm ${isAdvancedFiltersOpen || hasActiveDropdownFilters ? 'btn-primary' : 'btn-outline'}" style="height: 38px; padding: 0 12px; font-size: 12px; font-weight: 700; gap: 6px;">
+              ${getIcon('filter')} <span>Filters</span> ${hasActiveDropdownFilters ? `<span style="background: rgba(255,255,255,0.3); border-radius: 999px; padding: 1px 6px; font-size: 10px;">Active</span>` : ''}
             </button>
+
+            ${(searchQuery || quickFilter !== 'ALL' || hasActiveDropdownFilters) ? `
+              <button type="button" id="btnResetCandFilters" class="btn btn-sm btn-outline text-danger" style="height: 38px; padding: 0 10px; font-size: 12px; font-weight: 600; border-color: #fecaca;" title="Reset all filters">
+                ${getIcon('x')} <span>Clear</span>
+              </button>
+            ` : ''}
           </div>
         </div>
 
-        <!-- Filter Dropdowns Grid -->
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px;">
-          
+        <!-- 1-Click Quick Filter Pills -->
+        <div class="reports-quick-pills">
+          <button type="button" class="quick-pill-btn ${quickFilter === 'ALL' ? 'active' : ''}" data-qf="ALL">
+            <span>All</span>
+            <span class="qf-count">${totalCount}</span>
+          </button>
+          <button type="button" class="quick-pill-btn ${quickFilter === 'READY' ? 'active' : ''}" data-qf="READY">
+            <span class="qf-dot" style="background: #10b981;"></span>
+            <span>Stage Ready (80%+)</span>
+            <span class="qf-count">${readyCount}</span>
+          </button>
+          <button type="button" class="quick-pill-btn ${quickFilter === 'PREPARING' ? 'active' : ''}" data-qf="PREPARING">
+            <span class="qf-dot" style="background: #3b82f6;"></span>
+            <span>Actively Preparing</span>
+            <span class="qf-count">${preparingCount}</span>
+          </button>
+          <button type="button" class="quick-pill-btn ${quickFilter === 'AT_RISK' ? 'active' : ''}" data-qf="AT_RISK">
+            <span class="qf-dot" style="background: #ef4444;"></span>
+            <span>Follow-Up Needed</span>
+            <span class="qf-count">${atRiskCount}</span>
+          </button>
+          <button type="button" class="quick-pill-btn ${quickFilter === 'FULLY_MET' ? 'active' : ''}" data-qf="FULLY_MET">
+            <span style="display: inline-flex; align-items: center; width: 13px; height: 13px; color: #10b981;">${getIcon('check')}</span>
+            <span>Fully Met (100%)</span>
+            <span class="qf-count">${fullyMetCount}</span>
+          </button>
+          <button type="button" class="quick-pill-btn ${quickFilter === 'PENDING' ? 'active' : ''}" data-qf="PENDING">
+            <span style="display: inline-flex; align-items: center; width: 13px; height: 13px; color: #f59e0b;">${getIcon('clock')}</span>
+            <span>Pending Check-in</span>
+            <span class="qf-count">${pendingCount}</span>
+          </button>
+        </div>
+
+        <!-- Expandable Advanced Filters Drawer -->
+        <div id="advancedFiltersDrawer" style="display: ${isAdvancedFiltersOpen ? 'grid' : 'none'}; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; margin-top: 14px; padding-top: 12px; border-top: 1px dashed #e2e8f0;">
           <div>
             <label class="form-label text-xs" style="margin-bottom: 3px;">Category</label>
             <select id="selFilterCategory" class="form-input" style="height: 34px; font-size: 12px; padding: 0 8px;">
@@ -352,19 +440,6 @@ export function renderReportsView(container, navigateTo) {
           </div>
 
           <div>
-            <label class="form-label text-xs" style="margin-bottom: 3px;">Preparation Health</label>
-            <select id="selFilterMomentum" class="form-input" style="height: 34px; font-size: 12px; padding: 0 8px;">
-              <option value="ALL" ${filterMomentum === 'ALL' ? 'selected' : ''}>All Trajectories</option>
-              <option value="stage-ready" ${filterMomentum === 'stage-ready' ? 'selected' : ''}>Peak Ready & Active</option>
-              <option value="accelerating" ${filterMomentum === 'accelerating' ? 'selected' : ''}>Actively Preparing</option>
-              <option value="progressing" ${filterMomentum === 'progressing' ? 'selected' : ''}>Steady Progress</option>
-              <option value="stagnant" ${filterMomentum === 'stagnant' ? 'selected' : ''}>Needs Intervention (&gt;7d)</option>
-              <option value="at-risk" ${filterMomentum === 'at-risk' ? 'selected' : ''}>Lagging / At Risk</option>
-              <option value="not-started" ${filterMomentum === 'not-started' ? 'selected' : ''}>Not Started</option>
-            </select>
-          </div>
-
-          <div>
             <label class="form-label text-xs" style="margin-bottom: 3px;">Assigned Program</label>
             <select id="selFilterProgramId" class="form-input" style="height: 34px; font-size: 12px; padding: 0 8px;">
               <option value="ALL">All Programs</option>
@@ -383,101 +458,114 @@ export function renderReportsView(container, navigateTo) {
 
       </div>
 
-      <!-- Results Count & Print Indicator Strip -->
-      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; padding: 0 2px;">
+      <!-- Results Count & Hint -->
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; padding: 0 2px;">
         <span class="text-xs font-semibold text-muted">
           Showing <strong>${filtered.length}</strong> of <strong>${totalCount}</strong> candidates
         </span>
         <span class="text-xs text-muted desktop-only-inline">
-          Click <strong>View Dossier</strong> to analyze multi-session trajectories and trainer remarks.
+          Click on any candidate name or the <strong>Dossier</strong> button to inspect multi-session progress.
         </span>
       </div>
 
-      <!-- Candidate Report Table & Cards -->
+      <!-- Candidate Report Table -->
       ${filtered.length === 0 ? `
-        <div class="empty-state-card" style="background: #ffffff; border: 1.5px solid #e2e8f0; border-radius: 14px; padding: 40px; text-align: center;">
-          <div style="font-size: 32px; margin-bottom: 8px;">🔍</div>
-          <strong style="font-size: 16px; color: #0f172a;">No candidates match your filters</strong>
-          <p style="font-size: 13px; color: #64748b; margin-top: 4px;">Try loosening your search terms or resetting filters.</p>
-          <button type="button" id="btnResetEmptyFilters" class="btn btn-secondary btn-sm" style="margin-top: 12px;">
+        <div class="empty-state-card" style="background: #ffffff; border: 1.5px solid #e2e8f0; border-radius: 14px; padding: 48px 24px; text-align: center;">
+          <div style="width: 52px; height: 52px; border-radius: 50%; background: #f1f5f9; color: #64748b; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 12px; margin-left: auto; margin-right: auto;">
+            ${getIcon('search')}
+          </div>
+          <h3 style="font-size: 16px; font-weight: 800; color: #0f172a; margin: 0 0 6px 0;">No candidates match your filters</h3>
+          <p style="font-size: 13px; color: #64748b; margin: 0 auto 16px auto; max-width: 380px;">Try loosening your search terms or resetting filters to view all candidates.</p>
+          <button type="button" id="btnResetEmptyFilters" class="btn btn-secondary btn-sm" style="font-weight: 700; height: 34px; padding: 0 16px;">
             Reset All Filters
           </button>
         </div>
       ` : `
-        <div class="reports-table-container" style="background: #ffffff; border: 1.5px solid #e2e8f0; border-radius: 14px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
-          <table class="saas-table reports-cand-table" style="width: 100%; border-collapse: collapse; text-align: left;">
+        <div class="reports-table-container" style="background: #ffffff; border: 1.5px solid #e2e8f0; border-radius: 14px; overflow-x: auto; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
+          <table class="saas-table reports-cand-table" style="width: 100%; border-collapse: collapse; text-align: left; min-width: 860px;">
             <thead>
-              <tr style="background: #f8fafc; border-bottom: 1.5px solid #e2e8f0; font-size: 11.5px; text-transform: uppercase; color: #64748b; letter-spacing: 0.5px;">
-                <th style="padding: 12px 14px; width: 60px;">Chest</th>
-                <th style="padding: 12px 14px; width: 220px;">Candidate</th>
-                <th style="padding: 12px 14px; min-width: 220px;">Assigned Programs (Status & Readiness)</th>
-                <th style="padding: 12px 14px; width: 140px;">Overall Readiness</th>
-                <th style="padding: 12px 14px; width: 130px;">Meeting Rate</th>
-                <th style="padding: 12px 14px; width: 150px;">Preparation Health</th>
-                <th style="padding: 12px 14px; width: 130px; text-align: right;">Dossier Actions</th>
+              <tr style="background: #f8fafc; border-bottom: 1.5px solid #e2e8f0; font-size: 11px; text-transform: uppercase; color: #64748b; letter-spacing: 0.5px;">
+                <th style="padding: 11px 14px; width: 65px;">Chest</th>
+                <th style="padding: 11px 14px; min-width: 180px;">Candidate</th>
+                <th style="padding: 11px 14px; min-width: 220px;">Assigned Programs & Readiness</th>
+                <th style="padding: 11px 14px; width: 140px;">Overall Readiness</th>
+                <th style="padding: 11px 14px; width: 130px;">Meeting Rate</th>
+                <th style="padding: 11px 14px; width: 145px;">Preparation Health</th>
+                <th style="padding: 11px 14px; width: 120px; text-align: right;">Dossier</th>
               </tr>
             </thead>
             <tbody>
               ${filtered.map(d => {
                 const cand = d.candidate;
                 const statusBadge = d.overallStatus;
+                const cleanChest = formatChestNo(cand);
                 const isMet = d.totalPrograms > 0 && d.metProgramsCount === d.totalPrograms;
+
+                // Max 3 program chips to keep row uniform and compact
+                const maxChips = 3;
+                const visibleChips = d.programReports.slice(0, maxChips);
+                const remainingChips = d.programReports.length - maxChips;
 
                 return `
                   <tr class="report-candidate-tr" style="border-bottom: 1px solid #f1f5f9; transition: background 0.15s ease;">
                     
-                    <!-- Chest No -->
-                    <td style="padding: 12px 14px; vertical-align: middle;">
-                      <span class="badge badge-neutral" style="font-weight: 800; font-size: 11.5px;">
-                        #${cand.chestNo || cand.id}
+                    <!-- Clean Chest No -->
+                    <td style="padding: 11px 14px; vertical-align: middle;">
+                      <span class="badge badge-neutral" style="font-weight: 800; font-size: 11px;">
+                        ${cleanChest}
                       </span>
                     </td>
 
                     <!-- Candidate Name & Meta -->
-                    <td style="padding: 12px 14px; vertical-align: middle;">
+                    <td style="padding: 11px 14px; vertical-align: middle;">
                       <div style="display: flex; flex-direction: column;">
                         <strong class="report-cand-name" style="font-size: 13.5px; color: #0f172a; cursor: pointer;" data-action="view-dossier" data-cid="${cand.id}" title="Click to view candidate performance dossier">
                           ${cand.name}
                         </strong>
-                        <div style="font-size: 11px; color: #64748b; margin-top: 2px;">
+                        <div style="font-size: 11px; color: #64748b; margin-top: 1px;">
                           <span>${cand.category}</span>
                           ${cand.phone ? `<span> • ${cand.phone}</span>` : ''}
                         </div>
                       </div>
                     </td>
 
-                    <!-- Assigned Programs with individual readiness -->
-                    <td style="padding: 12px 14px; vertical-align: middle;">
+                    <!-- Assigned Programs with individual readiness chips -->
+                    <td style="padding: 11px 14px; vertical-align: middle;">
                       ${d.programs.length === 0 ? `
                         <span class="text-xs text-muted">No programs assigned</span>
                       ` : `
-                        <div style="display: flex; flex-wrap: wrap; gap: 6px;">
-                          ${d.programReports.map(pr => {
+                        <div style="display: flex; flex-wrap: wrap; gap: 4px; align-items: center; max-width: 290px;">
+                          ${visibleChips.map(pr => {
                             const badgeBg = pr.isMet ? '#ecfdf5' : '#fef2f2';
                             const badgeBorder = pr.isMet ? '#a7f3d0' : '#fecaca';
                             const badgeText = pr.isMet ? '#065f46' : '#991b1b';
                             const scoreText = pr.isMet ? `${pr.latestScore}%` : 'Pending';
 
                             return `
-                              <div class="prog-report-chip" style="display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; border-radius: 6px; font-size: 11px; font-weight: 700; background: ${badgeBg}; border: 1px solid ${badgeBorder}; color: ${badgeText};" title="Program: ${pr.program.name} | Readiness: ${scoreText} | Mentor: ${pr.trainer ? pr.trainer.name : 'Unassigned'}">
+                              <div class="prog-report-chip" style="display: inline-flex; align-items: center; gap: 4px; padding: 2px 7px; border-radius: 6px; font-size: 10.5px; font-weight: 700; background: ${badgeBg}; border: 1px solid ${badgeBorder}; color: ${badgeText};" title="${pr.program.name} | Readiness: ${scoreText} | Mentor: ${pr.trainer ? pr.trainer.name : 'Unassigned'}">
                                 <span>[${pr.program.code}]</span>
                                 <span>•</span>
                                 <span style="font-weight: 800;">${scoreText}</span>
                               </div>
                             `;
                           }).join('')}
+                          ${remainingChips > 0 ? `
+                            <span class="badge badge-neutral" style="font-size: 10px; cursor: pointer;" data-action="view-dossier" data-cid="${cand.id}" title="Click to view all ${d.programs.length} programs">
+                              +${remainingChips} more
+                            </span>
+                          ` : ''}
                         </div>
                       `}
                     </td>
 
                     <!-- Overall Readiness -->
-                    <td style="padding: 12px 14px; vertical-align: middle;">
-                      <div style="display: flex; flex-direction: column; gap: 4px;">
+                    <td style="padding: 11px 14px; vertical-align: middle;">
+                      <div style="display: flex; flex-direction: column; gap: 3px;">
                         <div style="display: flex; align-items: center; justify-content: space-between;">
-                          <strong style="font-size: 14px; color: ${d.hasEvaluation ? statusBadge.color : '#64748b'};">
+                          <strong style="font-size: 13.5px; color: ${d.hasEvaluation ? statusBadge.color : '#64748b'};">
                             ${d.hasEvaluation ? `${d.overallReadiness}%` : 'N/A'}
                           </strong>
-                          <span class="badge ${statusBadge.badgeClass}" style="font-size: 10px;">
+                          <span class="badge ${statusBadge.badgeClass}" style="font-size: 9.5px; padding: 1px 6px;">
                             ${statusBadge.label}
                           </span>
                         </div>
@@ -487,38 +575,45 @@ export function renderReportsView(container, navigateTo) {
                       </div>
                     </td>
 
-                    <!-- Meeting Rate -->
-                    <td style="padding: 12px 14px; vertical-align: middle;">
-                      <div style="display: flex; flex-direction: column; gap: 2px;">
-                        <span class="badge ${isMet ? 'badge-stage' : (d.metProgramsCount > 0 ? 'badge-amber' : 'badge-danger')}" style="font-size: 11px; font-weight: 700; width: fit-content;">
-                          ${d.meetingRateLabel}
-                        </span>
-                        <span style="font-size: 10.5px; color: #64748b;">
-                          ${d.totalMeets} check-ins logged
-                        </span>
+                    <!-- Meeting Rate & Segmented Bars -->
+                    <td style="padding: 11px 14px; vertical-align: middle;">
+                      <div style="display: flex; flex-direction: column; gap: 3px;">
+                        <div style="display: flex; align-items: center; gap: 6px;">
+                          <span class="badge ${isMet ? 'badge-stage' : (d.metProgramsCount > 0 ? 'badge-amber' : 'badge-danger')}" style="font-size: 10.5px; font-weight: 800;">
+                            ${d.meetingRateLabel}
+                          </span>
+                        </div>
+                        <!-- Mini Segmented Rectangles -->
+                        ${d.totalPrograms > 0 ? `
+                          <div style="display: flex; gap: 2px; align-items: center; margin-top: 1px;">
+                            ${d.programReports.map(pr => `
+                              <span style="display: inline-block; width: 12px; height: 4px; border-radius: 1px; background: ${pr.isMet ? '#10b981' : '#fecaca'};" title="[${pr.program.code}]: ${pr.isMet ? 'Met' : 'Pending'}"></span>
+                            `).join('')}
+                          </div>
+                        ` : ''}
                       </div>
                     </td>
 
-                    <!-- Preparation Trajectory / Health -->
-                    <td style="padding: 12px 14px; vertical-align: middle;">
+                    <!-- Preparation Momentum / Health -->
+                    <td style="padding: 11px 14px; vertical-align: middle;">
                       <div style="display: flex; align-items: center; gap: 5px;">
                         <span style="width: 7px; height: 7px; border-radius: 50%; background: ${d.momentumColor}; flex-shrink: 0;"></span>
-                        <span class="badge ${d.momentumBadgeClass}" style="font-size: 10.5px; font-weight: 700;">
+                        <span class="badge ${d.momentumBadgeClass}" style="font-size: 10px; font-weight: 700;">
                           ${d.momentumLabel}
                         </span>
                       </div>
-                      <div style="font-size: 10px; color: #64748b; margin-top: 3px;">
+                      <div style="font-size: 10px; color: #64748b; margin-top: 2px;">
                         ${d.daysSinceLastMeet !== null ? (d.daysSinceLastMeet === 0 ? 'Active today' : `${d.daysSinceLastMeet}d ago`) : 'No check-ins'}
                       </div>
                     </td>
 
                     <!-- Actions -->
-                    <td style="padding: 12px 14px; vertical-align: middle; text-align: right;">
-                      <div style="display: inline-flex; align-items: center; gap: 6px;">
-                        <button type="button" class="btn btn-sm btn-primary" data-action="view-dossier" data-cid="${cand.id}" style="font-size: 11.5px; height: 30px; padding: 0 10px; gap: 4px; font-weight: 700;" title="View candidate dossier & trainer feedback">
+                    <td style="padding: 11px 14px; vertical-align: middle; text-align: right;">
+                      <div style="display: inline-flex; align-items: center; gap: 5px;">
+                        <button type="button" class="btn btn-sm btn-primary" data-action="view-dossier" data-cid="${cand.id}" style="font-size: 11px; height: 28px; padding: 0 9px; gap: 4px; font-weight: 700;" title="View candidate dossier">
                           ${getIcon('award')} <span>Dossier</span>
                         </button>
-                        <button type="button" class="btn btn-sm btn-outline desktop-only-btn" data-action="print-dossier" data-cid="${cand.id}" style="font-size: 11.5px; height: 30px; padding: 0 8px; border-color: #cbd5e1;" title="Print candidate dossier">
+                        <button type="button" class="btn btn-sm btn-outline desktop-only-btn" data-action="print-dossier" data-cid="${cand.id}" style="font-size: 11px; height: 28px; padding: 0 7px; border-color: #cbd5e1;" title="Print candidate dossier">
                           ${getIcon('printer')}
                         </button>
                       </div>
@@ -541,10 +636,35 @@ export function renderReportsView(container, navigateTo) {
       });
     }
 
+    const btnClearSearch = contentWrapper.querySelector('#btnClearCandSearch');
+    if (btnClearSearch) {
+      btnClearSearch.addEventListener('click', () => {
+        searchQuery = '';
+        renderCandidateReportSection();
+      });
+    }
+
     const selSort = contentWrapper.querySelector('#selReportSort');
     if (selSort) {
       selSort.addEventListener('change', e => {
         sortBy = e.target.value;
+        renderCandidateReportSection();
+      });
+    }
+
+    // Quick Filter Buttons
+    contentWrapper.querySelectorAll('.quick-pill-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        quickFilter = btn.getAttribute('data-qf');
+        renderCandidateReportSection();
+      });
+    });
+
+    // Toggle Advanced Filters
+    const btnAdvToggle = contentWrapper.querySelector('#btnToggleAdvancedFilters');
+    if (btnAdvToggle) {
+      btnAdvToggle.addEventListener('click', () => {
+        isAdvancedFiltersOpen = !isAdvancedFiltersOpen;
         renderCandidateReportSection();
       });
     }
@@ -581,14 +701,6 @@ export function renderReportsView(container, navigateTo) {
       });
     }
 
-    const selMomentum = contentWrapper.querySelector('#selFilterMomentum');
-    if (selMomentum) {
-      selMomentum.addEventListener('change', e => {
-        filterMomentum = e.target.value;
-        renderCandidateReportSection();
-      });
-    }
-
     const selProgram = contentWrapper.querySelector('#selFilterProgramId');
     if (selProgram) {
       selProgram.addEventListener('change', e => {
@@ -607,6 +719,7 @@ export function renderReportsView(container, navigateTo) {
 
     const resetFilters = () => {
       searchQuery = '';
+      quickFilter = 'ALL';
       filterCategory = 'ALL';
       filterProgType = 'ALL';
       filterReadiness = 'ALL';
@@ -687,7 +800,7 @@ export function renderReportsView(container, navigateTo) {
 
     contentWrapper.innerHTML = `
       <!-- Executive Summary KPI Row -->
-      <div class="saas-stats-grid reports-stats-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 14px; margin-bottom: 18px;">
+      <div class="saas-stats-grid reports-stats-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 14px; margin-bottom: 16px;">
         
         <div class="saas-stat-card">
           <div class="ssc-top">
@@ -749,8 +862,8 @@ export function renderReportsView(container, navigateTo) {
       </div>
 
       <!-- Search Toolbar -->
-      <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 14px; background: #ffffff; border: 1.5px solid #e2e8f0; border-radius: 12px; padding: 10px 14px;">
-        <div class="search-box" style="flex: 1; margin: 0;">
+      <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 14px; background: #ffffff; border: 1.5px solid #e2e8f0; border-radius: 14px; padding: 12px 16px;">
+        <div class="reports-search-box">
           <span class="search-icon">${getIcon('search')}</span>
           <input 
             type="text" 
@@ -759,29 +872,34 @@ export function renderReportsView(container, navigateTo) {
             placeholder="Search trainer by name, expertise, domain..." 
             value="${searchQuery}" 
           />
+          ${searchQuery ? `<button type="button" id="btnClearTrnSearch" class="search-clear-btn" title="Clear search">${getIcon('x')}</button>` : ''}
         </div>
-        <span class="text-xs text-muted">
+        <span class="text-xs text-muted" style="white-space: nowrap; font-weight: 600;">
           Showing <strong>${filtered.length}</strong> of <strong>${totalTrainers}</strong> trainers
         </span>
       </div>
 
       <!-- Trainers Performance Table -->
       ${filtered.length === 0 ? `
-        <div class="empty-state-card" style="background: #ffffff; border: 1.5px solid #e2e8f0; border-radius: 14px; padding: 40px; text-align: center;">
-          <strong style="font-size: 15px; color: #0f172a;">No trainers match your search.</strong>
+        <div class="empty-state-card" style="background: #ffffff; border: 1.5px solid #e2e8f0; border-radius: 14px; padding: 48px 24px; text-align: center;">
+          <div style="width: 52px; height: 52px; border-radius: 50%; background: #f1f5f9; color: #64748b; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 12px; margin-left: auto; margin-right: auto;">
+            ${getIcon('search')}
+          </div>
+          <h3 style="font-size: 16px; font-weight: 800; color: #0f172a; margin: 0 0 6px 0;">No trainers match your search</h3>
+          <p style="font-size: 13px; color: #64748b; margin: 0 auto 16px auto; max-width: 380px;">Try searching with a different name or faculty specialization.</p>
         </div>
       ` : `
-        <div class="reports-table-container" style="background: #ffffff; border: 1.5px solid #e2e8f0; border-radius: 14px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
-          <table class="saas-table" style="width: 100%; border-collapse: collapse; text-align: left;">
+        <div class="reports-table-container" style="background: #ffffff; border: 1.5px solid #e2e8f0; border-radius: 14px; overflow-x: auto; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
+          <table class="saas-table" style="width: 100%; border-collapse: collapse; text-align: left; min-width: 860px;">
             <thead>
-              <tr style="background: #f8fafc; border-bottom: 1.5px solid #e2e8f0; font-size: 11.5px; text-transform: uppercase; color: #64748b; letter-spacing: 0.5px;">
-                <th style="padding: 12px 14px; width: 240px;">Trainer & Mentor</th>
-                <th style="padding: 12px 14px; width: 140px;">Specialization</th>
-                <th style="padding: 12px 14px; min-width: 180px;">Assigned Programs</th>
-                <th style="padding: 12px 14px; width: 130px;">Meeting Compliance</th>
-                <th style="padding: 12px 14px; width: 140px;">Avg Mentee Readiness</th>
-                <th style="padding: 12px 14px; width: 150px;">Score Breakdown</th>
-                <th style="padding: 12px 14px; width: 110px; text-align: right;">Action</th>
+              <tr style="background: #f8fafc; border-bottom: 1.5px solid #e2e8f0; font-size: 11px; text-transform: uppercase; color: #64748b; letter-spacing: 0.5px;">
+                <th style="padding: 11px 14px; width: 220px;">Trainer & Mentor</th>
+                <th style="padding: 11px 14px; width: 140px;">Specialization</th>
+                <th style="padding: 11px 14px; min-width: 200px;">Assigned Programs</th>
+                <th style="padding: 11px 14px; width: 150px;">Meeting Compliance</th>
+                <th style="padding: 11px 14px; width: 140px;">Avg Mentee Readiness</th>
+                <th style="padding: 11px 14px; width: 140px;">Score Breakdown</th>
+                <th style="padding: 11px 14px; width: 100px; text-align: right;">Action</th>
               </tr>
             </thead>
             <tbody>
@@ -789,10 +907,15 @@ export function renderReportsView(container, navigateTo) {
                 const trn = t.trainer;
                 const rStatus = getProgressStatus(t.averageReadiness);
 
+                // Max 4 programs shown as badges, rest shown as +X more to prevent row stretching!
+                const maxProgs = 4;
+                const visibleProgs = t.assignedPrograms.slice(0, maxProgs);
+                const remainingProgs = t.assignedPrograms.length - maxProgs;
+
                 return `
                   <tr style="border-bottom: 1px solid #f1f5f9;">
                     <!-- Trainer Avatar & Name -->
-                    <td style="padding: 12px 14px; vertical-align: middle;">
+                    <td style="padding: 11px 14px; vertical-align: middle;">
                       <div style="display: flex; align-items: center; gap: 10px;">
                         <div class="trainer-avatar-mini" style="background: ${trn.color || '#6366f1'}; overflow: hidden; width: 38px; height: 38px;">
                           ${trn.photo ? `<img src="${trn.photo}" alt="${trn.name}" style="width: 100%; height: 100%; object-fit: cover;" />` : trn.name.split(' ').map(n => n[0]).slice(0, 2).join('')}
@@ -809,33 +932,43 @@ export function renderReportsView(container, navigateTo) {
                     </td>
 
                     <!-- Expertise -->
-                    <td style="padding: 12px 14px; vertical-align: middle;">
+                    <td style="padding: 11px 14px; vertical-align: middle;">
                       <span class="badge badge-primary-subtle" style="font-size: 11px; font-weight: 700;">
                         ${trn.expertise}
                       </span>
                     </td>
 
-                    <!-- Assigned Programs -->
-                    <td style="padding: 12px 14px; vertical-align: middle;">
+                    <!-- Assigned Programs (compact uniform wrap) -->
+                    <td style="padding: 11px 14px; vertical-align: middle;">
                       ${t.assignedPrograms.length === 0 ? `
                         <span class="text-xs text-muted">No programs assigned</span>
                       ` : `
-                        <div style="display: flex; flex-wrap: wrap; gap: 5px;">
-                          ${t.assignedPrograms.map(p => `
-                            <span class="badge badge-neutral" style="font-size: 10.5px; font-weight: 700;" title="${p.name} (${p.candidateIds ? p.candidateIds.length : 0} candidates)">
-                              [${p.code}] ${p.candidateIds ? p.candidateIds.length : 0}c
+                        <div style="display: flex; flex-wrap: wrap; gap: 4px; align-items: center; max-width: 250px;">
+                          ${visibleProgs.map(p => `
+                            <span class="badge badge-neutral" style="font-size: 10px; font-weight: 700;" title="${p.name} (${p.candidateIds ? p.candidateIds.length : 0} candidates)">
+                              [${p.code}] ${p.candidateIds ? p.candidateIds.length : 0} cand
                             </span>
                           `).join('')}
+                          ${remainingProgs > 0 ? `
+                            <span class="badge badge-primary-subtle" style="font-size: 10px; font-weight: 700; cursor: pointer;" data-action="view-trn-profile" data-tid="${trn.id}" title="${t.assignedPrograms.slice(maxProgs).map(p => `[${p.code}] ${p.name}`).join(', ')}">
+                              +${remainingProgs} more
+                            </span>
+                          ` : ''}
                         </div>
                       `}
                     </td>
 
-                    <!-- Compliance -->
-                    <td style="padding: 12px 14px; vertical-align: middle;">
+                    <!-- Meeting Compliance with mini progress bar -->
+                    <td style="padding: 11px 14px; vertical-align: middle;">
                       <div style="display: flex; flex-direction: column; gap: 3px;">
-                        <span class="badge ${t.complianceRate === 100 ? 'badge-stage' : (t.complianceRate > 0 ? 'badge-amber' : 'badge-danger')}" style="font-size: 11px; font-weight: 800; width: fit-content;">
-                          ${t.complianceRate}% Compliance
-                        </span>
+                        <div style="display: flex; align-items: center; justify-content: space-between;">
+                          <span class="badge ${t.complianceRate === 100 ? 'badge-stage' : (t.complianceRate > 0 ? 'badge-amber' : 'badge-danger')}" style="font-size: 10.5px; font-weight: 800;">
+                            ${t.complianceRate}% Compliance
+                          </span>
+                        </div>
+                        <div class="progress-bar-bg" style="height: 4px; border-radius: 999px; background: #e2e8f0; overflow: hidden; margin-top: 2px;">
+                          <div style="width: ${t.complianceRate}%; height: 100%; background: ${t.complianceRate >= 80 ? '#10b981' : (t.complianceRate > 0 ? '#f59e0b' : '#ef4444')};"></div>
+                        </div>
                         <span style="font-size: 10.5px; color: #64748b;">
                           ${t.uniqueMenteesMetCount} of ${t.menteeCount} met (${t.totalMeetsLogged} meets)
                         </span>
@@ -843,33 +976,33 @@ export function renderReportsView(container, navigateTo) {
                     </td>
 
                     <!-- Average Mentee Score -->
-                    <td style="padding: 12px 14px; vertical-align: middle;">
+                    <td style="padding: 11px 14px; vertical-align: middle;">
                       <div style="display: flex; flex-direction: column; gap: 3px;">
                         <div style="display: flex; align-items: center; justify-content: space-between;">
-                          <strong style="font-size: 14px; color: ${t.readiness.hasData ? rStatus.color : '#64748b'};">
+                          <strong style="font-size: 13.5px; color: ${t.readiness.hasData ? rStatus.color : '#64748b'};">
                             ${t.readiness.hasData ? `${t.averageReadiness}%` : 'N/A'}
                           </strong>
-                          <span class="badge ${rStatus.badgeClass}" style="font-size: 10px;">
+                          <span class="badge ${rStatus.badgeClass}" style="font-size: 9.5px; padding: 1px 6px;">
                             ${t.readiness.hasData ? rStatus.label : 'Pending'}
                           </span>
                         </div>
-                        <div class="progress-bar-bg" style="height: 5px; border-radius: 999px; background: #e2e8f0; overflow: hidden;">
+                        <div class="progress-bar-bg" style="height: 4px; border-radius: 999px; background: #e2e8f0; overflow: hidden; margin-top: 2px;">
                           <div style="width: ${t.averageReadiness}%; height: 100%; background: ${t.readiness.hasData ? rStatus.color : '#cbd5e1'};"></div>
                         </div>
                       </div>
                     </td>
 
-                    <!-- Distribution -->
-                    <td style="padding: 12px 14px; vertical-align: middle;">
-                      <div style="display: flex; gap: 4px; font-size: 11px;">
-                        <span class="badge badge-stage" style="padding: 2px 6px; font-size: 10px;" title="Stage Ready (80%+)">${t.distribution.readyCount} Ready</span>
-                        <span class="badge badge-amber" style="padding: 2px 6px; font-size: 10px;" title="Needs Attention (<60%)">${t.distribution.needsAttentionCount} Lagging</span>
+                    <!-- Score Distribution -->
+                    <td style="padding: 11px 14px; vertical-align: middle;">
+                      <div style="display: flex; flex-direction: column; gap: 3px; font-size: 10.5px;">
+                        <span class="badge badge-stage" style="padding: 1px 6px; font-size: 9.5px;" title="Stage Ready (80%+)">${t.distribution.readyCount} Ready</span>
+                        <span class="badge badge-amber" style="padding: 1px 6px; font-size: 9.5px;" title="Needs Attention (<60%)">${t.distribution.needsAttentionCount} Lagging</span>
                       </div>
                     </td>
 
                     <!-- Action -->
-                    <td style="padding: 12px 14px; vertical-align: middle; text-align: right;">
-                      <button type="button" class="btn btn-sm btn-secondary" data-action="view-trn-profile" data-tid="${trn.id}" style="font-size: 11px; height: 30px; padding: 0 10px;">
+                    <td style="padding: 11px 14px; vertical-align: middle; text-align: right;">
+                      <button type="button" class="btn btn-sm btn-secondary" data-action="view-trn-profile" data-tid="${trn.id}" style="font-size: 11px; height: 28px; padding: 0 10px;">
                         Profile
                       </button>
                     </td>
@@ -886,6 +1019,14 @@ export function renderReportsView(container, navigateTo) {
     if (inpTrnSearch) {
       inpTrnSearch.addEventListener('input', e => {
         searchQuery = e.target.value.trim();
+        renderTrainerReportSection();
+      });
+    }
+
+    const btnClearTrnSearch = contentWrapper.querySelector('#btnClearTrnSearch');
+    if (btnClearTrnSearch) {
+      btnClearTrnSearch.addEventListener('click', () => {
+        searchQuery = '';
         renderTrainerReportSection();
       });
     }
@@ -926,22 +1067,22 @@ export function renderReportsView(container, navigateTo) {
       <head>
         <title>DH BENGAL - Candidate Performance & Readiness Report</title>
         <style>
-          body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 24px; color: #0f172a; font-size: 12px; }
-          .header { border-bottom: 2px solid #0f172a; padding-bottom: 12px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: flex-start; }
+          body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 24px; color: #0f172a; font-size: 11.5px; }
+          .header { border-bottom: 2px solid #0f172a; padding-bottom: 12px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: flex-start; }
           h1 { margin: 0; font-size: 18px; font-weight: 900; text-transform: uppercase; }
-          .sub { font-size: 12px; color: #4338ca; font-weight: 700; margin-top: 3px; }
+          .sub { font-size: 12px; color: #4338ca; font-weight: 700; margin-top: 2px; }
           table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-          th { background: #f1f5f9; border: 1px solid #cbd5e1; padding: 7px 8px; text-align: left; font-size: 10.5px; text-transform: uppercase; font-weight: 800; color: #334155; }
-          td { border: 1px solid #e2e8f0; padding: 7px 8px; vertical-align: top; }
+          th { background: #f1f5f9; border: 1px solid #cbd5e1; padding: 6px 8px; text-align: left; font-size: 10px; text-transform: uppercase; font-weight: 800; color: #334155; }
+          td { border: 1px solid #e2e8f0; padding: 6px 8px; vertical-align: top; }
           tr:nth-child(even) { background: #f8fafc; }
-          .badge { display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 700; }
+          .badge { display: inline-block; padding: 2px 5px; border-radius: 4px; font-size: 9.5px; font-weight: 700; }
           .badge-ready { background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; }
           .badge-track { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
           .badge-attention { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
-          .prog-tag { display: inline-block; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 4px; padding: 1px 5px; font-size: 10px; margin: 1px; font-weight: 600; }
-          .footer { margin-top: 30px; padding-top: 14px; border-top: 1px solid #cbd5e1; display: flex; justify-content: space-between; font-size: 10px; color: #64748b; }
+          .prog-tag { display: inline-block; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 3px; padding: 1px 4px; font-size: 9.5px; margin: 1px; font-weight: 600; }
+          .footer { margin-top: 24px; padding-top: 12px; border-top: 1px solid #cbd5e1; display: flex; justify-content: space-between; font-size: 10px; color: #64748b; }
           @media print {
-            body { margin: 10mm; }
+            body { margin: 8mm; }
             button { display: none; }
           }
         </style>
@@ -974,9 +1115,10 @@ export function renderReportsView(container, navigateTo) {
           <tbody>
             ${dossiers.map(d => {
               const statusClass = d.overallReadiness >= 80 ? 'badge-ready' : (d.overallReadiness >= 60 ? 'badge-track' : 'badge-attention');
+              const cleanChest = formatChestNo(d.candidate);
               return `
                 <tr>
-                  <td><strong>#${d.candidate.chestNo || d.candidate.id}</strong></td>
+                  <td><strong>${cleanChest}</strong></td>
                   <td><strong>${d.candidate.name}</strong></td>
                   <td>${d.candidate.category}</td>
                   <td>
@@ -995,7 +1137,7 @@ export function renderReportsView(container, navigateTo) {
                   <td>
                     ${d.momentumLabel}
                   </td>
-                  <td style="font-size: 11px; color: #334155;">
+                  <td style="font-size: 10.5px; color: #334155;">
                     ${d.latestRemark ? `"${d.latestRemark.text}" (${d.latestRemark.trainerName})` : '-'}
                   </td>
                 </tr>
@@ -1035,19 +1177,19 @@ export function renderReportsView(container, navigateTo) {
       <head>
         <title>DH BENGAL - Trainer Mentorship & Evaluation Report</title>
         <style>
-          body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 24px; color: #0f172a; font-size: 12px; }
-          .header { border-bottom: 2px solid #0f172a; padding-bottom: 12px; margin-bottom: 16px; display: flex; justify-content: space-between; align-items: flex-start; }
+          body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 24px; color: #0f172a; font-size: 11.5px; }
+          .header { border-bottom: 2px solid #0f172a; padding-bottom: 12px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: flex-start; }
           h1 { margin: 0; font-size: 18px; font-weight: 900; text-transform: uppercase; }
-          .sub { font-size: 12px; color: #4338ca; font-weight: 700; margin-top: 3px; }
+          .sub { font-size: 12px; color: #4338ca; font-weight: 700; margin-top: 2px; }
           table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-          th { background: #f1f5f9; border: 1px solid #cbd5e1; padding: 7px 8px; text-align: left; font-size: 10.5px; text-transform: uppercase; font-weight: 800; color: #334155; }
-          td { border: 1px solid #e2e8f0; padding: 7px 8px; vertical-align: top; }
+          th { background: #f1f5f9; border: 1px solid #cbd5e1; padding: 6px 8px; text-align: left; font-size: 10px; text-transform: uppercase; font-weight: 800; color: #334155; }
+          td { border: 1px solid #e2e8f0; padding: 6px 8px; vertical-align: top; }
           tr:nth-child(even) { background: #f8fafc; }
-          .badge { display: inline-block; padding: 2px 6px; border-radius: 4px; font-size: 10px; font-weight: 700; }
+          .badge { display: inline-block; padding: 2px 5px; border-radius: 4px; font-size: 9.5px; font-weight: 700; }
           .badge-stage { background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; }
-          .footer { margin-top: 30px; padding-top: 14px; border-top: 1px solid #cbd5e1; display: flex; justify-content: space-between; font-size: 10px; color: #64748b; }
+          .footer { margin-top: 24px; padding-top: 12px; border-top: 1px solid #cbd5e1; display: flex; justify-content: space-between; font-size: 10px; color: #64748b; }
           @media print {
-            body { margin: 10mm; }
+            body { margin: 8mm; }
             button { display: none; }
           }
         </style>

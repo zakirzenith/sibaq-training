@@ -9,9 +9,10 @@ import { getIcon } from './icons.js';
  * @param {Object} options - Optional initial configuration: { defaultRole: 'controller' | 'trainer' }
  */
 export function renderLoginView(container, onLoginSuccess, options = {}) {
-  let activeTab = options.defaultRole === 'trainer' ? 'trainer' : 'controller';
+  let activeTab = options.defaultRole === 'trainer' ? 'trainer' : (options.defaultRole === 'mentee' ? 'mentee' : 'controller');
 
   const trainers = state.getTrainers();
+  const categories = state.getAvailableCategories();
 
   function render() {
     container.innerHTML = `
@@ -30,17 +31,17 @@ export function renderLoginView(container, onLoginSuccess, options = {}) {
             <p class="auth-main-subtitle">Sibaq Operations & Training Management System</p>
           </div>
 
-          <!-- Dual Portal Role Switcher Tabs -->
-          <div class="auth-role-tabs">
+          <!-- Triple Portal Role Switcher Tabs -->
+          <div class="auth-role-tabs" style="grid-template-columns: repeat(3, 1fr);">
             <button 
               type="button" 
               id="tabController" 
               class="auth-tab-btn ${activeTab === 'controller' ? 'active' : ''}"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/>
               </svg>
-              <span>Controller Login</span>
+              <span>Controller</span>
             </button>
 
             <button 
@@ -48,10 +49,21 @@ export function renderLoginView(container, onLoginSuccess, options = {}) {
               id="tabTrainer" 
               class="auth-tab-btn ${activeTab === 'trainer' ? 'active' : ''}"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
                 <circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 1 0-16 0"/>
               </svg>
-              <span>Trainer Login</span>
+              <span>Mentor</span>
+            </button>
+
+            <button 
+              type="button" 
+              id="tabMentee" 
+              class="auth-tab-btn ${activeTab === 'mentee' ? 'active' : ''}"
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/>
+              </svg>
+              <span>Mentee</span>
             </button>
           </div>
 
@@ -108,13 +120,13 @@ export function renderLoginView(container, onLoginSuccess, options = {}) {
                   <span class="auth-btn-arrow">&rarr;</span>
                 </button>
               </form>
-            ` : `
+            ` : activeTab === 'trainer' ? `
               <!-- ================= TRAINER LOGIN FORM ================= -->
               <div class="auth-form-header">
                 <div class="auth-badge-pill badge-trainer">
-                  <span class="auth-badge-dot" style="background: #6366f1;"></span> Trainer Portal
+                  <span class="auth-badge-dot" style="background: #6366f1;"></span> Mentor Portal
                 </div>
-                <h2 class="auth-form-title">Trainer Sign In</h2>
+                <h2 class="auth-form-title">Mentor Sign In</h2>
                 <p class="auth-form-desc">
                   Access your assigned mentees, enrolled programs, and report daily progress.
                 </p>
@@ -122,7 +134,7 @@ export function renderLoginView(container, onLoginSuccess, options = {}) {
 
               <form id="formTrainerLogin" class="auth-form-body">
                 <div class="form-group">
-                  <label class="form-label" for="trnUsername">Trainer Username / ID</label>
+                  <label class="form-label" for="trnUsername">Mentor Username / ID</label>
                   <div class="auth-input-wrap">
                     <span class="auth-input-icon">${getIcon('user')}</span>
                     <input 
@@ -137,7 +149,7 @@ export function renderLoginView(container, onLoginSuccess, options = {}) {
                 </div>
 
                 <div class="form-group">
-                  <label class="form-label" for="trnPassword">Trainer Password</label>
+                  <label class="form-label" for="trnPassword">Mentor Password</label>
                   <div class="auth-input-wrap">
                     <span class="auth-input-icon">${getIcon('lock')}</span>
                     <input 
@@ -155,7 +167,51 @@ export function renderLoginView(container, onLoginSuccess, options = {}) {
                 </div>
 
                 <button type="submit" id="btnSubmitTrn" class="btn btn-primary auth-submit-btn" style="background: #4f46e5; border-color: #4338ca;">
-                  <span>Sign In to Trainer Panel</span>
+                  <span>Sign In to Mentor Panel</span>
+                  <span class="auth-btn-arrow">&rarr;</span>
+                </button>
+              </form>
+            ` : `
+              <!-- ================= MENTEE LOGIN FORM ================= -->
+              <div class="auth-form-header">
+                <div class="auth-badge-pill badge-mentee" style="background: #ecfdf5; color: #047857; border-color: #a7f3d0;">
+                  <span class="auth-badge-dot" style="background: #10b981;"></span> Candidate Portal
+                </div>
+                <h2 class="auth-form-title">Mentee Sign In</h2>
+                <p class="auth-form-desc">
+                  Access your daily practice tasks, assigned mentors, enrolled programs, and mentor reviews.
+                </p>
+              </div>
+
+              <form id="formMenteeLogin" class="auth-form-body">
+                <div class="form-group">
+                  <label class="form-label" for="menteeAdNo">Admission / Chest Number</label>
+                  <div class="auth-input-wrap">
+                    <span class="auth-input-icon">${getIcon('user')}</span>
+                    <input 
+                      type="text" 
+                      id="menteeAdNo" 
+                      class="form-input auth-input" 
+                      required 
+                      placeholder="e.g. AD-2026-01 or 101"
+                      autocomplete="username"
+                    />
+                  </div>
+                </div>
+
+                <div class="form-group">
+                  <label class="form-label" for="menteeCategory">Competition Category</label>
+                  <div class="auth-input-wrap">
+                    <span class="auth-input-icon" style="color: #059669;">${getIcon('award')}</span>
+                    <select id="menteeCategory" class="form-select auth-input" required style="width: 100%; cursor: pointer;">
+                      <option value="">-- Choose Your Category --</option>
+                      ${categories.map(cat => `<option value="${cat}">${cat}</option>`).join('')}
+                    </select>
+                  </div>
+                </div>
+
+                <button type="submit" id="btnSubmitMentee" class="btn btn-primary auth-submit-btn" style="background: #059669; border-color: #047857;">
+                  <span>Sign In to Mentee Portal</span>
                   <span class="auth-btn-arrow">&rarr;</span>
                 </button>
               </form>
@@ -166,7 +222,7 @@ export function renderLoginView(container, onLoginSuccess, options = {}) {
           <div class="auth-footer-bar">
             <span>DH BENGAL &bull; Sibaq 2026</span>
             <span class="afb-bullet">&bull;</span>
-            <span>Role-Based Access Control</span>
+            <span>Candidate & Mentorship Portal</span>
           </div>
         </div>
       </div>
@@ -179,6 +235,7 @@ export function renderLoginView(container, onLoginSuccess, options = {}) {
     // 1. Tab Switchers
     const tabCtrl = container.querySelector('#tabController');
     const tabTrn = container.querySelector('#tabTrainer');
+    const tabMnt = container.querySelector('#tabMentee');
 
     if (tabCtrl) {
       tabCtrl.addEventListener('click', () => {
@@ -193,6 +250,15 @@ export function renderLoginView(container, onLoginSuccess, options = {}) {
       tabTrn.addEventListener('click', () => {
         if (activeTab !== 'trainer') {
           activeTab = 'trainer';
+          render();
+        }
+      });
+    }
+
+    if (tabMnt) {
+      tabMnt.addEventListener('click', () => {
+        if (activeTab !== 'mentee') {
+          activeTab = 'mentee';
           render();
         }
       });
@@ -232,7 +298,7 @@ export function renderLoginView(container, onLoginSuccess, options = {}) {
       }
     }
 
-    // 3. Trainer Form Logic
+    // 3. Trainer / Mentor Form Logic
     if (activeTab === 'trainer') {
       const formTrn = container.querySelector('#formTrainerLogin');
       const txtTrnUser = container.querySelector('#trnUsername');
@@ -262,6 +328,32 @@ export function renderLoginView(container, onLoginSuccess, options = {}) {
 
           toast.success(`Welcome back, ${result.trainer.name}!`);
           onLoginSuccess('trainer', result.trainer);
+        });
+      }
+    }
+
+    // 4. Mentee Form Logic
+    if (activeTab === 'mentee') {
+      const formMnt = container.querySelector('#formMenteeLogin');
+      const txtAdNo = container.querySelector('#menteeAdNo');
+      const selCat = container.querySelector('#menteeCategory');
+
+      if (formMnt) {
+        formMnt.addEventListener('submit', (e) => {
+          e.preventDefault();
+          const adNo = txtAdNo.value.trim();
+          const category = selCat.value.trim();
+
+          const result = state.authenticateMentee(adNo, category);
+          if (!result.success) {
+            toast.error(result.error);
+            txtAdNo.classList.add('input-error');
+            setTimeout(() => txtAdNo.classList.remove('input-error'), 1000);
+            return;
+          }
+
+          toast.success(`Welcome back, ${result.candidate.name}!`);
+          onLoginSuccess('mentee', result.candidate);
         });
       }
     }

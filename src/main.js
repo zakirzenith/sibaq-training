@@ -12,6 +12,8 @@ import { renderReportsView } from './components/reportsView.js';
 import { renderTrainerDashboardView } from './components/trainerPortal/trainerDashboardView.js';
 import { renderTrainerDailyProgressView } from './components/trainerPortal/trainerDailyProgressView.js';
 import { renderTrainerReportsView } from './components/trainerPortal/trainerReportsView.js';
+import { renderMenteeDashboardView } from './components/menteePortal/menteeDashboardView.js';
+import { openCandidateDossierModal } from './components/modals/candidateDossierModal.js';
 import { openExcelUploadModal } from './components/modals/excelUploadModal.js';
 import { openCloudDatabaseModal } from './components/modals/cloudDatabaseModal.js';
 import { openTrainerLoginModal } from './components/modals/trainerLoginModal.js';
@@ -45,6 +47,9 @@ class App {
       if (session.role === 'trainer') {
         this.currentPortal = 'trainer';
         this.currentView = 'trainer-dashboard';
+      } else if (session.role === 'mentee') {
+        this.currentPortal = 'mentee';
+        this.currentView = 'mentee-dashboard';
       } else {
         this.currentPortal = 'controller';
         this.currentView = 'dashboard';
@@ -162,22 +167,35 @@ class App {
     if (!session) return;
 
     const isTrainer = session.role === 'trainer' || this.currentPortal === 'trainer';
+    const isMentee = session.role === 'mentee' || this.currentPortal === 'mentee';
     const activeTrainer = isTrainer ? state.getActiveTrainer() : null;
+    const activeMentee = isMentee && session.candidate ? session.candidate : null;
 
     const overlay = document.createElement('div');
     overlay.className = 'modal-backdrop';
 
-    const panelName = isTrainer ? 'Trainer Panel' : 'Controller Panel';
-    const panelBadgeStyle = isTrainer 
-      ? 'background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0;' 
-      : 'background: #eef2ff; color: #4338ca; border: 1px solid #c7d2fe;';
-    const panelDotColor = isTrainer ? '#10b981' : '#6366f1';
+    let panelName = 'Controller Panel';
+    let panelBadgeStyle = 'background: #eef2ff; color: #4338ca; border: 1px solid #c7d2fe;';
+    let panelDotColor = '#6366f1';
+    let userName = 'DH BENGAL';
+    let userRole = 'Sibaq Controller Central Hub';
+    let userIdentifier = 'Username: sibaq';
 
-    const userName = isTrainer && activeTrainer ? activeTrainer.name : 'DH BENGAL';
-    const userRole = isTrainer ? 'Assigned Trainer & Mentor' : 'Sibaq Controller Central Hub';
-    const userIdentifier = isTrainer && activeTrainer 
-      ? (activeTrainer.username || activeTrainer.email || activeTrainer.phone || 'Trainer ID: ' + activeTrainer.id) 
-      : 'Username: sibaq';
+    if (isTrainer && activeTrainer) {
+      panelName = 'Mentor Panel';
+      panelBadgeStyle = 'background: #eef2ff; color: #4f46e5; border: 1px solid #c7d2fe;';
+      panelDotColor = '#6366f1';
+      userName = activeTrainer.name;
+      userRole = 'Assigned Mentor & Coach';
+      userIdentifier = activeTrainer.username || 'Trainer ID: ' + activeTrainer.id;
+    } else if (isMentee && activeMentee) {
+      panelName = 'Mentee / Candidate Portal';
+      panelBadgeStyle = 'background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0;';
+      panelDotColor = '#10b981';
+      userName = activeMentee.name;
+      userRole = `Registered Candidate (${activeMentee.category})`;
+      userIdentifier = 'Admission / Chest: ' + (activeMentee.adNo || activeMentee.chestNo || activeMentee.id);
+    }
 
     overlay.innerHTML = `
       <div class="modal-dialog profile-modal-dialog" style="max-width: 400px; width: 92%;">
@@ -195,12 +213,14 @@ class App {
         <div class="modal-body" style="padding: 16px 18px;">
           <!-- Top Profile Banner -->
           <div style="background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border: 1px solid #e2e8f0; border-radius: 14px; padding: 16px; text-align: center; margin-bottom: 14px;">
-            <div style="display: inline-flex; align-items: center; justify-content: center; width: 62px; height: 62px; border-radius: 50%; background: ${isTrainer && activeTrainer ? (activeTrainer.color || '#6366f1') : '#ffffff'}; color: #fff; font-size: 22px; font-weight: 800; box-shadow: 0 4px 12px rgba(0,0,0,0.08); border: 3px solid #ffffff; margin-bottom: 10px; overflow: hidden;">
+            <div style="display: inline-flex; align-items: center; justify-content: center; width: 62px; height: 62px; border-radius: 50%; background: ${isTrainer && activeTrainer ? (activeTrainer.color || '#6366f1') : (isMentee ? '#059669' : '#ffffff')}; color: #fff; font-size: 22px; font-weight: 800; box-shadow: 0 4px 12px rgba(0,0,0,0.08); border: 3px solid #ffffff; margin-bottom: 10px; overflow: hidden;">
               ${isTrainer && activeTrainer 
                 ? (activeTrainer.photo 
                     ? `<img src="${activeTrainer.photo}" alt="${activeTrainer.name}" style="width: 100%; height: 100%; object-fit: cover;" />` 
                     : activeTrainer.name.split(' ').map(n => n[0]).slice(0, 2).join(''))
-                : `<img src="/logo.png" alt="Logo" style="width: 100%; height: 100%; object-fit: contain; padding: 4px;" />`}
+                : isMentee && activeMentee
+                  ? activeMentee.name.split(' ').map(n => n[0]).slice(0, 2).join('')
+                  : `<img src="/logo.png" alt="Logo" style="width: 100%; height: 100%; object-fit: contain; padding: 4px;" />`}
             </div>
             <h3 style="font-size: 16.5px; font-weight: 800; color: #0f172a; margin: 0 0 4px 0;">${userName}</h3>
             <div style="font-size: 12px; color: #64748b; margin-bottom: 10px;">${userRole}</div>
@@ -230,6 +250,15 @@ class App {
               <div style="display: flex; justify-content: space-between; align-items: center;">
                 <span style="color: #64748b;">Assigned Programs:</span>
                 <span style="font-weight: 700; color: #4f46e5;">${state.getTrainerPrograms(activeTrainer.id).length} Active Program(s)</span>
+              </div>
+            ` : isMentee && activeMentee ? `
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="color: #64748b;">Category:</span>
+                <span style="font-weight: 700; color: #0f172a;">${activeMentee.category}</span>
+              </div>
+              <div style="display: flex; justify-content: space-between; align-items: center;">
+                <span style="color: #64748b;">Enrolled Programs:</span>
+                <span style="font-weight: 700; color: #059669;">${state.getCandidatePrograms(activeMentee.id).length} Program(s)</span>
               </div>
             ` : `
               <div style="display: flex; justify-content: space-between; align-items: center;">
@@ -328,6 +357,11 @@ class App {
       }
       this.updatePortalUI();
       this.navigateTo('trainer-dashboard');
+    } else if (role === 'mentee') {
+      this.currentPortal = 'mentee';
+      localStorage.setItem('mentorflow_active_portal', 'mentee');
+      this.updatePortalUI();
+      this.navigateTo('mentee-dashboard');
     } else {
       this.currentPortal = 'controller';
       localStorage.setItem('mentorflow_active_portal', 'controller');
@@ -385,8 +419,11 @@ class App {
 
     const session = state.getAuthSession();
     const isRealTrainerSession = session && session.role === 'trainer';
+    const isRealMenteeSession = session && session.role === 'mentee';
     const isTrainer = this.currentPortal === 'trainer';
+    const isMentee = this.currentPortal === 'mentee' || isRealMenteeSession;
     const activeTrainer = state.getActiveTrainer();
+    const activeMentee = session && session.role === 'mentee' ? session.candidate : null;
 
     const brandSubtitle = document.querySelector('.logo-subtitle');
     const statusCapsule = document.querySelector('.topbar-status-capsule');
@@ -514,6 +551,80 @@ class App {
         `;
       }
 
+    } else if (isMentee && activeMentee) {
+      if (brandSubtitle) brandSubtitle.textContent = 'Mentee Portal';
+      if (statusCapsule) {
+        statusCapsule.innerHTML = `<span class="dot-stage" style="background: #10b981;"></span> Mentee: <strong>${activeMentee.name}</strong>`;
+      }
+      if (userPill) {
+        userPill.innerHTML = `
+          <div class="sup-avatar" style="width: 28px; height: 28px; border-radius: 50%; background: #059669; color: #fff; font-weight: 700; font-size: 11px; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+            ${activeMentee.name.split(' ').map(n => n[0]).slice(0, 2).join('')}
+          </div>
+          <div class="sup-info">
+            <span class="sup-name">${activeMentee.name}</span>
+          </div>
+        `;
+      }
+
+      if (btnTopTrainer) {
+        btnTopTrainer.style.display = 'none';
+      }
+
+      // Sidebar Nav for Mentee Portal
+      if (sidebarNav) {
+        sidebarNav.innerHTML = `
+          <div class="nav-section-title">Mentee Workspace</div>
+          <a class="nav-item ${this.currentView === 'mentee-dashboard' ? 'active' : ''}" data-view="mentee-dashboard" id="navMenteeDashboard">
+            <span class="nav-item-icon">${getIcon('dashboard')}</span>
+            <span>My Practice &amp; Tasks</span>
+          </a>
+          <a class="nav-item" data-action="view-my-dossier" id="navMenteeDossier" style="cursor: pointer;">
+            <span class="nav-item-icon">${getIcon('award')}</span>
+            <span>My Official Dossier</span>
+          </a>
+
+          <div class="nav-section-title" style="margin-top: 18px;">Account</div>
+          <a class="nav-item" data-action="logout" style="cursor: pointer; color: #ef4444;">
+            <span class="nav-item-icon">${getIcon('logout')}</span>
+            <span>Sign Out</span>
+          </a>
+        `;
+      }
+
+      // Sidebar Footer for Mentee Portal
+      if (sidebarFooter) {
+        sidebarFooter.innerHTML = `
+          <div class="saas-system-card" style="border-color: #a7f3d0; background: #ecfdf5;">
+            <div class="ssc-dot-row">
+              <span class="status-pulse-dot" style="background: #10b981;"></span>
+              <span class="ssc-title" style="color: #065f46;">AD: ${activeMentee.adNo || activeMentee.chestNo}</span>
+            </div>
+            <div class="ssc-subtitle" style="color: #047857;">Category: ${activeMentee.category}</div>
+          </div>
+        `;
+      }
+
+      // Mobile Nav for Mentee Portal
+      if (mobileNav) {
+        mobileNav.innerHTML = `
+          <button class="mobile-nav-btn ${this.currentView === 'mentee-dashboard' ? 'active' : ''}" data-view="mentee-dashboard">
+            ${getIcon('dashboard')}
+            <span>Practice</span>
+          </button>
+          <button class="mobile-nav-btn" data-action="view-my-dossier">
+            ${getIcon('award')}
+            <span>Dossier</span>
+          </button>
+          <button class="mobile-nav-btn" data-action="open-profile">
+            <span style="display:inline-flex; align-items:center; justify-content:center; width:22px; height:22px; border-radius:50%; background:#059669; color:#fff; font-weight:700; font-size:11px; overflow:hidden;">
+              ${activeMentee.name.split(' ').map(n => n[0]).slice(0, 2).join('')}
+            </span>
+            <span>Profile</span>
+          </button>
+        `;
+      }
+
     } else {
       // Restore Controller Navigation
       if (brandSubtitle) brandSubtitle.textContent = 'Sibaq Controller';
@@ -604,6 +715,15 @@ class App {
         }
       };
     });
+
+    document.querySelectorAll('[data-action="view-my-dossier"]').forEach(el => {
+      el.onclick = () => {
+        const session = state.getAuthSession();
+        if (session && session.role === 'mentee' && session.candidate) {
+          openCandidateDossierModal(session.candidate.id);
+        }
+      };
+    });
   }
 
   navigateTo(viewName) {
@@ -619,6 +739,16 @@ class App {
       if (!allowedTrainerViews.includes(viewName)) {
         toast.error('Access Restricted: Trainer accounts cannot access Controller views.');
         this.currentView = 'trainer-dashboard';
+        this.render();
+        return;
+      }
+    }
+
+    if (session && session.role === 'mentee') {
+      const allowedMenteeViews = ['mentee-dashboard'];
+      if (!allowedMenteeViews.includes(viewName)) {
+        toast.error('Access Restricted: Candidates can only access their personal dashboard.');
+        this.currentView = 'mentee-dashboard';
         this.render();
         return;
       }
@@ -645,7 +775,8 @@ class App {
       'reports': 'Performance Reports & Dossiers',
       'trainer-dashboard': 'Trainer Dashboard',
       'trainer-daily-progress': 'Trainer Daily Progress',
-      'trainer-reports': 'Performance & Mentorship Reports'
+      'trainer-reports': 'Performance & Mentorship Reports',
+      'mentee-dashboard': 'Candidate Practice & Daily Tasks'
     };
     const breadcrumbEl = document.getElementById('topbarCurrentViewName');
     if (breadcrumbEl && viewTitleMap[viewName]) {
@@ -908,9 +1039,14 @@ class App {
       case 'trainer-reports':
         renderTrainerReportsView(this.mainContent, navigate);
         break;
+      case 'mentee-dashboard':
+        renderMenteeDashboardView(this.mainContent, navigate);
+        break;
       default:
         if (this.currentPortal === 'trainer') {
           renderTrainerDashboardView(this.mainContent, navigate);
+        } else if (this.currentPortal === 'mentee') {
+          renderMenteeDashboardView(this.mainContent, navigate);
         } else {
           renderDashboardView(this.mainContent, navigate);
         }

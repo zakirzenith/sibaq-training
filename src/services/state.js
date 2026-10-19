@@ -981,6 +981,42 @@ class StateService {
     return { success: false, error: 'Incorrect username or password. Please verify controller credentials.' };
   }
 
+  // --- MENTEE AUTHENTICATION ---
+  authenticateMentee(adNo, category) {
+    const rawAd = String(adNo || '').trim();
+    const rawCat = String(category || '').trim().toLowerCase();
+
+    if (!rawAd) {
+      return { success: false, error: 'Please enter your Admission / Chest Number.' };
+    }
+    if (!rawCat) {
+      return { success: false, error: 'Please select your competition Category.' };
+    }
+
+    const candidate = this.getCandidateByAdNo(rawAd);
+    if (!candidate) {
+      return { 
+        success: false, 
+        error: `No candidate found with Admission / Chest No "${rawAd}". Please verify your number.` 
+      };
+    }
+
+    // Verify category matches (case-insensitive and trimmed)
+    const candCat = String(candidate.category || '').trim().toLowerCase();
+    if (candCat !== rawCat) {
+      return { 
+        success: false, 
+        error: `Category mismatch for ${candidate.name}. You are registered under "${candidate.category}", but "${category}" was selected.` 
+      };
+    }
+
+    localStorage.setItem('mentorflow_auth_role', 'mentee');
+    localStorage.setItem('mentorflow_auth_mentee_id', candidate.id);
+    localStorage.setItem('mentorflow_active_portal', 'mentee');
+    this.clearActiveTrainer();
+    return { success: true, candidate };
+  }
+
   getAuthSession() {
     const role = localStorage.getItem('mentorflow_auth_role');
     if (role === 'controller') {
@@ -993,12 +1029,20 @@ class StateService {
         return { role: 'trainer', trainer };
       }
     }
+    if (role === 'mentee') {
+      const authId = localStorage.getItem('mentorflow_auth_mentee_id');
+      const candidate = authId ? this.getCandidateById(authId) : null;
+      if (candidate) {
+        return { role: 'mentee', candidate };
+      }
+    }
     return null;
   }
 
   logout() {
     localStorage.removeItem('mentorflow_auth_role');
     localStorage.removeItem('mentorflow_auth_trainer_id');
+    localStorage.removeItem('mentorflow_auth_mentee_id');
     localStorage.removeItem('mentorflow_controller_user');
     this.clearActiveTrainer();
     localStorage.removeItem('mentorflow_active_portal');
@@ -1505,6 +1549,66 @@ class StateService {
       statusClass,
       latestMeet,
       targetDate
+    };
+  }
+
+  getCandidateMenteeDashboardData(candidateId) {
+    const candidate = this.getCandidateById(candidateId);
+    if (!candidate) return null;
+
+    const dossier = this.getCandidatePerformanceDossier(candidateId);
+    const todayStatus = this.getCandidateDailyStatus(candidateId);
+
+    const now = new Date();
+    // Build past 7 days tracking (0 = today, 1 = yesterday, ... 6 = 6 days ago)
+    const daysHistory = [];
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(now);
+      d.setDate(d.getDate() - i);
+      const dStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      const statusObj = this.getCandidateDailyStatus(candidateId, dStr);
+
+      let displayDate = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
+      if (i === 0) displayDate = 'Today';
+      else if (i === 1) displayDate = 'Yesterday';
+
+      daysHistory.push({
+        dateStr: dStr,
+        displayDate,
+        dayIndex: i,
+        isToday: i === 0,
+        statusObj
+      });
+    }
+
+    // Calculate active meeting streak
+    let streak = 0;
+    const startIdx = todayStatus && todayStatus.isMet ? 0 : 1;
+    for (let i = startIdx; i < 60; i++) {
+      const d = new Date(now);
+      d.setDate(d.getDate() - i);
+      const dStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      const hasMeet = this.dailyMeets.some(m => m.candidateId === candidate.id && m.date === dStr);
+      if (hasMeet) {
+        streak++;
+      } else {
+        break;
+      }
+    }
+
+    // Past 6 days stats (excluding today)
+    const pastDays = daysHistory.slice(1);
+    const pastMetCount = pastDays.filter(d => d.statusObj && d.statusObj.isMet).length;
+    const pastMissedCount = pastDays.filter(d => d.statusObj && d.statusObj.isMissed).length;
+
+    return {
+      candidate,
+      dossier,
+      todayStatus,
+      daysHistory,
+      streak,
+      pastMetCount,
+      pastMissedCount
     };
   }
 

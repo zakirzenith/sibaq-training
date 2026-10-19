@@ -114,10 +114,10 @@ export function renderReportsView(container, navigateTo) {
 
         <!-- Global Action Buttons -->
         <button id="btnPrintReportTable" class="btn btn-outline btn-sm desktop-only-btn" style="gap: 6px; font-weight: 700; border-color: #cbd5e1; height: 36px;" title="Print Current Report Sheet">
-          ${getIcon('printer')} <span>Print Report</span>
+          ${getIcon('printer')} <span id="topPrintBtnText">Print Candidates</span>
         </button>
         <button id="btnExportReportExcel" class="btn btn-primary btn-sm desktop-only-btn" style="gap: 6px; font-weight: 700; height: 36px;" title="Export Current Report to Excel Spreadsheet">
-          ${getIcon('fileSpreadsheet')} <span>Export Excel</span>
+          ${getIcon('fileSpreadsheet')} <span id="topExportBtnText">Export Excel</span>
         </button>
       </div>
     </div>
@@ -135,14 +135,20 @@ export function renderReportsView(container, navigateTo) {
   const tabBadgeTrainers = container.querySelector('#tabBadgeTrainers');
   const btnPrint = container.querySelector('#btnPrintReportTable');
   const btnExport = container.querySelector('#btnExportReportExcel');
+  const topPrintBtnText = container.querySelector('#topPrintBtnText');
+  const topExportBtnText = container.querySelector('#topExportBtnText');
 
   const updateTabStyles = () => {
     if (activeTab === 'candidates') {
       tabBtnCandidates.classList.add('active');
       tabBtnTrainers.classList.remove('active');
+      if (topPrintBtnText) topPrintBtnText.textContent = 'Print Candidates';
+      if (topExportBtnText) topExportBtnText.textContent = 'Export Excel';
     } else {
       tabBtnTrainers.classList.add('active');
       tabBtnCandidates.classList.remove('active');
+      if (topPrintBtnText) topPrintBtnText.textContent = 'Print Trainers';
+      if (topExportBtnText) topExportBtnText.textContent = 'Export Excel';
     }
   };
 
@@ -379,6 +385,10 @@ export function renderReportsView(container, navigateTo) {
 
             <button type="button" id="btnToggleAdvancedFilters" class="btn ${isAdvancedFiltersOpen || hasActiveDropdownFilters ? 'btn-primary' : 'btn-outline'}" style="height: 40px; padding: 0 14px; font-size: 12.5px; font-weight: 700; gap: 6px; border-radius: 10px;">
               ${getIcon('filter')} <span>Filters</span> ${hasActiveDropdownFilters ? `<span style="background: rgba(255,255,255,0.3); border-radius: 999px; padding: 1px 6px; font-size: 10px;">Active</span>` : ''}
+            </button>
+
+            <button type="button" id="btnPrintCandToolbar" class="btn btn-outline desktop-only-btn" style="height: 40px; padding: 0 14px; font-size: 12.5px; font-weight: 700; gap: 6px; border-radius: 10px; border-color: #cbd5e1;" title="Print filtered candidates report">
+              ${getIcon('printer')} <span>Print</span>
             </button>
 
             ${(searchQuery || quickFilter !== 'ALL' || hasActiveDropdownFilters) ? `
@@ -902,9 +912,73 @@ export function renderReportsView(container, navigateTo) {
     });
 
     // Wire global print and excel for Candidate Report
-    btnPrint.onclick = () => {
-      printCandidateReportSheet(filtered);
+    const triggerCandidatePrint = () => {
+      const quickFilterLabels = {
+        'ALL': 'All Candidates',
+        'READY': 'Stage Ready (80%+)',
+        'PREPARING': 'Actively Preparing',
+        'AT_RISK': 'Follow-Up Needed',
+        'FULLY_MET': 'Fully Met (100%)',
+        'PENDING': 'Pending Check-in'
+      };
+
+      const filterTags = [];
+      if (quickFilter !== 'ALL') {
+        filterTags.push({ label: 'Scope', val: quickFilterLabels[quickFilter] || quickFilter, isMain: true });
+      } else {
+        filterTags.push({ label: 'Scope', val: 'All Candidates', isMain: true });
+      }
+
+      if (filterCategory !== 'ALL') filterTags.push({ label: 'Category', val: filterCategory });
+      if (filterProgType !== 'ALL') filterTags.push({ label: 'Program Type', val: filterProgType });
+      if (filterReadiness !== 'ALL') filterTags.push({ label: 'Readiness Band', val: filterReadiness });
+      if (filterMeetingRate !== 'ALL') filterTags.push({ label: 'Meeting Rate', val: filterMeetingRate });
+      if (filterMomentum !== 'ALL') filterTags.push({ label: 'Trajectory', val: filterMomentum });
+      if (filterProgramId !== 'ALL') {
+        const prog = state.getProgramById(filterProgramId);
+        filterTags.push({ label: 'Program', val: prog ? `[${prog.code}] ${prog.name}` : filterProgramId });
+      }
+      if (filterTrainerId !== 'ALL') {
+        const trn = state.getTrainerById(filterTrainerId);
+        filterTags.push({ label: 'Trainer', val: trn ? trn.name : filterTrainerId });
+      }
+      if (searchQuery) {
+        filterTags.push({ label: 'Search Query', val: `"${searchQuery}"` });
+      }
+
+      const evalCount = filtered.filter(d => d.hasEvaluation).length;
+      const avgScore = evalCount > 0
+        ? Math.round(filtered.filter(d => d.hasEvaluation).reduce((s, d) => s + d.overallReadiness, 0) / evalCount)
+        : 0;
+
+      const totalProgramsAssigned = filtered.reduce((s, d) => s + d.totalPrograms, 0);
+      const totalProgramsMet = filtered.reduce((s, d) => s + d.metProgramsCount, 0);
+      const compliancePct = totalProgramsAssigned > 0
+        ? Math.round((totalProgramsMet / totalProgramsAssigned) * 100)
+        : 0;
+
+      const meta = {
+        title: 'Candidate Performance & Readiness Report',
+        filterTags,
+        scopeName: quickFilterLabels[quickFilter] || 'All Candidates',
+        quickFilterKey: quickFilter,
+        totalCount: allDossiers.length,
+        filteredCount: filtered.length,
+        avgScore,
+        compliancePct,
+        totalProgramsAssigned,
+        totalProgramsMet,
+        evalCount
+      };
+
+      printCandidateReportSheet(filtered, meta);
     };
+
+    btnPrint.onclick = triggerCandidatePrint;
+    const btnPrintCandToolbar = contentWrapper.querySelector('#btnPrintCandToolbar');
+    if (btnPrintCandToolbar) {
+      btnPrintCandToolbar.onclick = triggerCandidatePrint;
+    }
 
     btnExport.onclick = () => {
       excelService.exportCandidatePerformanceReport(filtered);
@@ -1020,6 +1094,9 @@ export function renderReportsView(container, navigateTo) {
           </div>
           <div style="display: flex; align-items: center; gap: 10px; font-size: 12.5px; font-weight: 600; color: #64748b; white-space: nowrap;">
             <span>Showing <strong>${filtered.length}</strong> of <strong>${totalTrainers}</strong> trainers</span>
+            <button type="button" id="btnPrintTrnToolbar" class="btn btn-outline desktop-only-btn" style="height: 36px; padding: 0 14px; font-size: 12px; font-weight: 700; gap: 6px; border-radius: 8px; border-color: #cbd5e1;" title="Print filtered trainers report">
+              ${getIcon('printer')} <span>Print</span>
+            </button>
             ${searchQuery ? `
               <button type="button" id="btnResetTrnFilters" class="btn btn-outline text-danger btn-sm" style="height: 36px; padding: 0 12px; border-color: #fecaca; border-radius: 8px;" title="Reset search">
                 ${getIcon('x')} <span>Clear</span>
@@ -1336,9 +1413,43 @@ export function renderReportsView(container, navigateTo) {
       });
     });
 
-    btnPrint.onclick = () => {
-      printTrainerReportSheet(filtered);
+    const triggerTrainerPrint = () => {
+      const filterTags = [];
+      if (searchQuery) {
+        filterTags.push({ label: 'Search', val: `"${searchQuery}"`, isMain: true });
+      } else {
+        filterTags.push({ label: 'Scope', val: 'All Mentors & Faculty', isMain: true });
+      }
+
+      const totalMentors = allTrainerReports.length;
+      const evalCount = filtered.filter(t => t.readiness.hasData).length;
+      const avgMenteeReadiness = evalCount > 0
+        ? Math.round(filtered.filter(t => t.readiness.hasData).reduce((s, t) => s + t.averageReadiness, 0) / evalCount)
+        : 0;
+      const totalMentees = filtered.reduce((s, t) => s + t.menteeCount, 0);
+      const avgCompliance = filtered.length > 0
+        ? Math.round(filtered.reduce((s, t) => s + t.complianceRate, 0) / filtered.length)
+        : 0;
+
+      const meta = {
+        title: 'Trainer Mentorship, Compliance & Evaluation Report',
+        filterTags,
+        scopeName: searchQuery ? `Search: "${searchQuery}"` : 'All Mentors',
+        totalCount: totalMentors,
+        filteredCount: filtered.length,
+        avgMenteeReadiness,
+        totalMentees,
+        avgCompliance
+      };
+
+      printTrainerReportSheet(filtered, meta);
     };
+
+    btnPrint.onclick = triggerTrainerPrint;
+    const btnPrintTrnToolbar = contentWrapper.querySelector('#btnPrintTrnToolbar');
+    if (btnPrintTrnToolbar) {
+      btnPrintTrnToolbar.onclick = triggerTrainerPrint;
+    }
 
     btnExport.onclick = () => {
       excelService.exportTrainerPerformanceReport(filtered);
@@ -1347,207 +1458,1109 @@ export function renderReportsView(container, navigateTo) {
   }
 
   // -------------------------------------------------------------
-  // PRINT HELPERS
+  // PRINT HELPERS: EXECUTIVE A4 LANDSCAPE LAYOUTS
   // -------------------------------------------------------------
-  function printCandidateReportSheet(dossiers) {
+  function printCandidateReportSheet(dossiers, meta = {}) {
     const printWindow = window.open('', '_blank');
     if (!printWindow) {
-      toast.error('Please allow popups to print the candidate report.');
+      toast.error('Please allow popups in your browser to print the candidate report.');
       return;
     }
 
-    const todayFormatted = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+    const now = new Date();
+    const todayFormatted = now.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+    const timeFormatted = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+    const docRef = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}-${String(now.getTime()).slice(-4)}`;
 
-    printWindow.document.write(`
+    const scopeName = meta.scopeName || 'All Candidates';
+    const scopeClass = meta.quickFilterKey || 'ALL';
+    const totalCount = meta.totalCount || dossiers.length;
+    const filteredCount = meta.filteredCount !== undefined ? meta.filteredCount : dossiers.length;
+    const avgScore = meta.avgScore !== undefined ? meta.avgScore : 0;
+    const compliancePct = meta.compliancePct !== undefined ? meta.compliancePct : 0;
+    const filterTags = meta.filterTags || [];
+
+    const printHtml = `
       <!DOCTYPE html>
-      <html>
+      <html lang="en">
       <head>
-        <title>DH BENGAL - Candidate Performance & Readiness Report</title>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>DH BENGAL - Candidate Performance Report [${scopeName}]</title>
         <style>
-          body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 24px; color: #0f172a; font-size: 11.5px; }
-          .header { border-bottom: 2px solid #0f172a; padding-bottom: 12px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: flex-start; }
-          h1 { margin: 0; font-size: 18px; font-weight: 900; text-transform: uppercase; }
-          .sub { font-size: 12px; color: #4338ca; font-weight: 700; margin-top: 2px; }
-          table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-          th { background: #f1f5f9; border: 1px solid #cbd5e1; padding: 6px 8px; text-align: left; font-size: 10px; text-transform: uppercase; font-weight: 800; color: #334155; }
-          td { border: 1px solid #e2e8f0; padding: 6px 8px; vertical-align: top; }
-          tr:nth-child(even) { background: #f8fafc; }
-          .badge { display: inline-block; padding: 2px 5px; border-radius: 4px; font-size: 9.5px; font-weight: 700; }
-          .badge-ready { background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; }
-          .badge-track { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
-          .badge-attention { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
-          .prog-tag { display: inline-block; background: #ffffff; border: 1px solid #cbd5e1; border-radius: 3px; padding: 1px 4px; font-size: 9.5px; margin: 1px; font-weight: 600; }
-          .footer { margin-top: 24px; padding-top: 12px; border-top: 1px solid #cbd5e1; display: flex; justify-content: space-between; font-size: 10px; color: #64748b; }
+          @page {
+            size: A4 landscape;
+            margin: 7mm 9mm 8mm 9mm;
+          }
+          *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+          }
+          body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            color: #0f172a;
+            background: #ffffff;
+            font-size: 10.5px;
+            line-height: 1.35;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
+
+          /* Floating Screen Preview Controls (Hidden in actual print) */
+          .screen-control-bar {
+            position: sticky;
+            top: 0;
+            z-index: 99999;
+            background: #0f172a;
+            color: #ffffff;
+            padding: 10px 18px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 4px 14px rgba(15, 23, 42, 0.25);
+            margin-bottom: 14px;
+            border-bottom: 2px solid #6366f1;
+          }
+          .scb-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+          }
+          .scb-badge {
+            background: #4f46e5;
+            color: #ffffff;
+            font-size: 9.5px;
+            font-weight: 800;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            padding: 3px 8px;
+            border-radius: 4px;
+          }
+          .scb-title {
+            font-size: 13px;
+            font-weight: 800;
+            color: #f8fafc;
+          }
+          .scb-hint {
+            font-size: 11px;
+            color: #94a3b8;
+          }
+          .scb-right {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+          }
+          .scb-btn {
+            cursor: pointer;
+            border: none;
+            border-radius: 6px;
+            padding: 6px 14px;
+            font-size: 11.5px;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: opacity 0.15s ease;
+          }
+          .scb-btn-print {
+            background: #4f46e5;
+            color: #ffffff;
+          }
+          .scb-btn-close {
+            background: #334155;
+            color: #f1f5f9;
+          }
+          .scb-btn:hover {
+            opacity: 0.9;
+          }
+
+          /* Printable Sheet */
+          .sheet-wrapper {
+            padding: 0;
+            width: 100%;
+          }
+
+          /* Executive Header */
+          .header-box {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #0f172a;
+            margin-bottom: 8px;
+          }
+          .brand-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+          }
+          .brand-logo-sq {
+            width: 36px;
+            height: 36px;
+            border-radius: 6px;
+            background: #1e1b4b;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+            font-size: 15px;
+            letter-spacing: 0.05em;
+            border: 1px solid #4338ca;
+            flex-shrink: 0;
+          }
+          .brand-org {
+            font-size: 9.5px;
+            font-weight: 800;
+            letter-spacing: 0.08em;
+            color: #64748b;
+            text-transform: uppercase;
+          }
+          .brand-title {
+            font-size: 16px;
+            font-weight: 900;
+            color: #0f172a;
+            letter-spacing: -0.01em;
+            line-height: 1.15;
+          }
+          .brand-sub {
+            font-size: 10px;
+            font-weight: 700;
+            color: #4338ca;
+          }
+
+          .meta-box {
+            text-align: right;
+            font-size: 9.5px;
+            color: #475569;
+            line-height: 1.45;
+          }
+          .meta-line {
+            display: flex;
+            justify-content: flex-end;
+            gap: 6px;
+          }
+          .meta-k {
+            color: #64748b;
+          }
+          .meta-v {
+            font-weight: 700;
+            color: #0f172a;
+          }
+          .mono {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+          }
+
+          /* Scope & Metrics Ribbon */
+          .scope-ribbon {
+            background: #f8fafc;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            padding: 7px 11px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+          }
+          .sr-left {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+          }
+          .sr-lbl {
+            font-size: 9px;
+            font-weight: 800;
+            color: #64748b;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+          }
+          .scope-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 2.5px 8px;
+            border-radius: 999px;
+            font-size: 10px;
+            font-weight: 800;
+          }
+          .scope-badge-ALL {
+            background: #0f172a;
+            color: #ffffff;
+          }
+          .scope-badge-READY {
+            background: #ecfdf5;
+            color: #047857;
+            border: 1.5px solid #10b981;
+          }
+          .scope-badge-PREPARING {
+            background: #eff6ff;
+            color: #1d4ed8;
+            border: 1.5px solid #3b82f6;
+          }
+          .scope-badge-AT_RISK {
+            background: #fef2f2;
+            color: #b91c1c;
+            border: 1.5px solid #ef4444;
+          }
+          .scope-badge-FULLY_MET {
+            background: #f0fdf4;
+            color: #15803d;
+            border: 1.5px solid #22c55e;
+          }
+          .scope-badge-PENDING {
+            background: #fffbeb;
+            color: #b45309;
+            border: 1.5px solid #f59e0b;
+          }
+          .sub-filter-pill {
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            padding: 1.5px 6px;
+            border-radius: 4px;
+            font-size: 9px;
+            color: #334155;
+          }
+
+          .sr-metrics {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+          }
+          .m-box {
+            text-align: right;
+            line-height: 1.15;
+          }
+          .m-val {
+            font-size: 12px;
+            font-weight: 900;
+            color: #0f172a;
+          }
+          .m-lbl {
+            font-size: 8px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: #64748b;
+            letter-spacing: 0.04em;
+          }
+
+          /* Executive Report Table */
+          table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+            font-size: 9.5px;
+          }
+          thead {
+            display: table-header-group;
+          }
+          tr {
+            page-break-inside: avoid;
+            break-inside: avoid;
+          }
+          th {
+            background: #f1f5f9;
+            border-top: 1.5px solid #94a3b8;
+            border-bottom: 1.5px solid #94a3b8;
+            border-left: 1px solid #e2e8f0;
+            border-right: 1px solid #e2e8f0;
+            padding: 5px 6px;
+            font-size: 8.5px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: #1e293b;
+            text-align: left;
+            vertical-align: middle;
+          }
+          td {
+            border: 1px solid #e2e8f0;
+            padding: 4.5px 6px;
+            vertical-align: middle;
+            line-height: 1.25;
+          }
+          tbody tr:nth-child(even) {
+            background: #f8fafc;
+          }
+
+          /* Status Badges */
+          .badge {
+            display: inline-block;
+            padding: 2px 5px;
+            border-radius: 4px;
+            font-size: 9px;
+            font-weight: 700;
+            white-space: nowrap;
+          }
+          .badge-ready {
+            background: #ecfdf5;
+            color: #047857;
+            border: 1px solid #a7f3d0;
+          }
+          .badge-track {
+            background: #eff6ff;
+            color: #1d4ed8;
+            border: 1px solid #bfdbfe;
+          }
+          .badge-attention {
+            background: #fef2f2;
+            color: #b91c1c;
+            border: 1px solid #fecaca;
+          }
+          .badge-pending {
+            background: #fffbeb;
+            color: #b45309;
+            border: 1px solid #fde68a;
+          }
+
+          .prog-chip {
+            display: inline-block;
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            border-radius: 3px;
+            padding: 1px 4px;
+            font-size: 8.5px;
+            margin: 1px 2px 1px 0;
+            font-weight: 600;
+            color: #334155;
+            white-space: nowrap;
+          }
+          .prog-chip.met {
+            border-color: #86efac;
+            background: #f0fdf4;
+            color: #15803d;
+          }
+          .prog-chip.pending {
+            border-color: #e2e8f0;
+            background: #ffffff;
+            color: #64748b;
+          }
+
+          /* Document Sign-off Footer */
+          .doc-footer {
+            margin-top: 10px;
+            padding-top: 8px;
+            border-top: 1.5px solid #cbd5e1;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            font-size: 8.5px;
+            color: #64748b;
+          }
+          .f-col {
+            line-height: 1.4;
+          }
+          .f-sign-line {
+            width: 170px;
+            border-bottom: 1px solid #0f172a;
+            margin-bottom: 3px;
+          }
+
           @media print {
-            body { margin: 8mm; }
-            button { display: none; }
+            .no-print {
+              display: none !important;
+            }
+            body {
+              margin: 0 !important;
+              padding: 0 !important;
+            }
           }
         </style>
       </head>
       <body>
-        <div class="header">
-          <div>
-            <h1>DH BENGAL • SIBAQ TRAINING ACADEMY</h1>
-            <div class="sub">Official Candidate Performance & Readiness Report</div>
+        <!-- Floating On-Screen Print Bar (Screen Only) -->
+        <div class="screen-control-bar no-print">
+          <div class="scb-left">
+            <span class="scb-badge">A4 Landscape</span>
+            <span class="scb-title">Candidate Performance Report • ${scopeName}</span>
+            <span class="scb-hint">Showing <strong>${filteredCount}</strong> of <strong>${totalCount}</strong> candidates</span>
           </div>
-          <div style="text-align: right;">
-            <div>Date: <strong>${todayFormatted}</strong></div>
-            <div>Total Candidates: <strong>${dossiers.length}</strong></div>
+          <div class="scb-right">
+            <button type="button" class="scb-btn scb-btn-print" onclick="window.print()">
+              Print / Save as PDF
+            </button>
+            <button type="button" class="scb-btn scb-btn-close" onclick="window.close()">
+              Close Preview
+            </button>
           </div>
         </div>
 
-        <table>
-          <thead>
-            <tr>
-              <th style="width: 45px;">Chest</th>
-              <th style="width: 140px;">Candidate Name</th>
-              <th style="width: 75px;">Category</th>
-              <th>Assigned Programs & Readiness</th>
-              <th style="width: 85px;">Overall Readiness</th>
-              <th style="width: 85px;">Meeting Rate</th>
-              <th style="width: 95px;">Trajectory</th>
-              <th>Latest Remark</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${dossiers.map(d => {
-              const statusClass = d.overallReadiness >= 80 ? 'badge-ready' : (d.overallReadiness >= 60 ? 'badge-track' : 'badge-attention');
-              const cleanChest = formatChestNo(d.candidate);
-              return `
-                <tr>
-                  <td><strong>${cleanChest}</strong></td>
-                  <td><strong>${d.candidate.name}</strong></td>
-                  <td>${d.candidate.category}</td>
-                  <td>
-                    ${d.programReports.map(pr => `
-                      <span class="prog-tag">[${pr.program.code}] ${pr.isMet ? `${pr.latestScore}%` : 'Pending'}</span>
-                    `).join(' ')}
-                  </td>
-                  <td>
-                    <span class="badge ${statusClass}">
-                      ${d.hasEvaluation ? `${d.overallReadiness}%` : 'N/A'} • ${d.overallStatus.label}
-                    </span>
-                  </td>
-                  <td>
-                    <strong>${d.meetingRateLabel}</strong>
-                  </td>
-                  <td>
-                    ${d.momentumLabel}
-                  </td>
-                  <td style="font-size: 10.5px; color: #334155;">
-                    ${d.latestRemark ? `"${d.latestRemark.text}" (${d.latestRemark.trainerName})` : '-'}
-                  </td>
-                </tr>
-              `;
-            }).join('')}
-          </tbody>
-        </table>
+        <div class="sheet-wrapper">
+          <!-- Document Letterhead -->
+          <div class="header-box">
+            <div class="brand-row">
+              <div class="brand-logo-sq">DH</div>
+              <div>
+                <div class="brand-org">DARUL HUDA BENGAL • SIBAQ TRAINING ACADEMY</div>
+                <div class="brand-title">CANDIDATE PERFORMANCE & READINESS DOSSIER</div>
+                <div class="brand-sub">Academic Mentorship, Continuous Evaluation & Candidate Readiness System</div>
+              </div>
+            </div>
+            <div class="meta-box">
+              <div class="meta-line"><span class="meta-k">Date:</span> <span class="meta-v">${todayFormatted} • ${timeFormatted}</span></div>
+              <div class="meta-line"><span class="meta-k">Document Ref:</span> <span class="meta-v mono">DHB-CPRD-${docRef}</span></div>
+              <div class="meta-line"><span class="meta-k">Authority:</span> <span class="meta-v" style="color: #4338ca;">Academic Controller Sign-Off</span></div>
+            </div>
+          </div>
 
-        <div class="footer">
-          <div>Report generated via Sibaq Mentoring Hub</div>
-          <div>Authorized Controller Verification: _______________________</div>
+          <!-- Filter Scope Ribbon -->
+          <div class="scope-ribbon">
+            <div class="sr-left">
+              <span class="sr-lbl">Filter Scope:</span>
+              <span class="scope-badge scope-badge-${scopeClass}">
+                ${scopeName}
+              </span>
+              ${filterTags.filter(t => !t.isMain).map(t => `
+                <span class="sub-filter-pill"><strong>${t.label}:</strong> ${t.val}</span>
+              `).join('')}
+            </div>
+            <div class="sr-metrics">
+              <div class="m-box">
+                <span class="m-val">${filteredCount} <small style="font-size: 8.5px; font-weight: normal; color: #64748b;">/ ${totalCount}</small></span>
+                <div class="m-lbl">In Filter Scope</div>
+              </div>
+              <div class="m-box">
+                <span class="m-val">${avgScore}%</span>
+                <div class="m-lbl">Avg Readiness</div>
+              </div>
+              <div class="m-box">
+                <span class="m-val">${compliancePct}%</span>
+                <div class="m-lbl">Program Meeting Rate</div>
+              </div>
+            </div>
+          </div>
+
+          ${dossiers.length === 0 ? `
+            <div style="padding: 40px; text-align: center; border: 1.5px dashed #cbd5e1; border-radius: 8px; color: #64748b; font-size: 13px;">
+              No candidates found matching the selected filter criteria: <strong>${scopeName}</strong>.
+            </div>
+          ` : `
+            <!-- Data Table -->
+            <table>
+              <thead>
+                <tr>
+                  <th style="width: 48px;">Chest</th>
+                  <th style="width: 175px;">Candidate Name & Institution</th>
+                  <th style="width: 75px;">Category</th>
+                  <th>Assigned Programs & Module Readiness</th>
+                  <th style="width: 110px;">Overall Readiness</th>
+                  <th style="width: 75px;">Meeting Rate</th>
+                  <th style="width: 90px;">Trajectory</th>
+                  <th style="width: 175px;">Latest Trainer Remark</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${dossiers.map(d => {
+                  const cleanChest = formatChestNo(d.candidate);
+                  const statusClass = !d.hasEvaluation
+                    ? 'badge-pending'
+                    : (d.overallReadiness >= 80 ? 'badge-ready' : (d.overallReadiness >= 60 ? 'badge-track' : 'badge-attention'));
+
+                  return `
+                    <tr>
+                      <td style="font-weight: 800; font-family: ui-monospace, monospace; color: #0f172a;">${cleanChest}</td>
+                      <td>
+                        <div style="font-weight: 700; color: #0f172a; font-size: 10px;">${d.candidate.name}</div>
+                        ${d.candidate.institution ? `<div style="font-size: 8.5px; color: #64748b;">${d.candidate.institution}</div>` : ''}
+                      </td>
+                      <td style="font-weight: 600; color: #334155;">${d.candidate.category}</td>
+                      <td>
+                        ${d.programReports.length > 0 ? d.programReports.map(pr => `
+                          <span class="prog-chip ${pr.isMet ? 'met' : 'pending'}">
+                            <strong>[${pr.program.code}]</strong> ${pr.isMet ? `${pr.latestScore}%` : 'Pending'}
+                          </span>
+                        `).join('') : '<span style="color: #94a3b8; font-size: 8.5px;">No assigned programs</span>'}
+                      </td>
+                      <td>
+                        <span class="badge ${statusClass}">
+                          ${d.hasEvaluation ? `${d.overallReadiness}% • ${d.overallStatus.label}` : 'Pending Check-in'}
+                        </span>
+                      </td>
+                      <td style="font-weight: 700; color: #0f172a;">
+                        ${d.meetingRateLabel}
+                      </td>
+                      <td style="font-weight: 600; font-size: 9px; color: #334155;">
+                        ${d.momentumLabel}
+                      </td>
+                      <td style="font-size: 9px; color: #334155;">
+                        ${d.latestRemark ? `
+                          <div style="font-style: italic; color: #1e293b; line-height: 1.2;">"${d.latestRemark.text}"</div>
+                          <div style="font-size: 8px; color: #64748b; margin-top: 1px;">— ${d.latestRemark.trainerName} (${d.latestRemark.date})</div>
+                        ` : '<span style="color: #94a3b8;">No remarks yet</span>'}
+                      </td>
+                    </tr>
+                  `;
+                }).join('')}
+              </tbody>
+            </table>
+          `}
+
+          <!-- Footer with Sign-off -->
+          <div class="doc-footer">
+            <div class="f-col">
+              <div style="font-weight: 700; color: #0f172a;">DARUL HUDA BENGAL • SIBAQ TRAINING HUB</div>
+              <div>Report Filter: <strong>${scopeName}</strong> • Generated on ${todayFormatted}</div>
+            </div>
+            <div class="f-col" style="text-align: center;">
+              <div>Official Academic Evaluation Document</div>
+              <div style="font-size: 8px; color: #94a3b8;">Strictly Confidential & Controlled Document</div>
+            </div>
+            <div class="f-col" style="text-align: right;">
+              <div class="f-sign-line"></div>
+              <div style="font-weight: 700; color: #0f172a;">Authorized Controller / Sign-Off</div>
+            </div>
+          </div>
         </div>
 
         <script>
-          window.onload = function() {
-            window.print();
-          };
+          window.focus();
+          setTimeout(function() {
+            try {
+              window.print();
+            } catch (e) {
+              console.warn(e);
+            }
+          }, 350);
         </script>
       </body>
       </html>
-    `);
+    `;
+
+    printWindow.document.open();
+    printWindow.document.write(printHtml);
     printWindow.document.close();
   }
 
-  function printTrainerReportSheet(trainers) {
+  function printTrainerReportSheet(trainers, meta = {}) {
     const printWindow = window.open('', '_blank');
     if (!printWindow) {
-      toast.error('Please allow popups to print the trainer report.');
+      toast.error('Please allow popups in your browser to print the trainer report.');
       return;
     }
 
-    const todayFormatted = new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+    const now = new Date();
+    const todayFormatted = now.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+    const timeFormatted = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+    const docRef = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}-${String(now.getTime()).slice(-4)}`;
 
-    printWindow.document.write(`
+    const scopeName = meta.scopeName || 'All Mentors';
+    const totalCount = meta.totalCount || trainers.length;
+    const filteredCount = meta.filteredCount !== undefined ? meta.filteredCount : trainers.length;
+    const avgMenteeReadiness = meta.avgMenteeReadiness !== undefined ? meta.avgMenteeReadiness : 0;
+    const totalMentees = meta.totalMentees !== undefined ? meta.totalMentees : 0;
+    const avgCompliance = meta.avgCompliance !== undefined ? meta.avgCompliance : 0;
+    const filterTags = meta.filterTags || [];
+
+    const printHtml = `
       <!DOCTYPE html>
-      <html>
+      <html lang="en">
       <head>
-        <title>DH BENGAL - Trainer Mentorship & Evaluation Report</title>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1" />
+        <title>DH BENGAL - Trainer Mentorship & Evaluation Report [${scopeName}]</title>
         <style>
-          body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; margin: 24px; color: #0f172a; font-size: 11.5px; }
-          .header { border-bottom: 2px solid #0f172a; padding-bottom: 12px; margin-bottom: 14px; display: flex; justify-content: space-between; align-items: flex-start; }
-          h1 { margin: 0; font-size: 18px; font-weight: 900; text-transform: uppercase; }
-          .sub { font-size: 12px; color: #4338ca; font-weight: 700; margin-top: 2px; }
-          table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-          th { background: #f1f5f9; border: 1px solid #cbd5e1; padding: 6px 8px; text-align: left; font-size: 10px; text-transform: uppercase; font-weight: 800; color: #334155; }
-          td { border: 1px solid #e2e8f0; padding: 6px 8px; vertical-align: top; }
-          tr:nth-child(even) { background: #f8fafc; }
-          .badge { display: inline-block; padding: 2px 5px; border-radius: 4px; font-size: 9.5px; font-weight: 700; }
-          .badge-stage { background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; }
-          .footer { margin-top: 24px; padding-top: 12px; border-top: 1px solid #cbd5e1; display: flex; justify-content: space-between; font-size: 10px; color: #64748b; }
+          @page {
+            size: A4 landscape;
+            margin: 7mm 9mm 8mm 9mm;
+          }
+          *, *::before, *::after {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+          }
+          body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            color: #0f172a;
+            background: #ffffff;
+            font-size: 10.5px;
+            line-height: 1.35;
+            -webkit-print-color-adjust: exact !important;
+            print-color-adjust: exact !important;
+          }
+
+          /* Floating Screen Preview Controls (Hidden in actual print) */
+          .screen-control-bar {
+            position: sticky;
+            top: 0;
+            z-index: 99999;
+            background: #0f172a;
+            color: #ffffff;
+            padding: 10px 18px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 4px 14px rgba(15, 23, 42, 0.25);
+            margin-bottom: 14px;
+            border-bottom: 2px solid #6366f1;
+          }
+          .scb-left {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+          }
+          .scb-badge {
+            background: #4f46e5;
+            color: #ffffff;
+            font-size: 9.5px;
+            font-weight: 800;
+            letter-spacing: 0.06em;
+            text-transform: uppercase;
+            padding: 3px 8px;
+            border-radius: 4px;
+          }
+          .scb-title {
+            font-size: 13px;
+            font-weight: 800;
+            color: #f8fafc;
+          }
+          .scb-hint {
+            font-size: 11px;
+            color: #94a3b8;
+          }
+          .scb-right {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+          }
+          .scb-btn {
+            cursor: pointer;
+            border: none;
+            border-radius: 6px;
+            padding: 6px 14px;
+            font-size: 11.5px;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: opacity 0.15s ease;
+          }
+          .scb-btn-print {
+            background: #4f46e5;
+            color: #ffffff;
+          }
+          .scb-btn-close {
+            background: #334155;
+            color: #f1f5f9;
+          }
+          .scb-btn:hover {
+            opacity: 0.9;
+          }
+
+          /* Printable Sheet */
+          .sheet-wrapper {
+            padding: 0;
+            width: 100%;
+          }
+
+          /* Executive Header */
+          .header-box {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            padding-bottom: 8px;
+            border-bottom: 2px solid #0f172a;
+            margin-bottom: 8px;
+          }
+          .brand-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+          }
+          .brand-logo-sq {
+            width: 36px;
+            height: 36px;
+            border-radius: 6px;
+            background: #1e1b4b;
+            color: #ffffff;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 900;
+            font-size: 15px;
+            letter-spacing: 0.05em;
+            border: 1px solid #4338ca;
+            flex-shrink: 0;
+          }
+          .brand-org {
+            font-size: 9.5px;
+            font-weight: 800;
+            letter-spacing: 0.08em;
+            color: #64748b;
+            text-transform: uppercase;
+          }
+          .brand-title {
+            font-size: 16px;
+            font-weight: 900;
+            color: #0f172a;
+            letter-spacing: -0.01em;
+            line-height: 1.15;
+          }
+          .brand-sub {
+            font-size: 10px;
+            font-weight: 700;
+            color: #4338ca;
+          }
+
+          .meta-box {
+            text-align: right;
+            font-size: 9.5px;
+            color: #475569;
+            line-height: 1.45;
+          }
+          .meta-line {
+            display: flex;
+            justify-content: flex-end;
+            gap: 6px;
+          }
+          .meta-k {
+            color: #64748b;
+          }
+          .meta-v {
+            font-weight: 700;
+            color: #0f172a;
+          }
+          .mono {
+            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+          }
+
+          /* Scope & Metrics Ribbon */
+          .scope-ribbon {
+            background: #f8fafc;
+            border: 1px solid #cbd5e1;
+            border-radius: 6px;
+            padding: 7px 11px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 8px;
+          }
+          .sr-left {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            flex-wrap: wrap;
+          }
+          .sr-lbl {
+            font-size: 9px;
+            font-weight: 800;
+            color: #64748b;
+            letter-spacing: 0.05em;
+            text-transform: uppercase;
+          }
+          .scope-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 5px;
+            padding: 2.5px 8px;
+            border-radius: 999px;
+            font-size: 10px;
+            font-weight: 800;
+            background: #0f172a;
+            color: #ffffff;
+          }
+          .sub-filter-pill {
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            padding: 1.5px 6px;
+            border-radius: 4px;
+            font-size: 9px;
+            color: #334155;
+          }
+
+          .sr-metrics {
+            display: flex;
+            align-items: center;
+            gap: 14px;
+          }
+          .m-box {
+            text-align: right;
+            line-height: 1.15;
+          }
+          .m-val {
+            font-size: 12px;
+            font-weight: 900;
+            color: #0f172a;
+          }
+          .m-lbl {
+            font-size: 8px;
+            font-weight: 700;
+            text-transform: uppercase;
+            color: #64748b;
+            letter-spacing: 0.04em;
+          }
+
+          /* Executive Report Table */
+          table {
+            width: 100%;
+            border-collapse: collapse;
+            table-layout: fixed;
+            font-size: 9.5px;
+          }
+          thead {
+            display: table-header-group;
+          }
+          tr {
+            page-break-inside: avoid;
+            break-inside: avoid;
+          }
+          th {
+            background: #f1f5f9;
+            border-top: 1.5px solid #94a3b8;
+            border-bottom: 1.5px solid #94a3b8;
+            border-left: 1px solid #e2e8f0;
+            border-right: 1px solid #e2e8f0;
+            padding: 5px 6px;
+            font-size: 8.5px;
+            font-weight: 800;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+            color: #1e293b;
+            text-align: left;
+            vertical-align: middle;
+          }
+          td {
+            border: 1px solid #e2e8f0;
+            padding: 4.5px 6px;
+            vertical-align: middle;
+            line-height: 1.25;
+          }
+          tbody tr:nth-child(even) {
+            background: #f8fafc;
+          }
+
+          /* Badges */
+          .badge {
+            display: inline-block;
+            padding: 2px 5px;
+            border-radius: 4px;
+            font-size: 9px;
+            font-weight: 700;
+            white-space: nowrap;
+          }
+          .badge-comp-high {
+            background: #ecfdf5;
+            color: #047857;
+            border: 1px solid #a7f3d0;
+          }
+          .badge-comp-mid {
+            background: #fffbeb;
+            color: #b45309;
+            border: 1px solid #fde68a;
+          }
+          .badge-comp-low {
+            background: #fef2f2;
+            color: #b91c1c;
+            border: 1px solid #fecaca;
+          }
+
+          .prog-chip {
+            display: inline-block;
+            background: #ffffff;
+            border: 1px solid #cbd5e1;
+            border-radius: 3px;
+            padding: 1px 4px;
+            font-size: 8.5px;
+            margin: 1px 2px 1px 0;
+            font-weight: 600;
+            color: #334155;
+            white-space: nowrap;
+          }
+
+          /* Document Sign-off Footer */
+          .doc-footer {
+            margin-top: 10px;
+            padding-top: 8px;
+            border-top: 1.5px solid #cbd5e1;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+            font-size: 8.5px;
+            color: #64748b;
+          }
+          .f-col {
+            line-height: 1.4;
+          }
+          .f-sign-line {
+            width: 170px;
+            border-bottom: 1px solid #0f172a;
+            margin-bottom: 3px;
+          }
+
           @media print {
-            body { margin: 8mm; }
-            button { display: none; }
+            .no-print {
+              display: none !important;
+            }
+            body {
+              margin: 0 !important;
+              padding: 0 !important;
+            }
           }
         </style>
       </head>
       <body>
-        <div class="header">
-          <div>
-            <h1>DH BENGAL • SIBAQ TRAINING ACADEMY</h1>
-            <div class="sub">Trainer Mentorship, Compliance & Evaluation Report</div>
+        <!-- Floating On-Screen Print Bar (Screen Only) -->
+        <div class="screen-control-bar no-print">
+          <div class="scb-left">
+            <span class="scb-badge">A4 Landscape</span>
+            <span class="scb-title">Trainer Mentorship & Evaluation Report • ${scopeName}</span>
+            <span class="scb-hint">Showing <strong>${filteredCount}</strong> of <strong>${totalCount}</strong> mentors</span>
           </div>
-          <div style="text-align: right;">
-            <div>Date: <strong>${todayFormatted}</strong></div>
-            <div>Total Trainers: <strong>${trainers.length}</strong></div>
+          <div class="scb-right">
+            <button type="button" class="scb-btn scb-btn-print" onclick="window.print()">
+              Print / Save as PDF
+            </button>
+            <button type="button" class="scb-btn scb-btn-close" onclick="window.close()">
+              Close Preview
+            </button>
           </div>
         </div>
 
-        <table>
-          <thead>
-            <tr>
-              <th style="width: 140px;">Trainer Name</th>
-              <th style="width: 120px;">Specialization</th>
-              <th>Assigned Programs</th>
-              <th style="width: 65px;">Mentees</th>
-              <th style="width: 90px;">Compliance</th>
-              <th style="width: 90px;">Avg Score</th>
-              <th style="width: 110px;">Score Breakdown</th>
-              <th style="width: 95px;">Last Active</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${trainers.map(t => `
-              <tr>
-                <td><strong>${t.trainer.name}</strong></td>
-                <td>${t.trainer.expertise}</td>
-                <td>${t.assignedPrograms.map(p => `[${p.code}]`).join(', ') || 'None'}</td>
-                <td><strong>${t.menteeCount}</strong></td>
-                <td><strong>${t.complianceRate}%</strong> (${t.uniqueMenteesMetCount}/${t.menteeCount})</td>
-                <td><strong>${t.readiness.hasData ? `${t.averageReadiness}%` : 'N/A'}</strong></td>
-                <td>${t.distribution.readyCount} Ready / ${t.distribution.needsAttentionCount} Lagging</td>
-                <td>${t.latestMeet ? t.latestMeet.date : 'No sessions'}</td>
-              </tr>
-            `).join('')}
-          </tbody>
-        </table>
+        <div class="sheet-wrapper">
+          <!-- Document Letterhead -->
+          <div class="header-box">
+            <div class="brand-row">
+              <div class="brand-logo-sq">DH</div>
+              <div>
+                <div class="brand-org">DARUL HUDA BENGAL • SIBAQ TRAINING ACADEMY</div>
+                <div class="brand-title">TRAINER MENTORSHIP & EVALUATION DOSSIER</div>
+                <div class="brand-sub">Faculty Specialization, Mentee Allocation & Check-in Compliance Overview</div>
+              </div>
+            </div>
+            <div class="meta-box">
+              <div class="meta-line"><span class="meta-k">Date:</span> <span class="meta-v">${todayFormatted} • ${timeFormatted}</span></div>
+              <div class="meta-line"><span class="meta-k">Document Ref:</span> <span class="meta-v mono">DHB-TMER-${docRef}</span></div>
+              <div class="meta-line"><span class="meta-k">Authority:</span> <span class="meta-v" style="color: #4338ca;">Faculty Management Office</span></div>
+            </div>
+          </div>
 
-        <div class="footer">
-          <div>Report generated via Sibaq Mentoring Hub</div>
-          <div>Authorized Controller Verification: _______________________</div>
+          <!-- Scope Ribbon -->
+          <div class="scope-ribbon">
+            <div class="sr-left">
+              <span class="sr-lbl">Filter Scope:</span>
+              <span class="scope-badge">
+                ${scopeName}
+              </span>
+              ${filterTags.filter(t => !t.isMain).map(t => `
+                <span class="sub-filter-pill"><strong>${t.label}:</strong> ${t.val}</span>
+              `).join('')}
+            </div>
+            <div class="sr-metrics">
+              <div class="m-box">
+                <span class="m-val">${filteredCount} <small style="font-size: 8.5px; font-weight: normal; color: #64748b;">/ ${totalCount}</small></span>
+                <div class="m-lbl">Mentors in Scope</div>
+              </div>
+              <div class="m-box">
+                <span class="m-val">${totalMentees}</span>
+                <div class="m-lbl">Total Mentees Covered</div>
+              </div>
+              <div class="m-box">
+                <span class="m-val">${avgCompliance}%</span>
+                <div class="m-lbl">Avg Compliance</div>
+              </div>
+              <div class="m-box">
+                <span class="m-val">${avgMenteeReadiness}%</span>
+                <div class="m-lbl">Mentee Readiness</div>
+              </div>
+            </div>
+          </div>
+
+          ${trainers.length === 0 ? `
+            <div style="padding: 40px; text-align: center; border: 1.5px dashed #cbd5e1; border-radius: 8px; color: #64748b; font-size: 13px;">
+              No mentors found matching: <strong>${scopeName}</strong>.
+            </div>
+          ` : `
+            <!-- Data Table -->
+            <table>
+              <thead>
+                <tr>
+                  <th style="width: 160px;">Trainer Name & Contact</th>
+                  <th style="width: 125px;">Specialization</th>
+                  <th>Assigned Programs</th>
+                  <th style="width: 65px;">Mentees</th>
+                  <th style="width: 120px;">Meeting Compliance</th>
+                  <th style="width: 100px;">Avg Readiness</th>
+                  <th style="width: 140px;">Score Breakdown</th>
+                  <th style="width: 90px;">Last Session</th>
+                </tr>
+              </thead>
+              <tbody>
+                ${trainers.map(t => {
+                  const compClass = t.complianceRate >= 80 ? 'badge-comp-high' : (t.complianceRate >= 50 ? 'badge-comp-mid' : 'badge-comp-low');
+                  return `
+                    <tr>
+                      <td>
+                        <div style="font-weight: 700; color: #0f172a; font-size: 10px;">${t.trainer.name}</div>
+                        ${t.trainer.phone ? `<div style="font-size: 8.5px; color: #64748b;">${t.trainer.phone}</div>` : ''}
+                      </td>
+                      <td style="font-weight: 600; color: #334155;">${t.trainer.expertise || 'General'}</td>
+                      <td>
+                        ${t.assignedPrograms.length > 0 ? t.assignedPrograms.map(p => `
+                          <span class="prog-chip"><strong>[${p.code}]</strong> ${p.name}</span>
+                        `).join('') : '<span style="color: #94a3b8; font-size: 8.5px;">No assigned programs</span>'}
+                      </td>
+                      <td style="font-weight: 700; color: #0f172a;">${t.menteeCount}</td>
+                      <td>
+                        <span class="badge ${compClass}">
+                          ${t.complianceRate}% (${t.uniqueMenteesMetCount}/${t.menteeCount})
+                        </span>
+                      </td>
+                      <td>
+                        <strong style="color: #0f172a;">${t.readiness.hasData ? `${t.averageReadiness}%` : 'N/A'}</strong>
+                        ${t.readiness.hasData ? `<div style="font-size: 8px; color: #64748b;">${t.readiness.label}</div>` : ''}
+                      </td>
+                      <td>
+                        <span style="color: #047857; font-weight: 700;">${t.distribution.readyCount} Ready</span>
+                        <span style="color: #94a3b8; margin: 0 2px;">/</span>
+                        <span style="color: #b91c1c; font-weight: 700;">${t.distribution.needsAttentionCount} Lagging</span>
+                      </td>
+                      <td style="font-size: 9px; color: #334155;">
+                        ${t.latestMeet ? t.latestMeet.date : '<span style="color: #94a3b8;">None</span>'}
+                      </td>
+                    </tr>
+                  `;
+                }).join('')}
+              </tbody>
+            </table>
+          `}
+
+          <!-- Footer with Sign-off -->
+          <div class="doc-footer">
+            <div class="f-col">
+              <div style="font-weight: 700; color: #0f172a;">DARUL HUDA BENGAL • SIBAQ TRAINING HUB</div>
+              <div>Report Filter: <strong>${scopeName}</strong> • Generated on ${todayFormatted}</div>
+            </div>
+            <div class="f-col" style="text-align: center;">
+              <div>Official Academic Mentorship Evaluation</div>
+              <div style="font-size: 8px; color: #94a3b8;">Strictly Confidential & Controlled Document</div>
+            </div>
+            <div class="f-col" style="text-align: right;">
+              <div class="f-sign-line"></div>
+              <div style="font-weight: 700; color: #0f172a;">Authorized Faculty Dean / Controller</div>
+            </div>
+          </div>
         </div>
 
         <script>
-          window.onload = function() {
-            window.print();
-          };
+          window.focus();
+          setTimeout(function() {
+            try {
+              window.print();
+            } catch (e) {
+              console.warn(e);
+            }
+          }, 350);
         </script>
       </body>
       </html>
-    `);
+    `;
+
+    printWindow.document.open();
+    printWindow.document.write(printHtml);
     printWindow.document.close();
   }
 
   // Render Initial View
+  updateTabStyles();
   renderSubView();
 }

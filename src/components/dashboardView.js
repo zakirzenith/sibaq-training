@@ -1,11 +1,7 @@
 import { state } from '../services/state.js';
 import { getIcon } from './icons.js';
 import { openExcelUploadModal } from './modals/excelUploadModal.js';
-import { openCandidateFormModal } from './modals/candidateFormModal.js';
-import { openProgramFormModal } from './modals/programFormModal.js';
-import { openTrainerFormModal } from './modals/trainerFormModal.js';
 import { openAssignCandidatesModal } from './modals/assignCandidatesModal.js';
-import { excelService } from '../services/excelService.js';
 
 export function renderDashboardView(container, navigateTo) {
   const metrics = state.getMetrics();
@@ -78,39 +74,6 @@ export function renderDashboardView(container, navigateTo) {
             ${dailySummary.partialCount > 0 ? `<span style="color: #ea580c; font-weight: 700;">${dailySummary.partialCount} partial</span> • ` : ''}${dailySummary.pendingCount} pending • Avg ${dailySummary.avgScore}% &rarr;
           </div>
         </div>
-      </div>
-    </div>
-
-    <!-- Quick Actions Banner -->
-    <div class="quick-banner">
-      <div class="quick-banner-title">
-        ${getIcon('sparkles')} Quick Management Actions
-      </div>
-      <div class="quick-banner-buttons">
-        <button id="btnDashDailyProgress" class="btn btn-sm btn-primary">
-          ${getIcon('trendingUp')} Daily Mentorship Tracker
-        </button>
-        <button id="btnDashAddCandidate" class="btn btn-sm btn-outline">
-          ${getIcon('plus')} New Candidate
-        </button>
-        <button id="btnDashAddProgram" class="btn btn-sm btn-outline">
-          ${getIcon('plus')} New Program
-        </button>
-        <button id="btnDashAddTrainer" class="btn btn-sm btn-outline">
-          ${getIcon('plus')} New Trainer
-        </button>
-        <button id="btnDashUploadTrainers" class="btn btn-sm btn-outline">
-          ${getIcon('upload')} Upload Trainers
-        </button>
-        <button id="btnDashDownloadCandTemplate" class="btn btn-sm btn-text">
-          ${getIcon('fileSpreadsheet')} Candidates Template
-        </button>
-        <button id="btnDashDownloadProgTemplate" class="btn btn-sm btn-text">
-          ${getIcon('fileSpreadsheet')} Programs Template
-        </button>
-        <button id="btnDashDownloadTrnTemplate" class="btn btn-sm btn-text">
-          ${getIcon('fileSpreadsheet')} Trainers Template
-        </button>
       </div>
     </div>
 
@@ -236,44 +199,6 @@ export function renderDashboardView(container, navigateTo) {
     openExcelUploadModal({ type: 'programs', onComplete: () => renderDashboardView(container, navigateTo) });
   });
 
-  container.querySelector('#btnDashAddCandidate').addEventListener('click', () => {
-    openCandidateFormModal({ onSave: () => renderDashboardView(container, navigateTo) });
-  });
-
-  container.querySelector('#btnDashAddProgram').addEventListener('click', () => {
-    openProgramFormModal({ onSave: () => renderDashboardView(container, navigateTo) });
-  });
-
-  container.querySelector('#btnDashAddTrainer').addEventListener('click', () => {
-    openTrainerFormModal({ onSave: () => renderDashboardView(container, navigateTo) });
-  });
-
-  const btnDashDailyProgress = container.querySelector('#btnDashDailyProgress');
-  if (btnDashDailyProgress) {
-    btnDashDailyProgress.addEventListener('click', () => navigateTo('daily-progress'));
-  }
-
-  container.querySelector('#btnDashDownloadCandTemplate').addEventListener('click', () => {
-    excelService.downloadCandidatesTemplate();
-  });
-
-  container.querySelector('#btnDashDownloadProgTemplate').addEventListener('click', () => {
-    excelService.downloadProgramsTemplate();
-  });
-
-  const btnDashDownloadTrnTemplate = container.querySelector('#btnDashDownloadTrnTemplate');
-  if (btnDashDownloadTrnTemplate) {
-    btnDashDownloadTrnTemplate.addEventListener('click', () => {
-      excelService.downloadTrainersTemplate();
-    });
-  }
-
-  const btnDashUploadTrainers = container.querySelector('#btnDashUploadTrainers');
-  if (btnDashUploadTrainers) {
-    btnDashUploadTrainers.addEventListener('click', () => {
-      openExcelUploadModal({ type: 'trainers', onComplete: () => renderDashboardView(container, navigateTo) });
-    });
-  }
 
   const btnViewAllTrainers = container.querySelector('#btnViewAllTrainers');
   if (btnViewAllTrainers) {

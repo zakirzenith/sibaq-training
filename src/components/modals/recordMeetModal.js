@@ -167,7 +167,6 @@ export function openRecordMeetModal({ candidateId, programId = null, trainerId =
             <div>
               <div class="graph-title-row">
                 <span class="font-semibold">${getIcon('chart')} Progress & Overall Percentage Line Graph</span>
-                <span class="text-xs text-muted">Drag slider or line to adjust student score</span>
               </div>
             </div>
             

@@ -1,6 +1,7 @@
 import { state } from '../../services/state.js';
 import { toast } from '../toast.js';
 import { getIcon } from '../icons.js';
+import { openImageCropperModal } from './imageCropperModal.js';
 
 export function openTrainerFormModal({ trainer = null, onSave = () => {} }) {
   const isEdit = Boolean(trainer);
@@ -29,7 +30,7 @@ export function openTrainerFormModal({ trainer = null, onSave = () => {} }) {
         <!-- Trainer Profile Photo Row -->
         <div class="trainer-photo-upload-row" style="display: flex; align-items: center; gap: 14px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px 14px;">
           <div style="position: relative; width: 62px; height: 62px; flex-shrink: 0;">
-            <div id="trainerPhotoPreview" style="width: 100%; height: 100%; border-radius: 50%; background: ${trainer && trainer.color ? trainer.color : '#6366f1'}; color: #ffffff; font-weight: 800; font-size: 20px; display: flex; align-items: center; justify-content: center; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border: 2px solid #ffffff;">
+            <div id="trainerPhotoPreview" style="width: 100%; height: 100%; border-radius: 50%; background: ${trainer && trainer.color ? trainer.color : '#6366f1'}; color: #ffffff; font-weight: 800; font-size: 20px; display: flex; align-items: center; justify-content: center; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border: 2px solid #ffffff; cursor: pointer;" title="Click to upload or crop photo">
               ${trainer && trainer.photo 
                 ? `<img src="${trainer.photo}" alt="Trainer Photo" style="width: 100%; height: 100%; object-fit: cover;" />`
                 : (trainer ? trainer.name.split(' ').map(n => n[0]).slice(0, 2).join('') : 'TR')}
@@ -44,6 +45,9 @@ export function openTrainerFormModal({ trainer = null, onSave = () => {} }) {
               <input type="file" id="inpTrainerPhotoFile" accept="image/*" style="display: none;" />
               <button type="button" id="btnUploadTrainerPhoto" class="btn btn-sm btn-outline" style="font-size: 11.5px; height: 30px; padding: 0 10px; gap: 5px; font-weight: 700; border-radius: 7px; border-color: #cbd5e1; background: #ffffff; cursor: pointer;">
                 ${getIcon('upload')} <span>${trainer && trainer.photo ? 'Change Photo' : 'Upload Photo'}</span>
+              </button>
+              <button type="button" id="btnCropTrainerPhoto" class="btn btn-sm btn-outline" style="font-size: 11.5px; height: 30px; padding: 0 10px; gap: 5px; font-weight: 700; border-radius: 7px; border-color: #cbd5e1; background: #ffffff; display: ${trainer && trainer.photo ? 'inline-flex' : 'none'}; cursor: pointer;" title="Adjust framing and crop photo">
+                ${getIcon('crop')} <span>Crop / Frame</span>
               </button>
               <button type="button" id="btnRemoveTrainerPhoto" class="btn btn-sm text-danger" style="font-size: 11.5px; height: 30px; padding: 0 8px; gap: 4px; font-weight: 600; border: none; background: transparent; display: ${trainer && trainer.photo ? 'inline-flex' : 'none'}; cursor: pointer;">
                 ${getIcon('trash')} <span>Remove</span>
@@ -172,12 +176,14 @@ export function openTrainerFormModal({ trainer = null, onSave = () => {} }) {
   const photoPreview = overlay.querySelector('#trainerPhotoPreview');
   const inpPhotoFile = overlay.querySelector('#inpTrainerPhotoFile');
   const btnUploadPhoto = overlay.querySelector('#btnUploadTrainerPhoto');
+  const btnCropPhoto = overlay.querySelector('#btnCropTrainerPhoto');
   const btnRemovePhoto = overlay.querySelector('#btnRemoveTrainerPhoto');
 
   const updatePreview = () => {
     if (currentPhotoData) {
       photoPreview.innerHTML = `<img src="${currentPhotoData}" alt="Trainer Photo" style="width: 100%; height: 100%; object-fit: cover;" />`;
       btnRemovePhoto.style.display = 'inline-flex';
+      btnCropPhoto.style.display = 'inline-flex';
       btnUploadPhoto.querySelector('span').textContent = 'Change Photo';
     } else {
       const nameVal = txtName.value.trim();
@@ -186,12 +192,39 @@ export function openTrainerFormModal({ trainer = null, onSave = () => {} }) {
         : (trainer ? trainer.name.split(' ').map(n => n[0]).slice(0, 2).join('') : 'TR');
       photoPreview.innerHTML = initials;
       btnRemovePhoto.style.display = 'none';
+      btnCropPhoto.style.display = 'none';
       btnUploadPhoto.querySelector('span').textContent = 'Upload Photo';
     }
   };
 
+  const openCropper = (src) => {
+    openImageCropperModal({
+      imageSrc: src,
+      title: 'Crop & Frame Trainer Photo',
+      onApply: (croppedDataUrl) => {
+        currentPhotoData = croppedDataUrl;
+        updatePreview();
+        toast.success('Photo framed and cropped! Click save to apply.');
+      }
+    });
+  };
+
   btnUploadPhoto.addEventListener('click', () => {
     inpPhotoFile.click();
+  });
+
+  btnCropPhoto.addEventListener('click', () => {
+    if (currentPhotoData) {
+      openCropper(currentPhotoData);
+    }
+  });
+
+  photoPreview.addEventListener('click', () => {
+    if (currentPhotoData) {
+      openCropper(currentPhotoData);
+    } else {
+      inpPhotoFile.click();
+    }
   });
 
   btnRemovePhoto.addEventListener('click', () => {
@@ -210,39 +243,10 @@ export function openTrainerFormModal({ trainer = null, onSave = () => {} }) {
       return;
     }
 
-    // Client-side image optimization (max 400x400)
     const reader = new FileReader();
     reader.onload = (event) => {
-      const img = new Image();
-      img.onload = () => {
-        const canvas = document.createElement('canvas');
-        const maxDim = 400;
-        let width = img.width;
-        let height = img.height;
-
-        if (width > height) {
-          if (width > maxDim) {
-            height = Math.round((height * maxDim) / width);
-            width = maxDim;
-          }
-        } else {
-          if (height > maxDim) {
-            width = Math.round((width * maxDim) / height);
-            height = maxDim;
-          }
-        }
-
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext('2d');
-        ctx.drawImage(img, 0, 0, width, height);
-
-        const compressedBase64 = canvas.toDataURL('image/jpeg', 0.85);
-        currentPhotoData = compressedBase64;
-        updatePreview();
-        toast.success('Photo uploaded! Click save to apply changes.');
-      };
-      img.src = event.target.result;
+      openCropper(event.target.result);
+      inpPhotoFile.value = ''; // Reset so the same file can be re-selected if user wants
     };
     reader.readAsDataURL(file);
   });

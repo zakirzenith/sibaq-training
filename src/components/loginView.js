@@ -79,9 +79,8 @@ export function renderLoginView(container, onLoginSuccess, options = {}) {
                       id="ctrlUsername" 
                       class="form-input auth-input" 
                       required 
-                      placeholder="Username (e.g. sibaq)"
+                      placeholder="Enter controller username"
                       autocomplete="username"
-                      value="sibaq"
                     />
                   </div>
                 </div>
@@ -97,23 +96,11 @@ export function renderLoginView(container, onLoginSuccess, options = {}) {
                       required 
                       placeholder="Enter controller password"
                       autocomplete="current-password"
-                      value="champion2023"
                     />
                     <button type="button" class="btn-toggle-pwd" id="btnToggleCtrlPwd" title="Show/Hide Password">
                       👁️
                     </button>
                   </div>
-                </div>
-
-                <!-- Credential Quick-Fill Notice Bar -->
-                <div class="auth-hint-card">
-                  <div class="ahc-info">
-                    <span class="ahc-label">Credentials:</span>
-                    <span class="ahc-val"><code>sibaq</code> / <code>champion2023</code></span>
-                  </div>
-                  <button type="button" id="btnAutoFillCtrl" class="btn-pill-action">
-                    Auto-Fill
-                  </button>
                 </div>
 
                 <button type="submit" id="btnSubmitCtrl" class="btn btn-primary auth-submit-btn">
@@ -143,7 +130,7 @@ export function renderLoginView(container, onLoginSuccess, options = {}) {
                       id="trnUsername" 
                       class="form-input auth-input" 
                       required 
-                      placeholder="e.g. elena or marcus"
+                      placeholder="Enter your assigned username"
                       autocomplete="username"
                     />
                   </div>
@@ -166,31 +153,6 @@ export function renderLoginView(container, onLoginSuccess, options = {}) {
                     </button>
                   </div>
                 </div>
-
-                ${trainers.length > 0 ? `
-                  <div class="auth-trainer-selector-box">
-                    <div class="atsb-header">
-                      <span class="atsb-title">Quick Select Registered Trainer</span>
-                      <span class="atsb-badge">${trainers.length} Trainers</span>
-                    </div>
-                    <select id="selQuickTrainerLogin" class="form-select auth-select">
-                      <option value="">-- Choose Trainer to Auto-Fill Credentials --</option>
-                      ${trainers.map(t => {
-                        const u = t.username || t.name.toLowerCase().replace(/[^a-z0-9]/g, '');
-                        const p = t.password || '123456';
-                        return `<option value="${t.id}" data-username="${u}" data-pwd="${p}">
-                          ${t.name} (${t.expertise}) • @${u}
-                        </option>`;
-                      }).join('')}
-                    </select>
-                  </div>
-                ` : `
-                  <div class="auth-hint-card" style="background: #fffbeb; border-color: #fde68a;">
-                    <div style="font-size: 12px; color: #b45309;">
-                      ℹ️ No trainers registered yet. Log in as Controller first to create trainers.
-                    </div>
-                  </div>
-                `}
 
                 <button type="submit" id="btnSubmitTrn" class="btn btn-primary auth-submit-btn" style="background: #4f46e5; border-color: #4338ca;">
                   <span>Sign In to Trainer Panel</span>
@@ -242,20 +204,11 @@ export function renderLoginView(container, onLoginSuccess, options = {}) {
       const txtCtrlUser = container.querySelector('#ctrlUsername');
       const txtCtrlPwd = container.querySelector('#ctrlPassword');
       const btnToggle = container.querySelector('#btnToggleCtrlPwd');
-      const btnAutoFill = container.querySelector('#btnAutoFillCtrl');
 
       if (btnToggle && txtCtrlPwd) {
         btnToggle.addEventListener('click', () => {
           txtCtrlPwd.type = txtCtrlPwd.type === 'password' ? 'text' : 'password';
           btnToggle.textContent = txtCtrlPwd.type === 'password' ? '👁️' : '🔒';
-        });
-      }
-
-      if (btnAutoFill) {
-        btnAutoFill.addEventListener('click', () => {
-          txtCtrlUser.value = 'sibaq';
-          txtCtrlPwd.value = 'champion2023';
-          toast.info('Auto-filled controller credentials.');
         });
       }
 
@@ -285,23 +238,11 @@ export function renderLoginView(container, onLoginSuccess, options = {}) {
       const txtTrnUser = container.querySelector('#trnUsername');
       const txtTrnPwd = container.querySelector('#trnPassword');
       const btnToggleTrn = container.querySelector('#btnToggleTrnPwd');
-      const selQuick = container.querySelector('#selQuickTrainerLogin');
 
       if (btnToggleTrn && txtTrnPwd) {
         btnToggleTrn.addEventListener('click', () => {
           txtTrnPwd.type = txtTrnPwd.type === 'password' ? 'text' : 'password';
           btnToggleTrn.textContent = txtTrnPwd.type === 'password' ? '👁️' : '🔒';
-        });
-      }
-
-      if (selQuick) {
-        selQuick.addEventListener('change', () => {
-          const opt = selQuick.selectedOptions[0];
-          if (opt && opt.value) {
-            txtTrnUser.value = opt.getAttribute('data-username') || '';
-            txtTrnPwd.value = opt.getAttribute('data-pwd') || '';
-            toast.info(`Auto-filled credentials for ${opt.textContent.split('(')[0].trim()}`);
-          }
         });
       }
 

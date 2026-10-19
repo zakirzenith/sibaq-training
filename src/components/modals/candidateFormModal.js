@@ -72,6 +72,7 @@ export function openCandidateFormModal({
                 value="${candidate ? (candidate.adNo || '') : ''}"
                 style="height: 38px; font-size: 13px;"
               />
+              <div id="adNoFeedback" style="font-size: 11px; margin-top: 4px; display: none;"></div>
             </div>
 
             <div class="form-group flex-1" style="min-width: 220px; margin-bottom: 0;">
@@ -368,6 +369,44 @@ export function openCandidateFormModal({
     renderProgramsList();
   });
 
+  // Live validation for Admission / Chest No
+  const adNoFeedback = overlay.querySelector('#adNoFeedback');
+  const validateAdNo = () => {
+    const val = txtAdNo.value.trim();
+    if (!val) {
+      txtAdNo.style.borderColor = '';
+      if (adNoFeedback) {
+        adNoFeedback.style.display = 'none';
+        adNoFeedback.textContent = '';
+      }
+      return null;
+    }
+
+    const existing = state.getCandidateByAdNo(val);
+    const isSelf = isEdit && candidate && existing && String(existing.id).trim() === String(candidate.id).trim();
+
+    if (existing && !isSelf) {
+      txtAdNo.style.borderColor = '#ef4444';
+      if (adNoFeedback) {
+        adNoFeedback.style.display = 'block';
+        adNoFeedback.style.color = '#dc2626';
+        adNoFeedback.innerHTML = `<strong>⚠️ Duplicate:</strong> Number "${val}" is already registered to <strong>${existing.name}</strong>.`;
+      }
+      return existing;
+    } else {
+      txtAdNo.style.borderColor = '#10b981';
+      if (adNoFeedback) {
+        adNoFeedback.style.display = 'block';
+        adNoFeedback.style.color = '#059669';
+        adNoFeedback.textContent = '✓ Number is available';
+      }
+      return null;
+    }
+  };
+
+  txtAdNo.addEventListener('input', validateAdNo);
+  txtAdNo.addEventListener('blur', validateAdNo);
+
   // Submit handler
   const handleFormSubmit = (e) => {
     if (e) e.preventDefault();
@@ -383,22 +422,38 @@ export function openCandidateFormModal({
       return;
     }
 
-    // Check duplicate adNo if adding new
-    if (!isEdit) {
-      const existing = (typeof state.getCandidateByAdNo === 'function' ? state.getCandidateByAdNo(adNo) : null) ||
-                       state.getCandidates().find(c => String(c.adNo || '').trim().toLowerCase() === adNo.toLowerCase());
-      if (existing) {
-        toast.error(`Admission number "${adNo}" is already registered to ${existing.name}.`);
-        return;
-      }
+    // Check duplicate adNo / chestNo
+    const duplicate = validateAdNo();
+    if (duplicate) {
+      toast.error(`Admission / Chest No "${adNo}" is already assigned to "${duplicate.name}". Cannot add duplicate candidate.`);
+      txtAdNo.focus();
+      return;
+    }
 
+    // Double check via state
+    const existing = state.getCandidateByAdNo(adNo);
+    const isSelf = isEdit && candidate && existing && String(existing.id).trim() === String(candidate.id).trim();
+    if (existing && !isSelf) {
+      toast.error(`Admission / Chest No "${adNo}" is already registered to "${existing.name}". Duplicate candidates cannot be created.`);
+      txtAdNo.focus();
+      return;
+    }
+
+    if (!isEdit) {
       const newCand = state.addCandidate({
         adNo,
+        chestNo: adNo,
         name,
         category,
         class: studentClass,
         programIds
       });
+
+      if (!newCand) {
+        toast.error(`Could not add candidate: Admission / Chest No "${adNo}" is already registered.`);
+        txtAdNo.focus();
+        return;
+      }
 
       toast.success(
         programIds.length > 0
@@ -410,11 +465,18 @@ export function openCandidateFormModal({
     } else {
       const updatedCand = state.updateCandidate(candidate.id, {
         adNo,
+        chestNo: adNo,
         name,
         category,
         class: studentClass,
         programIds
       });
+
+      if (!updatedCand) {
+        toast.error(`Could not update candidate: Admission / Chest No "${adNo}" is already in use by another candidate.`);
+        txtAdNo.focus();
+        return;
+      }
 
       toast.success(
         programIds.length > 0

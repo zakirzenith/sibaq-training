@@ -277,9 +277,19 @@ class StateService {
   getCandidateByAdNo(adNo) {
     if (!adNo) return null;
     const cleanAdNo = String(adNo).trim().toLowerCase();
-    return this.candidates.find(
-      c => String(c.adNo || '').trim().toLowerCase() === cleanAdNo
-    ) || null;
+    const stripped = cleanAdNo.replace(/^#+/, '').trim();
+    if (!cleanAdNo) return null;
+
+    return this.candidates.find(c => {
+      const candAd = String(c.adNo || '').trim().toLowerCase();
+      const candChest = String(c.chestNo || '').trim().toLowerCase();
+      const candId = String(c.id || '').trim().toLowerCase();
+
+      if (candAd && (candAd === cleanAdNo || (stripped && candAd.replace(/^#+/, '').trim() === stripped))) return true;
+      if (candChest && (candChest === cleanAdNo || (stripped && candChest.replace(/^#+/, '').trim() === stripped))) return true;
+      if (candId && candId === cleanAdNo) return true;
+      return false;
+    }) || null;
   }
 
   getAvailableCategories() {
@@ -304,9 +314,19 @@ class StateService {
   }
 
   addCandidate(candidateData) {
+    const rawAdNo = String(candidateData.adNo || candidateData.chestNo || '').trim();
+    if (rawAdNo) {
+      const existing = this.getCandidateByAdNo(rawAdNo);
+      if (existing) {
+        console.warn(`[state.addCandidate] Duplicate rejected: "${rawAdNo}" already belongs to ${existing.name} (id: ${existing.id})`);
+        return null;
+      }
+    }
+
     const newCandidate = {
       id: candidateData.id ? String(candidateData.id).trim() : `cnd-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
-      adNo: String(candidateData.adNo || '').trim(),
+      adNo: String(candidateData.adNo || candidateData.chestNo || '').trim(),
+      chestNo: String(candidateData.chestNo || candidateData.adNo || '').trim(),
       name: String(candidateData.name || '').trim(),
       category: String(candidateData.category || 'General').trim(),
       class: String(candidateData.class || '').trim(),
@@ -332,10 +352,22 @@ class StateService {
     const index = this.candidates.findIndex(c => String(c.id).trim() === cleanId);
     if (index === -1) return null;
 
+    if (updateData.adNo !== undefined || updateData.chestNo !== undefined) {
+      const newAd = String(updateData.adNo ?? updateData.chestNo ?? '').trim();
+      if (newAd) {
+        const existing = this.getCandidateByAdNo(newAd);
+        if (existing && String(existing.id).trim() !== cleanId) {
+          console.warn(`[state.updateCandidate] Duplicate rejected: "${newAd}" already belongs to ${existing.name}`);
+          return null;
+        }
+      }
+    }
+
     this.candidates[index] = {
       ...this.candidates[index],
       ...updateData,
-      adNo: String(updateData.adNo ?? this.candidates[index].adNo).trim(),
+      adNo: String(updateData.adNo ?? this.candidates[index].adNo ?? '').trim(),
+      chestNo: String(updateData.chestNo ?? updateData.adNo ?? this.candidates[index].chestNo ?? this.candidates[index].adNo ?? '').trim(),
       name: String(updateData.name ?? this.candidates[index].name).trim(),
       category: String(updateData.category ?? this.candidates[index].category).trim(),
       class: String(updateData.class ?? this.candidates[index].class).trim()

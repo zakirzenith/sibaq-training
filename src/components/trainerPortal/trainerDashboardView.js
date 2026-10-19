@@ -38,6 +38,13 @@ export function renderTrainerDashboardView(container, navigateTo) {
   let activeStatusFilter = 'ALL';
   let searchQuery = '';
 
+  const allTrainerReports = state.getAllTrainersReportData();
+  const sortedByCompliance = [...allTrainerReports].sort((a, b) => {
+    if (b.complianceRate !== a.complianceRate) return (b.complianceRate || 0) - (a.complianceRate || 0);
+    return (b.averageReadiness || 0) - (a.averageReadiness || 0);
+  });
+  const trainerRank = sortedByCompliance.findIndex(t => t.trainer.id === currentTrainer.id) + 1;
+
   const render = () => {
     const rawRoster = state.getTrainerDetailedRoster(currentTrainer.id);
 
@@ -85,15 +92,35 @@ export function renderTrainerDashboardView(container, navigateTo) {
                 <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 4px;">
                   <h1 style="font-size: 20px; font-weight: 800; color: #ffffff; margin: 0; letter-spacing: -0.01em;">${currentTrainer.name}</h1>
                   <span style="display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 999px; background: rgba(255, 255, 255, 0.18); backdrop-filter: blur(8px); border: 1px solid rgba(255, 255, 255, 0.25); color: #e0e7ff; font-size: 11px; font-weight: 700;">
-                    ${currentTrainer.expertise || 'Mentor & Trainer'}
+                    ${currentTrainer.expertise || 'Specialized Mentor'}
                   </span>
+                  ${trainerRank === 1 ? `
+                    <span style="display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 999px; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: #ffffff; font-size: 11px; font-weight: 800; box-shadow: 0 2px 10px rgba(245, 158, 11, 0.4); border: 1px solid rgba(255, 255, 255, 0.4);">
+                      🥇 Rank #1 Mentor (Champion)
+                    </span>
+                  ` : (trainerRank === 2 ? `
+                    <span style="display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 999px; background: linear-gradient(135deg, #94a3b8 0%, #64748b 100%); color: #ffffff; font-size: 11px; font-weight: 800; box-shadow: 0 2px 10px rgba(100, 116, 139, 0.35); border: 1px solid rgba(255, 255, 255, 0.4);">
+                      🥈 Rank #2 Mentor (Runner-Up)
+                    </span>
+                  ` : (trainerRank === 3 ? `
+                    <span style="display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 999px; background: linear-gradient(135deg, #f97316 0%, #ea580c 100%); color: #ffffff; font-size: 11px; font-weight: 800; box-shadow: 0 2px 10px rgba(249, 115, 22, 0.35); border: 1px solid rgba(255, 255, 255, 0.4);">
+                      🥉 Rank #3 Mentor (Top Performer)
+                    </span>
+                  ` : `
+                    <span style="display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 999px; background: rgba(255, 255, 255, 0.18); backdrop-filter: blur(8px); border: 1px solid rgba(255, 255, 255, 0.25); color: #ffffff; font-size: 11px; font-weight: 800;">
+                      🏆 Rank #${trainerRank} Mentor
+                    </span>
+                  `))}
                 </div>
                 <div style="display: flex; align-items: center; gap: 8px; font-size: 12px; color: #cbd5e1; flex-wrap: wrap;">
                   <span style="background: rgba(0,0,0,0.25); padding: 2px 8px; border-radius: 6px; font-family: monospace;">@${currentTrainer.username || currentTrainer.name.toLowerCase().replace(/[^a-z0-9]/g, '')}</span>
                   ${currentTrainer.phone ? `<span>• Tel: <strong>${currentTrainer.phone}</strong></span>` : ''}
+                  <span style="display: inline-flex; align-items: center; gap: 5px; color: #fef08a; background: rgba(0,0,0,0.32); padding: 2px 9px; border-radius: 6px; border: 1px solid rgba(254, 240, 138, 0.35); font-weight: 800; font-size: 11.5px;">
+                    ${trainerRank === 1 ? '🥇' : (trainerRank === 2 ? '🥈' : (trainerRank === 3 ? '🥉' : '🏆'))} Mentor Rank: <strong>#${trainerRank} of ${allTrainerReports.length}</strong>
+                  </span>
                   <span style="display: inline-flex; align-items: center; gap: 5px; color: #34d399; font-weight: 700;">
                     <span style="width: 7px; height: 7px; border-radius: 50%; background: #34d399; box-shadow: 0 0 8px #34d399;"></span>
-                    Active Trainer
+                    Active Mentor
                   </span>
                 </div>
               </div>

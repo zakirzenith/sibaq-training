@@ -10046,6 +10046,10 @@ body.auth-mode .main-view-container {
   gap: 3px;
 }
 
+.tr-tab-capsule {
+  min-height: 36px;
+}
+
 .reports-tab-btn {
   display: inline-flex;
   align-items: center;
@@ -10102,6 +10106,46 @@ body.auth-mode .main-view-container {
 
 .tab-lbl-short {
   display: none;
+}
+
+@media (max-width: 768px) {
+  .trainer-reports-header-row {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 12px !important;
+  }
+
+  .tr-tab-capsule {
+    width: 100% !important;
+    display: grid !important;
+    grid-template-columns: repeat(3, 1fr) !important;
+    padding: 3px !important;
+    gap: 3px !important;
+    box-sizing: border-box !important;
+    height: 36px !important;
+  }
+
+  .tr-tab-capsule .reports-tab-btn {
+    flex: 1 1 0% !important;
+    min-width: 0 !important;
+    padding: 0 4px !important;
+    font-size: 11px !important;
+    height: 30px !important;
+    justify-content: center !important;
+    gap: 4px !important;
+  }
+
+  .tr-tab-capsule .reports-tab-badge {
+    padding: 1px 4px !important;
+    font-size: 9.5px !important;
+  }
+
+  .tab-lbl-full {
+    display: none !important;
+  }
+  .tab-lbl-short {
+    display: inline !important;
+  }
 }
 
 @media (max-width: 540px) {

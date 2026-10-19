@@ -115,31 +115,37 @@ export function renderTrainerReportsView(container, navigateTo) {
         
         <!-- TOP VIEW HEADER & SEGMENTED TABS -->
         <div class="reports-header-card" style="background: #ffffff; border: 1.5px solid #e2e8f0; border-radius: 16px; padding: 18px 20px; margin-bottom: 16px; box-shadow: 0 2px 10px rgba(15,23,42,0.03);">
-          <div style="display: flex; justify-content: space-between; align-items: center; gap: 14px; flex-wrap: wrap;">
+          <div class="trainer-reports-header-row" style="display: flex; justify-content: space-between; align-items: center; gap: 14px; flex-wrap: wrap;">
             <div>
               <div style="display: inline-flex; align-items: center; gap: 6px; font-size: 11px; font-weight: 800; color: #4338ca; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 4px;">
-                ${getIcon('award')} <span>Faculty Evaluation Hub</span>
+                ${getIcon('award')} <span>Mentor Evaluation Hub</span>
               </div>
               <h1 style="font-size: 20px; font-weight: 900; color: #0f172a; margin: 0; letter-spacing: -0.01em;">
                 Mentorship & Performance Reports
               </h1>
               <p style="font-size: 12.5px; color: #64748b; margin: 3px 0 0 0;">
-                Review your assigned mentees, audit self performance, and benchmark with faculty peers.
+                Review your assigned mentees, audit self performance, and benchmark with mentor peers.
               </p>
             </div>
 
             <!-- Segmented View Tabs (Desktop + Phone Responsive) -->
-            <div class="trainer-reports-tabs" style="display: inline-flex; background: #f1f5f9; padding: 4px; border-radius: 12px; gap: 4px; border: 1px solid #e2e8f0;">
-              <button type="button" class="tr-tab-btn ${activeTab === 'mentees' ? 'active' : ''}" id="tabBtnMentees" style="padding: 7px 14px; font-size: 12px; font-weight: 700; border-radius: 9px; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: all 0.15s ease;">
-                ${getIcon('award')} <span>Assigned Mentees</span>
-                <span style="background: ${activeTab === 'mentees' ? '#4f46e5' : '#cbd5e1'}; color: #ffffff; padding: 1px 6px; border-radius: 999px; font-size: 10px;">${totalMenteesCount}</span>
+            <div class="reports-tab-capsule tr-tab-capsule">
+              <button type="button" class="reports-tab-btn ${activeTab === 'mentees' ? 'active' : ''}" id="tabBtnMentees" title="Assigned Mentees">
+                ${getIcon('award')}
+                <span class="tab-lbl-full">Assigned Mentees</span>
+                <span class="tab-lbl-short">Mentees</span>
+                <span class="reports-tab-badge">${totalMenteesCount}</span>
               </button>
-              <button type="button" class="tr-tab-btn ${activeTab === 'my-report' ? 'active' : ''}" id="tabBtnMyReport" style="padding: 7px 14px; font-size: 12px; font-weight: 700; border-radius: 9px; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: all 0.15s ease;">
-                ${getIcon('dashboard')} <span>My Report</span>
-                <span style="background: ${activeTab === 'my-report' ? '#10b981' : '#cbd5e1'}; color: #ffffff; padding: 1px 6px; border-radius: 999px; font-size: 10px;">${myReport.complianceRate}%</span>
+              <button type="button" class="reports-tab-btn ${activeTab === 'my-report' ? 'active' : ''}" id="tabBtnMyReport" title="My Performance Report">
+                ${getIcon('dashboard')}
+                <span class="tab-lbl-full">My Report</span>
+                <span class="tab-lbl-short">Report</span>
+                <span class="reports-tab-badge">${myReport.complianceRate}%</span>
               </button>
-              <button type="button" class="tr-tab-btn ${activeTab === 'comparison' ? 'active' : ''}" id="tabBtnComparison" style="padding: 7px 14px; font-size: 12px; font-weight: 700; border-radius: 9px; border: none; cursor: pointer; display: inline-flex; align-items: center; gap: 6px; transition: all 0.15s ease;">
-                ${getIcon('trainers')} <span>Peer Comparison</span>
+              <button type="button" class="reports-tab-btn ${activeTab === 'comparison' ? 'active' : ''}" id="tabBtnComparison" title="Compare with Mentor Peers">
+                ${getIcon('trainers')}
+                <span class="tab-lbl-full">Compare Mentors</span>
+                <span class="tab-lbl-short">Compare</span>
               </button>
             </div>
           </div>
@@ -566,7 +572,7 @@ function renderMyReportTab(data) {
         </h3>
 
         ${assignedPrograms.length === 0 ? `
-          <p style="color: #64748b; font-size: 13px; margin: 0;">No training programs are currently linked to your faculty account.</p>
+          <p style="color: #64748b; font-size: 13px; margin: 0;">No training programs are currently linked to your mentor account.</p>
         ` : `
           <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px;">
             ${assignedPrograms.map(p => {
@@ -597,7 +603,7 @@ function renderMyReportTab(data) {
 }
 
 /**
- * TAB 3: BENCHMARK & FACULTY PEER COMPARISON VIEW
+ * TAB 3: BENCHMARK & MENTOR PEER COMPARISON VIEW
  */
 function renderComparisonTab(data) {
   const { currentTrainer, myReport, allTrainerReports, avgAcademyCompliance, avgAcademyReadiness, trainerRank } = data;
@@ -616,6 +622,10 @@ function renderComparisonTab(data) {
     return (b.averageReadiness || 0) - (a.averageReadiness || 0);
   });
 
+  const top1 = rankedTrainers[0];
+  const top2 = rankedTrainers[1];
+  const top3 = rankedTrainers[2];
+
   return `
     <div style="display: flex; flex-direction: column; gap: 14px;">
       
@@ -627,11 +637,11 @@ function renderComparisonTab(data) {
               Academy Performance Benchmark
             </div>
             <h2 style="font-size: 19px; font-weight: 900; margin: 3px 0 0 0; letter-spacing: -0.01em;">
-              How You Compare Against Academy Faculty
+              How You Compare Against Academy Mentors
             </h2>
           </div>
-          <div style="background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15); padding: 6px 14px; border-radius: 999px; font-size: 12.5px; font-weight: 800;">
-            🏆 Faculty Rank: #${trainerRank} of ${rankedTrainers.length}
+          <div style="background: rgba(255,255,255,0.12); border: 1px solid rgba(255,255,255,0.2); padding: 6px 14px; border-radius: 999px; font-size: 12.5px; font-weight: 800; display: inline-flex; align-items: center; gap: 6px;">
+            ${trainerRank === 1 ? '🥇' : (trainerRank === 2 ? '🥈' : (trainerRank === 3 ? '🥉' : '🏆'))} Mentor Rank: #${trainerRank} of ${rankedTrainers.length}
           </div>
         </div>
 
@@ -664,15 +674,129 @@ function renderComparisonTab(data) {
         </div>
       </div>
 
-      <!-- Peer Faculty Comparison Leaderboard -->
+      <!-- TOP 3 MENTORS PODIUM SHOWCASE (Gold, Silver, Bronze Highlights) -->
+      <div class="podium-showcase-card" style="background: #ffffff; border: 1.5px solid #e2e8f0; border-radius: 16px; padding: 16px 18px; box-shadow: 0 2px 8px rgba(15,23,42,0.03);">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; flex-wrap: wrap; gap: 6px;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="font-size: 18px;">👑</span>
+            <h3 style="font-size: 14px; font-weight: 800; color: #0f172a; margin: 0; text-transform: uppercase; letter-spacing: 0.04em;">
+              Top 3 Mentors Podium Showcase
+            </h3>
+          </div>
+          <span style="font-size: 11.5px; font-weight: 700; color: #64748b;">Ranked by Evaluation Compliance & Readiness</span>
+        </div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px;">
+          ${top1 ? `
+            <!-- 1st Rank: Gold Champion -->
+            <div style="background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 50%, #ffffff 100%); border: 2px solid #f59e0b; border-radius: 14px; padding: 14px 16px; box-shadow: 0 4px 16px rgba(245, 158, 11, 0.22); position: relative; overflow: hidden;">
+              <div style="position: absolute; right: -8px; top: -8px; font-size: 46px; opacity: 0.16; pointer-events: none;">🥇</div>
+              <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                <span style="display: inline-flex; align-items: center; gap: 4px; padding: 2.5px 9px; border-radius: 999px; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: #ffffff; font-size: 11px; font-weight: 800; box-shadow: 0 2px 8px rgba(245, 158, 11, 0.35);">
+                  🥇 Rank #1 Champion
+                </span>
+                ${top1.trainer.id === currentTrainer.id ? `<span style="background: #4f46e5; color: #ffffff; font-size: 9.5px; font-weight: 800; padding: 2px 7px; border-radius: 999px;">YOU</span>` : ''}
+              </div>
+              <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                <div style="width: 44px; height: 44px; border-radius: 50%; background: ${top1.trainer.color || '#f59e0b'}; color: #fff; font-weight: 800; display: flex; align-items: center; justify-content: center; font-size: 15px; border: 2.5px solid #f59e0b; box-shadow: 0 0 10px rgba(245, 158, 11, 0.4); flex-shrink: 0; overflow: hidden;">
+                  ${top1.trainer.photo ? `<img src="${top1.trainer.photo}" style="width:100%; height:100%; object-fit:cover;" />` : top1.trainer.name.split(' ').map(n=>n[0]).slice(0,2).join('')}
+                </div>
+                <div style="min-width: 0; flex: 1;">
+                  <div style="font-weight: 800; font-size: 14.5px; color: #78350f; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${top1.trainer.name}</div>
+                  <div style="font-size: 11px; color: #92400e; font-weight: 600;">${top1.trainer.expertise || 'Specialized Mentor'}</div>
+                </div>
+              </div>
+              <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(255, 255, 255, 0.75); border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 8px; padding: 6px 10px; font-size: 11.5px;">
+                <div>
+                  <span style="color: #92400e; font-weight: 700;">Comp:</span>
+                  <strong style="color: #b45309; font-size: 13px;"> ${top1.complianceRate}%</strong>
+                </div>
+                <div>
+                  <span style="color: #92400e; font-weight: 700;">Readiness:</span>
+                  <strong style="color: #047857; font-size: 13px;"> ${top1.readiness.hasData ? `${top1.averageReadiness}%` : 'N/A'}</strong>
+                </div>
+                <div style="color: #78350f; font-weight: 700;">${top1.menteeCount} mentees</div>
+              </div>
+            </div>
+          ` : ''}
+
+          ${top2 ? `
+            <!-- 2nd Rank: Silver Runner-Up -->
+            <div style="background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 50%, #ffffff 100%); border: 1.5px solid #94a3b8; border-radius: 14px; padding: 14px 16px; box-shadow: 0 4px 14px rgba(100, 116, 139, 0.15); position: relative; overflow: hidden;">
+              <div style="position: absolute; right: -8px; top: -8px; font-size: 46px; opacity: 0.12; pointer-events: none;">🥈</div>
+              <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                <span style="display: inline-flex; align-items: center; gap: 4px; padding: 2.5px 9px; border-radius: 999px; background: linear-gradient(135deg, #94a3b8 0%, #64748b 100%); color: #ffffff; font-size: 11px; font-weight: 800; box-shadow: 0 2px 6px rgba(100, 116, 139, 0.3);">
+                  🥈 Rank #2 Runner-Up
+                </span>
+                ${top2.trainer.id === currentTrainer.id ? `<span style="background: #4f46e5; color: #ffffff; font-size: 9.5px; font-weight: 800; padding: 2px 7px; border-radius: 999px;">YOU</span>` : ''}
+              </div>
+              <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                <div style="width: 44px; height: 44px; border-radius: 50%; background: ${top2.trainer.color || '#64748b'}; color: #fff; font-weight: 800; display: flex; align-items: center; justify-content: center; font-size: 15px; border: 2.5px solid #94a3b8; box-shadow: 0 0 8px rgba(100, 116, 139, 0.25); flex-shrink: 0; overflow: hidden;">
+                  ${top2.trainer.photo ? `<img src="${top2.trainer.photo}" style="width:100%; height:100%; object-fit:cover;" />` : top2.trainer.name.split(' ').map(n=>n[0]).slice(0,2).join('')}
+                </div>
+                <div style="min-width: 0; flex: 1;">
+                  <div style="font-weight: 800; font-size: 14.5px; color: #1e293b; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${top2.trainer.name}</div>
+                  <div style="font-size: 11px; color: #475569; font-weight: 600;">${top2.trainer.expertise || 'Specialized Mentor'}</div>
+                </div>
+              </div>
+              <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(255, 255, 255, 0.75); border: 1px solid rgba(148, 163, 184, 0.3); border-radius: 8px; padding: 6px 10px; font-size: 11.5px;">
+                <div>
+                  <span style="color: #475569; font-weight: 700;">Comp:</span>
+                  <strong style="color: #334155; font-size: 13px;"> ${top2.complianceRate}%</strong>
+                </div>
+                <div>
+                  <span style="color: #475569; font-weight: 700;">Readiness:</span>
+                  <strong style="color: #047857; font-size: 13px;"> ${top2.readiness.hasData ? `${top2.averageReadiness}%` : 'N/A'}</strong>
+                </div>
+                <div style="color: #475569; font-weight: 700;">${top2.menteeCount} mentees</div>
+              </div>
+            </div>
+          ` : ''}
+
+          ${top3 ? `
+            <!-- 3rd Rank: Bronze Top Performer -->
+            <div style="background: linear-gradient(135deg, #fff7ed 0%, #ffedd5 50%, #ffffff 100%); border: 1.5px solid #f97316; border-radius: 14px; padding: 14px 16px; box-shadow: 0 4px 14px rgba(249, 115, 22, 0.15); position: relative; overflow: hidden;">
+              <div style="position: absolute; right: -8px; top: -8px; font-size: 46px; opacity: 0.12; pointer-events: none;">🥉</div>
+              <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px;">
+                <span style="display: inline-flex; align-items: center; gap: 4px; padding: 2.5px 9px; border-radius: 999px; background: linear-gradient(135deg, #f97316 0%, #ea580c 100%); color: #ffffff; font-size: 11px; font-weight: 800; box-shadow: 0 2px 6px rgba(249, 115, 22, 0.3);">
+                  🥉 Rank #3 Bronze Top
+                </span>
+                ${top3.trainer.id === currentTrainer.id ? `<span style="background: #4f46e5; color: #ffffff; font-size: 9.5px; font-weight: 800; padding: 2px 7px; border-radius: 999px;">YOU</span>` : ''}
+              </div>
+              <div style="display: flex; align-items: center; gap: 10px; margin-bottom: 10px;">
+                <div style="width: 44px; height: 44px; border-radius: 50%; background: ${top3.trainer.color || '#f97316'}; color: #fff; font-weight: 800; display: flex; align-items: center; justify-content: center; font-size: 15px; border: 2.5px solid #f97316; box-shadow: 0 0 8px rgba(249, 115, 22, 0.25); flex-shrink: 0; overflow: hidden;">
+                  ${top3.trainer.photo ? `<img src="${top3.trainer.photo}" style="width:100%; height:100%; object-fit:cover;" />` : top3.trainer.name.split(' ').map(n=>n[0]).slice(0,2).join('')}
+                </div>
+                <div style="min-width: 0; flex: 1;">
+                  <div style="font-weight: 800; font-size: 14.5px; color: #7c2d12; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">${top3.trainer.name}</div>
+                  <div style="font-size: 11px; color: #9a3412; font-weight: 600;">${top3.trainer.expertise || 'Specialized Mentor'}</div>
+                </div>
+              </div>
+              <div style="display: flex; justify-content: space-between; align-items: center; background: rgba(255, 255, 255, 0.75); border: 1px solid rgba(249, 115, 22, 0.3); border-radius: 8px; padding: 6px 10px; font-size: 11.5px;">
+                <div>
+                  <span style="color: #9a3412; font-weight: 700;">Comp:</span>
+                  <strong style="color: #c2410c; font-size: 13px;"> ${top3.complianceRate}%</strong>
+                </div>
+                <div>
+                  <span style="color: #9a3412; font-weight: 700;">Readiness:</span>
+                  <strong style="color: #047857; font-size: 13px;"> ${top3.readiness.hasData ? `${top3.averageReadiness}%` : 'N/A'}</strong>
+                </div>
+                <div style="color: #9a3412; font-weight: 700;">${top3.menteeCount} mentees</div>
+              </div>
+            </div>
+          ` : ''}
+        </div>
+      </div>
+
+      <!-- Peer Mentor Comparison Leaderboard -->
       <div style="background: #ffffff; border: 1.5px solid #e2e8f0; border-radius: 14px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.02);">
         <div style="padding: 14px 18px; border-bottom: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center;">
           <div>
             <h3 style="font-size: 15px; font-weight: 800; color: #0f172a; margin: 0;">
-              Faculty Mentorship Comparison Matrix
+              Mentor Performance & Comparison Matrix
             </h3>
             <p style="font-size: 12px; color: #64748b; margin: 2px 0 0 0;">
-              Benchmarked across all ${rankedTrainers.length} mentors based on evaluation compliance & mentee readiness.
+              Benchmarked across all ${rankedTrainers.length} mentors based on evaluation compliance & mentee readiness. Top 3 ranks highlighted.
             </p>
           </div>
         </div>
@@ -682,9 +806,9 @@ function renderComparisonTab(data) {
           <table class="saas-table" style="width: 100%; border-collapse: collapse; text-align: left;">
             <thead>
               <tr style="background: #f8fafc; border-bottom: 1.5px solid #e2e8f0; font-size: 11px; text-transform: uppercase; color: #64748b; letter-spacing: 0.5px;">
-                <th style="padding: 10px 14px; width: 60px;">Rank</th>
-                <th style="padding: 10px 14px; min-width: 190px;">Trainer & Faculty</th>
-                <th style="padding: 10px 14px; width: 140px;">Specialization</th>
+                <th style="padding: 10px 14px; width: 75px;">Rank</th>
+                <th style="padding: 10px 14px; min-width: 190px;">Mentor & Specialization</th>
+                <th style="padding: 10px 14px; width: 140px;">Expertise</th>
                 <th style="padding: 10px 14px; width: 90px;">Mentees</th>
                 <th style="padding: 10px 14px; width: 140px;">Compliance</th>
                 <th style="padding: 10px 14px; width: 120px;">Avg Readiness</th>
@@ -695,13 +819,44 @@ function renderComparisonTab(data) {
               ${rankedTrainers.map((t, index) => {
                 const isMe = t.trainer.id === currentTrainer.id;
                 const compClass = t.complianceRate >= 80 ? 'badge-ready' : (t.complianceRate >= 50 ? 'badge-track' : 'badge-attention');
+                const isRank1 = index === 0;
+                const isRank2 = index === 1;
+                const isRank3 = index === 2;
+
+                let rowBg = 'transparent';
+                let rowBorderLeft = 'none';
+                if (isMe) {
+                  rowBg = '#f5f3ff';
+                  rowBorderLeft = '4px solid #4f46e5';
+                } else if (isRank1) {
+                  rowBg = 'linear-gradient(90deg, #fffbeb 0%, #ffffff 100%)';
+                  rowBorderLeft = '4px solid #f59e0b';
+                } else if (isRank2) {
+                  rowBg = 'linear-gradient(90deg, #f8fafc 0%, #ffffff 100%)';
+                  rowBorderLeft = '4px solid #94a3b8';
+                } else if (isRank3) {
+                  rowBg = 'linear-gradient(90deg, #fff7ed 0%, #ffffff 100%)';
+                  rowBorderLeft = '4px solid #f97316';
+                }
 
                 return `
-                  <tr style="border-bottom: 1px solid #f1f5f9; background: ${isMe ? '#f5f3ff' : 'transparent'}; font-weight: ${isMe ? '700' : 'normal'};">
+                  <tr style="border-bottom: 1px solid #f1f5f9; background: ${rowBg}; border-left: ${rowBorderLeft}; font-weight: ${isMe ? '700' : 'normal'}; transition: background 0.15s ease;">
                     <td style="padding: 11px 14px;">
-                      <span style="font-weight: 800; font-size: 12px; color: ${index < 3 ? '#b45309' : '#64748b'};">
-                        ${index === 0 ? '🥇 #1' : (index === 1 ? '🥈 #2' : (index === 2 ? '🥉 #3' : `#${index + 1}`))}
-                      </span>
+                      ${isRank1 ? `
+                        <span style="display: inline-flex; align-items: center; gap: 3px; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: #ffffff; padding: 2px 8px; border-radius: 999px; font-weight: 800; font-size: 11px; box-shadow: 0 2px 6px rgba(245, 158, 11, 0.35);">
+                          🥇 #1
+                        </span>
+                      ` : (isRank2 ? `
+                        <span style="display: inline-flex; align-items: center; gap: 3px; background: linear-gradient(135deg, #94a3b8 0%, #64748b 100%); color: #ffffff; padding: 2px 8px; border-radius: 999px; font-weight: 800; font-size: 11px; box-shadow: 0 2px 6px rgba(100, 116, 139, 0.3);">
+                          🥈 #2
+                        </span>
+                      ` : (isRank3 ? `
+                        <span style="display: inline-flex; align-items: center; gap: 3px; background: linear-gradient(135deg, #f97316 0%, #ea580c 100%); color: #ffffff; padding: 2px 8px; border-radius: 999px; font-weight: 800; font-size: 11px; box-shadow: 0 2px 6px rgba(249, 115, 22, 0.3);">
+                          🥉 #3
+                        </span>
+                      ` : `
+                        <span style="font-weight: 800; font-size: 12px; color: #64748b; padding-left: 4px;">#${index + 1}</span>
+                      `))}
                     </td>
                     <td style="padding: 11px 14px;">
                       <div style="display: flex; align-items: center; gap: 8px;">
@@ -712,7 +867,7 @@ function renderComparisonTab(data) {
                       </div>
                     </td>
                     <td style="padding: 11px 14px; color: #475569; font-size: 12px;">
-                      ${t.trainer.expertise || 'General'}
+                      ${t.trainer.expertise || 'Specialized Mentor'}
                     </td>
                     <td style="padding: 11px 14px; font-weight: 700; color: #0f172a;">
                       ${t.menteeCount}
@@ -741,13 +896,49 @@ function renderComparisonTab(data) {
         <div class="mobile-cards-view" style="display: flex; flex-direction: column; gap: 8px; padding: 10px;">
           ${rankedTrainers.map((t, index) => {
             const isMe = t.trainer.id === currentTrainer.id;
+            const isRank1 = index === 0;
+            const isRank2 = index === 1;
+            const isRank3 = index === 2;
+
+            let cardBg = isMe ? '#f5f3ff' : '#f8fafc';
+            let cardBorder = isMe ? '1.5px solid #c4b5fd' : '1.5px solid #e2e8f0';
+            let cardShadow = 'none';
+
+            if (isRank1) {
+              cardBg = 'linear-gradient(135deg, #fffbeb 0%, #ffffff 100%)';
+              cardBorder = '2px solid #f59e0b';
+              cardShadow = '0 2px 10px rgba(245, 158, 11, 0.15)';
+            } else if (isRank2) {
+              cardBg = 'linear-gradient(135deg, #f8fafc 0%, #ffffff 100%)';
+              cardBorder = '1.5px solid #94a3b8';
+              cardShadow = '0 2px 8px rgba(100, 116, 139, 0.1)';
+            } else if (isRank3) {
+              cardBg = 'linear-gradient(135deg, #fff7ed 0%, #ffffff 100%)';
+              cardBorder = '1.5px solid #f97316';
+              cardShadow = '0 2px 8px rgba(249, 115, 22, 0.1)';
+            }
+
             return `
-              <div style="background: ${isMe ? '#f5f3ff' : '#f8fafc'}; border: 1.5px solid ${isMe ? '#c4b5fd' : '#e2e8f0'}; border-radius: 10px; padding: 12px 14px;">
-                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+              <div style="background: ${cardBg}; border: ${cardBorder}; border-radius: 12px; padding: 12px 14px; box-shadow: ${cardShadow};">
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px;">
                   <div style="display: flex; align-items: center; gap: 6px;">
-                    <span style="font-weight: 800; font-size: 12px; color: ${index < 3 ? '#b45309' : '#64748b'};">
-                      #${index + 1}
-                    </span>
+                    ${isRank1 ? `
+                      <span style="background: linear-gradient(135deg, #f59e0b, #d97706); color: #fff; font-size: 10px; font-weight: 800; padding: 2px 7px; border-radius: 999px;">
+                        🥇 #1 Champion
+                      </span>
+                    ` : (isRank2 ? `
+                      <span style="background: linear-gradient(135deg, #94a3b8, #64748b); color: #fff; font-size: 10px; font-weight: 800; padding: 2px 7px; border-radius: 999px;">
+                        🥈 #2 Runner-Up
+                      </span>
+                    ` : (isRank3 ? `
+                      <span style="background: linear-gradient(135deg, #f97316, #ea580c); color: #fff; font-size: 10px; font-weight: 800; padding: 2px 7px; border-radius: 999px;">
+                        🥉 #3 Bronze
+                      </span>
+                    ` : `
+                      <span style="font-weight: 800; font-size: 12px; color: #64748b;">
+                        #${index + 1}
+                      </span>
+                    `))}
                     <strong style="font-size: 13.5px; color: #0f172a;">${t.trainer.name}</strong>
                     ${isMe ? `<span style="background: #4f46e5; color: #fff; font-size: 9px; font-weight: 800; padding: 1px 5px; border-radius: 999px;">YOU</span>` : ''}
                   </div>
@@ -756,7 +947,7 @@ function renderComparisonTab(data) {
                   </span>
                 </div>
                 <div style="display: flex; justify-content: space-between; font-size: 11.5px; color: #64748b;">
-                  <span>${t.trainer.expertise || 'Faculty'} • ${t.menteeCount} mentees</span>
+                  <span>${t.trainer.expertise || 'Mentor'} • ${t.menteeCount} mentees</span>
                   <span>Avg Readiness: <strong>${t.readiness.hasData ? `${t.averageReadiness}%` : 'N/A'}</strong></span>
                 </div>
               </div>
@@ -1013,7 +1204,7 @@ function printTrainerAssignedMenteesSheet(dossiers, trainer, meta = {}) {
         <div>
           <div class="brand-org">DARUL HUDA BENGAL • SIBAQ TRAINING ACADEMY</div>
           <div class="brand-title">ASSIGNED MENTEE PERFORMANCE & READINESS DOSSIER</div>
-          <div style="font-size: 11px; color: #4338ca; font-weight: 700; margin-top: 2px;">Faculty Mentor: <strong>${trainer.name}</strong> (${trainer.expertise || 'Specialized Faculty'})</div>
+          <div style="font-size: 11px; color: #4338ca; font-weight: 700; margin-top: 2px;">Assigned Mentor: <strong>${trainer.name}</strong> (${trainer.expertise || 'Specialized Mentor'})</div>
         </div>
         <div style="text-align: right; font-size: 9.5px; color: #475569;">
           <div>Generated: <strong>${todayFormatted} • ${timeFormatted}</strong></div>
@@ -1083,7 +1274,7 @@ function printTrainerAssignedMenteesSheet(dossiers, trainer, meta = {}) {
       </table>
 
       <div class="doc-footer">
-        <div>Sibaq Training Academy • Faculty Mentorship Hub</div>
+        <div>Sibaq Training Academy • Mentor Performance Hub</div>
         <div>Assigned Mentor Verification: ___________________________</div>
       </div>
 

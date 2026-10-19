@@ -18,7 +18,7 @@ function formatChestNo(cand) {
 /**
  * Program Quick View Modal
  * Opens when any program code rectangle is clicked.
- * Shows complete program details, assigned faculty mentor,
+ * Shows complete program details, assigned mentor,
  * and roster of enrolled candidates with readiness scores and dossier links.
  */
 export function openProgramQuickViewModal(programId, contextCandidateId = null) {
@@ -96,13 +96,13 @@ export function openProgramQuickViewModal(programId, contextCandidateId = null) 
       <!-- Modal Body -->
       <div class="modal-body" style="overflow-y: auto; padding: 18px 20px; display: flex; flex-direction: column; gap: 14px; background: #f8fafc;">
         
-        <!-- Faculty Mentor & Summary Row -->
+        <!-- Assigned Mentor & Summary Row -->
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px;">
           
           <!-- Mentor Card -->
           <div style="background: #ffffff; border: 1.5px solid #e2e8f0; border-radius: 12px; padding: 14px 16px;">
             <div style="font-size: 10.5px; font-weight: 700; text-transform: uppercase; color: #64748b; margin-bottom: 8px; letter-spacing: 0.04em;">
-              Assigned Faculty Mentor
+              Assigned Mentor
             </div>
             ${trainer ? `
               <div style="display: flex; align-items: center; gap: 10px;">
@@ -121,7 +121,7 @@ export function openProgramQuickViewModal(programId, contextCandidateId = null) 
             ` : `
               <div style="display: flex; align-items: center; gap: 8px; color: #d97706; font-size: 13px; font-weight: 600;">
                 ${getIcon('alertCircle')}
-                <span>No Faculty Mentor Assigned</span>
+                <span>No Mentor Assigned</span>
               </div>
             `}
           </div>

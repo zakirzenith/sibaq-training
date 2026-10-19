@@ -48,7 +48,7 @@ export function openTrainerAllProgramsModal({ trainer, assignedPrograms }) {
             </div>
             <div style="min-width: 0;">
               <div class="modal-badge" style="font-size: 11px;">
-                <span>Faculty Programs Directory</span>
+                <span>Mentor Programs Directory</span>
               </div>
               <h2 class="modal-title" style="font-size: 18px; margin: 2px 0 0 0; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
                 All Assigned Programs (${assignedPrograms.length})
@@ -218,7 +218,7 @@ export function openTrainerMenteesBreakdownModal({ trainer, filterType, candidat
               ${title}
             </h2>
             <div style="font-size: 12px; color: #64748b; margin-top: 2px;">
-              Evaluated by Faculty: <strong style="color: #0f172a;">${trainer.name}</strong> (${trainer.expertise})
+              Evaluated by Mentor: <strong style="color: #0f172a;">${trainer.name}</strong> (${trainer.expertise})
             </div>
           </div>
         </div>
@@ -239,7 +239,7 @@ export function openTrainerMenteesBreakdownModal({ trainer, filterType, candidat
             <p style="font-size: 12.5px; color: #64748b; margin: 0;">
               ${isReady 
                 ? 'All evaluated candidates are currently progressing through foundational and active training phases.'
-                : 'Great news! No candidates under this faculty mentor are currently lagging or flagged at risk.'}
+                : 'Great news! No candidates under this mentor are currently lagging or flagged at risk.'}
             </p>
           </div>
         ` : `

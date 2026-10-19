@@ -671,7 +671,7 @@ function printCandidateSingleDossierDocument(dossier) {
             <div style="font-size: 8.5px; color: #64748b;">${totalMeets} Sessions Logged</div>
           </div>
           <div class="kpi-card">
-            <div class="kpi-k">Faculty Coverage</div>
+            <div class="kpi-k">Mentor Coverage</div>
             <div class="kpi-v" style="font-size: 14px; margin-top: 2px;">${programReports.filter(pr => pr.isMet).length}/${programReports.length}</div>
             <div style="font-size: 8.5px; color: #64748b;">Evaluated Modules</div>
           </div>
@@ -684,7 +684,7 @@ function printCandidateSingleDossierDocument(dossier) {
             <tr>
               <th style="width: 14%;">Code</th>
               <th style="width: 44%;">Program Title & Domain</th>
-              <th style="width: 24%;">Assigned Faculty Mentor</th>
+              <th style="width: 24%;">Assigned Mentor</th>
               <th style="width: 18%; text-align: right;">Latest Score & Status</th>
             </tr>
           </thead>
@@ -696,7 +696,7 @@ function printCandidateSingleDossierDocument(dossier) {
                   <strong style="color: #0f172a;">${pr.program.name}</strong>
                   <div style="font-size: 8.5px; color: #64748b;">${pr.program.category || 'General'}</div>
                 </td>
-                <td style="color: #334155;">${pr.trainerName || 'Assigned Faculty'}</td>
+                <td style="color: #334155;">${pr.trainerName || 'Assigned Mentor'}</td>
                 <td style="text-align: right;">
                   <span class="score-pill ${pr.isMet ? 'score-met' : 'score-pending'}">
                     ${pr.isMet ? `${pr.latestScore}% • ${pr.scoreStatus.label}` : 'Pending Check-in'}
@@ -708,7 +708,7 @@ function printCandidateSingleDossierDocument(dossier) {
         </table>
 
         <!-- Section 2: Mentoring Check-ins & Evaluation Log -->
-        <div class="sec-head">2. Mentoring Check-ins & Faculty Remarks Log</div>
+        <div class="sec-head">2. Mentoring Check-ins & Mentor Remarks Log</div>
         ${allRemarks.length === 0 ? `
           <div style="padding: 16px; border: 1px dashed #cbd5e1; border-radius: 6px; text-align: center; color: #64748b; font-size: 10px;">
             Candidate enrolled in Sibaq Academy; first formal evaluation check-in is pending.
@@ -718,7 +718,7 @@ function printCandidateSingleDossierDocument(dossier) {
             <thead>
               <tr>
                 <th style="width: 16%;">Date & Time</th>
-                <th style="width: 22%;">Faculty Evaluator</th>
+                <th style="width: 22%;">Mentor Evaluator</th>
                 <th style="width: 18%;">Module / Program</th>
                 <th style="width: 12%; text-align: center;">Score</th>
                 <th style="width: 32%;">Evaluator Observations & Remarks</th>

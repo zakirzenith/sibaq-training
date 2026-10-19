@@ -1026,7 +1026,7 @@ export function renderReportsView(container, navigateTo) {
           </div>
           <div class="rsc-main">
             <span class="rsc-value">${totalTrainers}</span>
-            <span class="badge badge-neutral rsc-badge">Active Faculty</span>
+            <span class="badge badge-neutral rsc-badge">Active Mentors</span>
           </div>
           <div class="rsc-footer">
             Evaluating stage & non-stage categories
@@ -1113,7 +1113,7 @@ export function renderReportsView(container, navigateTo) {
             ${getIcon('search')}
           </div>
           <h3 style="font-size: 16px; font-weight: 800; color: #0f172a; margin: 0 0 6px 0;">No trainers match your search</h3>
-          <p style="font-size: 13px; color: #64748b; margin: 0 auto 16px auto; max-width: 380px;">Try searching with a different name or faculty specialization.</p>
+          <p style="font-size: 13px; color: #64748b; margin: 0 auto 16px auto; max-width: 380px;">Try searching with a different name or mentor specialization.</p>
         </div>
       ` : `
         <!-- 1. Desktop Table View (>= 769px) -->
@@ -1418,7 +1418,7 @@ export function renderReportsView(container, navigateTo) {
       if (searchQuery) {
         filterTags.push({ label: 'Search', val: `"${searchQuery}"`, isMain: true });
       } else {
-        filterTags.push({ label: 'Scope', val: 'All Mentors & Faculty', isMain: true });
+        filterTags.push({ label: 'Scope', val: 'All Mentors & Trainers', isMain: true });
       }
 
       const totalMentors = allTrainerReports.length;
@@ -2451,13 +2451,13 @@ export function renderReportsView(container, navigateTo) {
               <div>
                 <div class="brand-org">DARUL HUDA BENGAL • SIBAQ TRAINING ACADEMY</div>
                 <div class="brand-title">TRAINER MENTORSHIP & EVALUATION DOSSIER</div>
-                <div class="brand-sub">Faculty Specialization, Mentee Allocation & Check-in Compliance Overview</div>
+                <div class="brand-sub">Mentor Specialization, Mentee Allocation & Check-in Compliance Overview</div>
               </div>
             </div>
             <div class="meta-box">
               <div class="meta-line"><span class="meta-k">Date:</span> <span class="meta-v">${todayFormatted} • ${timeFormatted}</span></div>
               <div class="meta-line"><span class="meta-k">Document Ref:</span> <span class="meta-v mono">DHB-TMER-${docRef}</span></div>
-              <div class="meta-line"><span class="meta-k">Authority:</span> <span class="meta-v" style="color: #4338ca;">Faculty Management Office</span></div>
+              <div class="meta-line"><span class="meta-k">Authority:</span> <span class="meta-v" style="color: #4338ca;">Mentorship Management Office</span></div>
             </div>
           </div>
 
@@ -2562,7 +2562,7 @@ export function renderReportsView(container, navigateTo) {
             </div>
             <div class="f-col" style="text-align: right;">
               <div class="f-sign-line"></div>
-              <div style="font-weight: 700; color: #0f172a;">Authorized Faculty Dean / Controller</div>
+              <div style="font-weight: 700; color: #0f172a;">Authorized Mentorship Dean / Controller</div>
             </div>
           </div>
         </div>

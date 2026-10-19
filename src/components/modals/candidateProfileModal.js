@@ -3,6 +3,7 @@ import { getIcon } from '../icons.js';
 import { toast } from '../toast.js';
 import { openRecordMeetModal } from './recordMeetModal.js';
 import { openTrainerProfileModal } from './trainerProfileModal.js';
+import { openCandidateFormModal } from './candidateFormModal.js';
 
 /**
  * Candidate Profile Modal
@@ -84,19 +85,31 @@ export function openCandidateProfileModal({ candidateId, onUpdate = () => {} }) 
 
         <!-- Assigned Programs & Mentors List -->
         <div class="profile-section">
-          <div class="profile-section-title">
-            <span>${getIcon('programs')} Assigned Programs & Designated Trainers</span>
-            <span class="badge badge-primary-subtle text-xs">${assignedPrograms.length} Active</span>
+          <div class="profile-section-title" style="display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <span>${getIcon('programs')} Assigned Programs & Designated Trainers</span>
+              <span class="badge badge-primary-subtle text-xs">${assignedPrograms.length} Active</span>
+            </div>
+            ${!isTrainer ? `
+              <button type="button" id="btnEditCandidatePrograms" class="btn btn-sm btn-outline" style="height: 28px; padding: 0 10px; font-size: 11px; font-weight: 700; gap: 4px;">
+                ${getIcon('edit')} <span>Assign / Edit Programs</span>
+              </button>
+            ` : ''}
           </div>
 
           <div class="assigned-programs-roster">
             ${
               assignedPrograms.length === 0
                 ? `
-                <div class="empty-state-box py-4">
+                <div class="empty-state-box py-4" style="text-align: center;">
                   <div class="empty-icon">${getIcon('programs')}</div>
                   <h4>No Programs Assigned Yet</h4>
                   <p class="text-muted text-xs">This candidate is not currently enrolled in any stage or non-stage programs.</p>
+                  ${!isTrainer ? `
+                    <button type="button" class="btn btn-sm btn-primary mt-2 btn-prompt-assign-progs" style="font-size: 11.5px; height: 32px; padding: 0 12px; font-weight: 700; margin-top: 8px; gap: 4px;">
+                      ${getIcon('plus')} <span>Enroll in Programs</span>
+                    </button>
+                  ` : ''}
                 </div>
               `
                 : assignedPrograms
@@ -355,6 +368,20 @@ export function openCandidateProfileModal({ candidateId, onUpdate = () => {} }) 
       if (tid) {
         openTrainerProfileModal({ trainerId: tid });
       }
+    });
+  });
+
+  // Assign / Edit candidate programs
+  overlay.querySelectorAll('#btnEditCandidatePrograms, .btn-prompt-assign-progs').forEach(btn => {
+    btn.addEventListener('click', () => {
+      close();
+      openCandidateFormModal({
+        candidate,
+        onSave: () => {
+          openCandidateProfileModal({ candidateId, onUpdate });
+          onUpdate();
+        }
+      });
     });
   });
 }

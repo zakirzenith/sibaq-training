@@ -2,6 +2,7 @@ import { state } from '../../services/state.js';
 import { toast } from '../toast.js';
 import { getIcon } from '../icons.js';
 import { openCandidateProfileModal } from './candidateProfileModal.js';
+import { openCandidateFormModal } from './candidateFormModal.js';
 
 /**
  * Candidate Select Modal (Popup Box)
@@ -57,13 +58,16 @@ export function openCandidateSelectModal({ program, onAdd = () => {} }) {
             />
           </div>
 
-          <div class="scb-filters-group" style="display: flex; gap: 6px; flex-wrap: wrap;">
+          <div class="scb-filters-group" style="display: flex; gap: 6px; flex-wrap: wrap; align-items: center;">
             <select id="modalFilterCat" class="saas-select-pill">
               <option value="ALL">All Categories</option>
             </select>
             <select id="modalFilterCls" class="saas-select-pill">
               <option value="ALL">All Classes</option>
             </select>
+            <button type="button" id="btnModalCreateNewCand" class="btn btn-sm btn-primary" style="height: 32px; padding: 0 10px; font-size: 11.5px; font-weight: 700; gap: 4px; border-radius: 999px;">
+              ${getIcon('plus')} <span>New Candidate</span>
+            </button>
           </div>
         </div>
 
@@ -354,6 +358,27 @@ export function openCandidateSelectModal({ program, onAdd = () => {} }) {
     selectedClass = e.target.value;
     renderTable();
   });
+
+  const btnCreateNewCand = overlay.querySelector('#btnModalCreateNewCand');
+  if (btnCreateNewCand) {
+    btnCreateNewCand.addEventListener('click', () => {
+      openCandidateFormModal({
+        programId: program.id,
+        defaultCategory: program.category,
+        onSave: (newCand) => {
+          if (newCand && newCand.id) {
+            currentAssignedIds.add(newCand.id);
+            selectedIdsToAdd.add(newCand.id);
+          }
+          const freshCandidates = state.getCandidates();
+          const freshCategories = Array.from(new Set(freshCandidates.map(c => c.category).filter(Boolean))).sort();
+          catSelect.innerHTML = `<option value="ALL">All Categories</option>` + freshCategories.map(cat => `<option value="${cat}" ${cat === selectedCategory ? 'selected' : ''}>${cat}</option>`).join('');
+          renderTable();
+          onAdd();
+        }
+      });
+    });
+  }
 
   btnSelectAll.addEventListener('click', () => {
     const list = getAvailableCandidates();

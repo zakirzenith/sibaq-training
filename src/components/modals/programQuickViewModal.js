@@ -2,6 +2,7 @@ import { state, getProgressStatus } from '../../services/state.js';
 import { getIcon } from '../icons.js';
 import { openCandidateDossierModal } from './candidateDossierModal.js';
 import { openProgramFormModal } from './programFormModal.js';
+import { openCandidateSelectModal } from './candidateSelectModal.js';
 
 function formatChestNo(cand) {
   if (cand.chestNo && cand.chestNo.trim()) return `#${cand.chestNo.trim()}`;
@@ -144,12 +145,16 @@ export function openProgramQuickViewModal(programId, contextCandidateId = null) 
 
         <!-- Enrolled Candidates Roster -->
         <div style="background: #ffffff; border: 1.5px solid #e2e8f0; border-radius: 14px; padding: 16px;">
-          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; border-bottom: 1px solid #f1f5f9; padding-bottom: 10px;">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; border-bottom: 1px solid #f1f5f9; padding-bottom: 10px; flex-wrap: wrap; gap: 8px;">
             <div style="display: flex; align-items: center; gap: 7px;">
               <span style="color: #4f46e5;">${getIcon('candidates')}</span>
               <strong style="font-size: 14px; color: #0f172a;">Assigned Candidates (${enrolledCandidates.length})</strong>
             </div>
-            <span class="text-xs text-muted">Click Dossier to view candidate tracking</span>
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <button type="button" id="btnProgQuickAddCand" class="btn btn-sm btn-primary" style="height: 30px; padding: 0 10px; font-size: 11.5px; font-weight: 700; gap: 4px;">
+                ${getIcon('plus')} <span>Enroll Candidate</span>
+              </button>
+            </div>
           </div>
 
           ${enrolledCandidates.length === 0 ? `
@@ -263,6 +268,20 @@ export function openProgramQuickViewModal(programId, contextCandidateId = null) 
     btnEdit.addEventListener('click', () => {
       closeModal();
       openProgramFormModal({ program });
+    });
+  }
+
+  // Wire enroll candidate
+  const btnAddCand = overlay.querySelector('#btnProgQuickAddCand');
+  if (btnAddCand) {
+    btnAddCand.addEventListener('click', () => {
+      closeModal();
+      openCandidateSelectModal({
+        program,
+        onAdd: () => {
+          openProgramQuickViewModal(program.id, contextCandidateId);
+        }
+      });
     });
   }
 }

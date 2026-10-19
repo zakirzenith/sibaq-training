@@ -93,6 +93,7 @@ export const excelService = {
       let name = '';
       let category = 'General';
       let studentClass = '';
+      let programsStr = '';
 
       // Match columns dynamically
       for (const [key, val] of Object.entries(row)) {
@@ -107,6 +108,8 @@ export const excelService = {
           category = strVal || 'General';
         } else if (['class', 'grade', 'standard', 'sec', 'section', 'std'].includes(cleaned)) {
           studentClass = strVal;
+        } else if (['programs', 'program', 'assignedprograms', 'item', 'items', 'event', 'events', 'code', 'codes', 'enrolledprograms'].includes(cleaned)) {
+          programsStr = strVal;
         }
       }
 
@@ -118,6 +121,7 @@ export const excelService = {
           name = String(values[1] || '').trim();
           if (values[2]) category = String(values[2]).trim();
           if (values[3]) studentClass = String(values[3]).trim();
+          if (values[4]) programsStr = String(values[4]).trim();
         }
       }
 
@@ -126,12 +130,17 @@ export const excelService = {
       if (!adNo) errors.push('Missing Admission No');
       if (!name) errors.push('Missing Candidate Name');
 
+      const programCodes = programsStr
+        ? programsStr.split(/[,;|\n]+/).map(s => s.trim().toUpperCase()).filter(Boolean)
+        : [];
+
       return {
         rowNumber: index + 2, // 1-indexed row in Excel
         adNo,
         name,
         category: category || 'General',
         class: studentClass,
+        programCodes,
         isValid,
         error: errors.join(', ')
       };

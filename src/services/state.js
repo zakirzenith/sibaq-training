@@ -274,6 +274,14 @@ class StateService {
     ) || null;
   }
 
+  getCandidateByAdNo(adNo) {
+    if (!adNo) return null;
+    const cleanAdNo = String(adNo).trim().toLowerCase();
+    return this.candidates.find(
+      c => String(c.adNo || '').trim().toLowerCase() === cleanAdNo
+    ) || null;
+  }
+
   getAvailableCategories() {
     const defaultCategories = ['BIDĀYAH', 'ŪLĀ', 'THĀNAWIYYAH', '‘ĀLIYAH', 'KULLIYYAH', 'BIDĀYAH & ŪLĀ'];
     const existing = new Set(defaultCategories);
@@ -312,6 +320,10 @@ class StateService {
       firebaseService.setDoc('candidates', newCandidate.id, newCandidate).catch(e => console.warn(e));
     }
 
+    if (Array.isArray(candidateData.programIds)) {
+      this.setCandidatePrograms(newCandidate.id, candidateData.programIds);
+    }
+
     return newCandidate;
   }
 
@@ -333,6 +345,10 @@ class StateService {
 
     if (firebaseService.isInitialized) {
       firebaseService.setDoc('candidates', cleanId, this.candidates[index]).catch(e => console.warn(e));
+    }
+
+    if (Array.isArray(updateData.programIds)) {
+      this.setCandidatePrograms(cleanId, updateData.programIds);
     }
 
     return this.candidates[index];
@@ -409,6 +425,18 @@ class StateService {
         this.candidates.push(newObj);
         newOrUpdated.push(newObj);
         addedCount++;
+      }
+
+      const candidateId = existingIndex >= 0 ? this.candidates[existingIndex].id : newObj.id;
+      if (Array.isArray(item.programIds) && item.programIds.length > 0) {
+        this.setCandidatePrograms(candidateId, item.programIds);
+      } else if (Array.isArray(item.programCodes) && item.programCodes.length > 0) {
+        const resolvedPids = item.programCodes
+          .map(c => this.getProgramByCode(c)?.id)
+          .filter(Boolean);
+        if (resolvedPids.length > 0) {
+          this.setCandidatePrograms(candidateId, resolvedPids);
+        }
       }
     });
 
@@ -743,6 +771,47 @@ class StateService {
       }
     }
 
+    return true;
+  }
+
+  setCandidatePrograms(candidateId, targetProgramIds) {
+    const session = this.getAuthSession();
+    if (session && session.role === 'trainer') {
+      console.warn('Unauthorized: Trainers cannot modify program enrollments.');
+      return false;
+    }
+    if (!candidateId) return false;
+    const cleanCid = String(candidateId).trim();
+    const cand = this.getCandidateById(cleanCid);
+    const targetSet = new Set((targetProgramIds || []).map(id => String(id).trim()).filter(Boolean));
+    const updatedPrograms = [];
+
+    this.programs.forEach(program => {
+      if (!Array.isArray(program.candidateIds)) program.candidateIds = [];
+      const hasCand = program.candidateIds.some(id => {
+        const c = String(id).trim();
+        return c === cleanCid || (cand && (c === String(cand.id).trim() || c === String(cand.adNo).trim()));
+      });
+      const shouldHave = targetSet.has(String(program.id).trim()) || targetSet.has(String(program.code).trim().toUpperCase());
+
+      if (shouldHave && !hasCand) {
+        program.candidateIds.push(cleanCid);
+        updatedPrograms.push(program);
+      } else if (!shouldHave && hasCand) {
+        program.candidateIds = program.candidateIds.filter(id => {
+          const c = String(id).trim();
+          return c !== cleanCid && (!cand || (c !== String(cand.id).trim() && c !== String(cand.adNo).trim()));
+        });
+        updatedPrograms.push(program);
+      }
+    });
+
+    if (updatedPrograms.length > 0) {
+      this.saveState();
+      if (firebaseService.isInitialized) {
+        firebaseService.batchSync('programs', updatedPrograms).catch(e => console.warn(e));
+      }
+    }
     return true;
   }
 

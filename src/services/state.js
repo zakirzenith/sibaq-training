@@ -9,6 +9,7 @@ import {
 } from '../data/initialData.js';
 import { firebaseService } from './firebase.js';
 import { inferProgramType } from './excelService.js';
+import { verifyControllerPassword } from './security.js';
 
 // Clear legacy demo storage key to wipe default mock records
 try {
@@ -969,7 +970,7 @@ class StateService {
       return { success: false, error: 'Please enter both username and password.' };
     }
 
-    if (u === 'sibaq' && p === 'champion#2029') {
+    if (u === 'sibaq' && verifyControllerPassword(p)) {
       localStorage.setItem('mentorflow_auth_role', 'controller');
       localStorage.setItem('mentorflow_controller_user', 'sibaq');
       localStorage.setItem('mentorflow_active_portal', 'controller');

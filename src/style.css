@@ -10806,3 +10806,20 @@ body.auth-mode .main-view-container {
     border: 1px solid #cbd5e1 !important;
   }
 }
+
+/* Trainer Reports: Interactive Assigned Program Cards */
+.tr-assigned-program-card {
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1) !important;
+  user-select: none;
+}
+
+.tr-assigned-program-card:hover {
+  background: #ffffff !important;
+  border-color: #6366f1 !important;
+  box-shadow: 0 6px 20px rgba(99, 102, 241, 0.16) !important;
+  transform: translateY(-2px);
+}
+
+.tr-assigned-program-card:active {
+  transform: translateY(0);
+}

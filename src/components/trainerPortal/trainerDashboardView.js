@@ -96,19 +96,19 @@ export function renderTrainerDashboardView(container, navigateTo) {
                   </span>
                   ${trainerRank === 1 ? `
                     <span style="display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 999px; background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%); color: #ffffff; font-size: 11px; font-weight: 800; box-shadow: 0 2px 10px rgba(245, 158, 11, 0.4); border: 1px solid rgba(255, 255, 255, 0.4);">
-                      🥇 Rank #1 Mentor (Champion)
+                      🥇 #1 Mentor
                     </span>
                   ` : (trainerRank === 2 ? `
                     <span style="display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 999px; background: linear-gradient(135deg, #94a3b8 0%, #64748b 100%); color: #ffffff; font-size: 11px; font-weight: 800; box-shadow: 0 2px 10px rgba(100, 116, 139, 0.35); border: 1px solid rgba(255, 255, 255, 0.4);">
-                      🥈 Rank #2 Mentor (Runner-Up)
+                      🥈 #2 Mentor
                     </span>
                   ` : (trainerRank === 3 ? `
                     <span style="display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 999px; background: linear-gradient(135deg, #f97316 0%, #ea580c 100%); color: #ffffff; font-size: 11px; font-weight: 800; box-shadow: 0 2px 10px rgba(249, 115, 22, 0.35); border: 1px solid rgba(255, 255, 255, 0.4);">
-                      🥉 Rank #3 Mentor (Top Performer)
+                      🥉 #3 Mentor
                     </span>
                   ` : `
                     <span style="display: inline-flex; align-items: center; gap: 4px; padding: 3px 10px; border-radius: 999px; background: rgba(255, 255, 255, 0.18); backdrop-filter: blur(8px); border: 1px solid rgba(255, 255, 255, 0.25); color: #ffffff; font-size: 11px; font-weight: 800;">
-                      🏆 Rank #${trainerRank} Mentor
+                      🏆 #${trainerRank} Mentor
                     </span>
                   `))}
                 </div>

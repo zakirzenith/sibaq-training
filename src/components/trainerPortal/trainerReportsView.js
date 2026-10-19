@@ -1,7 +1,6 @@
 import { state, getProgressStatus } from '../../services/state.js';
 import { getIcon } from '../icons.js';
 import { openCandidateDossierModal } from '../modals/candidateDossierModal.js';
-import { openRecordMeetModal } from '../modals/recordMeetModal.js';
 import { openProgramQuickViewModal } from '../modals/programQuickViewModal.js';
 import { toast } from '../toast.js';
 
@@ -336,7 +335,7 @@ function renderMenteesTab(data) {
               <th style="padding: 11px 14px; width: 140px;">Overall Readiness</th>
               <th style="padding: 11px 14px; width: 100px;">Sessions</th>
               <th style="padding: 11px 14px; width: 110px;">Trajectory</th>
-              <th style="padding: 11px 14px; width: 170px; text-align: right;">Action</th>
+              <th style="padding: 11px 14px; width: 120px; text-align: right;">Action</th>
             </tr>
           </thead>
           <tbody>
@@ -384,14 +383,9 @@ function renderMenteesTab(data) {
                     </div>
                   </td>
                   <td style="padding: 11px 14px; text-align: right;">
-                    <div style="display: inline-flex; align-items: center; gap: 6px;">
-                      <button type="button" class="btn btn-sm btn-outline" data-action="view-dossier" data-cid="${d.candidate.id}" style="height: 30px; padding: 0 9px; font-size: 11.5px; font-weight: 700; gap: 4px; border-color: #cbd5e1;" title="View Complete Candidate Performance Dossier">
-                        ${getIcon('award')} <span>Dossier</span>
-                      </button>
-                      <button type="button" class="btn btn-sm btn-primary" data-action="evaluate-mentee" data-cid="${d.candidate.id}" style="height: 30px; padding: 0 9px; font-size: 11.5px; font-weight: 700; gap: 4px;" title="Record Evaluation Check-in">
-                        ${getIcon('plus')} <span>Record</span>
-                      </button>
-                    </div>
+                    <button type="button" class="btn btn-sm btn-outline" data-action="view-dossier" data-cid="${d.candidate.id}" style="height: 30px; padding: 0 10px; font-size: 11.5px; font-weight: 700; gap: 4px; border-color: #cbd5e1; color: #4338ca;" title="View Complete Candidate Performance Dossier">
+                      ${getIcon('award')} <span>Dossier</span>
+                    </button>
                   </td>
                 </tr>
               `;
@@ -449,12 +443,9 @@ function renderMenteesTab(data) {
               </div>
 
               <!-- Mobile Actions -->
-              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
-                <button type="button" class="btn btn-outline btn-sm" data-action="view-dossier" data-cid="${d.candidate.id}" style="font-size: 12px; font-weight: 700; height: 34px; justify-content: center; gap: 5px;">
+              <div>
+                <button type="button" class="btn btn-outline btn-sm" data-action="view-dossier" data-cid="${d.candidate.id}" style="width: 100%; font-size: 12px; font-weight: 700; height: 34px; justify-content: center; gap: 6px; border-color: #cbd5e1; color: #4338ca;">
                   ${getIcon('award')} <span>View Dossier</span>
-                </button>
-                <button type="button" class="btn btn-primary btn-sm" data-action="evaluate-mentee" data-cid="${d.candidate.id}" style="font-size: 12px; font-weight: 700; height: 34px; justify-content: center; gap: 5px;">
-                  ${getIcon('plus')} <span>Record Meet</span>
                 </button>
               </div>
             </div>
@@ -975,16 +966,6 @@ function wireSubViewEvents(container, context) {
     });
   });
 
-  // Record Evaluation check-in trigger
-  container.querySelectorAll('[data-action="evaluate-mentee"]').forEach(btn => {
-    btn.addEventListener('click', e => {
-      e.stopPropagation();
-      const cid = btn.getAttribute('data-cid');
-      if (cid) {
-        openRecordMeetModal(null, cid);
-      }
-    });
-  });
 
   // Program Quick View Modal trigger (assigned programs in My Report)
   container.querySelectorAll('[data-action="view-program-candidates"]').forEach(card => {

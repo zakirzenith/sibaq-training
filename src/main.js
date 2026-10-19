@@ -13,6 +13,8 @@ import { renderTrainerDailyProgressView } from './components/trainerPortal/train
 import { openExcelUploadModal } from './components/modals/excelUploadModal.js';
 import { openCloudDatabaseModal } from './components/modals/cloudDatabaseModal.js';
 import { openTrainerLoginModal } from './components/modals/trainerLoginModal.js';
+import { pwaService } from './services/pwaService.js';
+import { openPwaInstallModal } from './components/modals/pwaInstallModal.js';
 
 class App {
   constructor() {
@@ -88,6 +90,9 @@ class App {
 
     // Render initial view
     this.render();
+
+    // Check PWA first-time installation auto-prompt
+    pwaService.checkAutoPrompt(() => openPwaInstallModal());
   }
 
   initTheme() {
@@ -100,6 +105,16 @@ class App {
     if (btnLogout) {
       btnLogout.onclick = () => {
         this.logout();
+      };
+    }
+
+    const btnTopInstallApp = document.getElementById('btnTopInstallApp');
+    if (btnTopInstallApp) {
+      pwaService.onInstallableChange((canInstall) => {
+        btnTopInstallApp.style.display = (canInstall && !pwaService.isStandalone()) ? 'inline-flex' : 'none';
+      });
+      btnTopInstallApp.onclick = () => {
+        openPwaInstallModal({ force: true });
       };
     }
 
@@ -235,6 +250,15 @@ class App {
             </div>
           ` : ''}
 
+          <!-- PWA Install Shortcut (If not in standalone app mode) -->
+          ${!pwaService.isStandalone() ? `
+            <div style="margin-bottom: 12px;">
+              <button type="button" id="btnModalInstallApp" class="btn btn-outline" style="width: 100%; height: 40px; font-weight: 700; font-size: 12.5px; border-radius: 10px; border: 1.5px solid #4f46e5; color: #4f46e5; background: #eef2ff; display: flex; align-items: center; justify-content: center; gap: 7px; cursor: pointer; transition: all 0.15s ease;">
+                ${getIcon('download')} Install Sibaq Mentoring App
+              </button>
+            </div>
+          ` : ''}
+
           <!-- Prominent Sign Out Button -->
           <button type="button" id="btnModalSignOut" class="btn btn-primary" style="width: 100%; height: 42px; background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); border: none; color: #ffffff; font-weight: 800; font-size: 13px; border-radius: 10px; display: flex; align-items: center; justify-content: center; gap: 8px; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.25); cursor: pointer;">
             ${getIcon('logout')}
@@ -255,6 +279,15 @@ class App {
     overlay.onclick = (e) => {
       if (e.target === overlay) close();
     };
+
+    // Install App action
+    const btnModalInstall = overlay.querySelector('#btnModalInstallApp');
+    if (btnModalInstall) {
+      btnModalInstall.onclick = () => {
+        close();
+        openPwaInstallModal({ force: true });
+      };
+    }
 
     // Sign out action
     overlay.querySelector('#btnModalSignOut').onclick = () => {

@@ -6,6 +6,15 @@
   <title>DH BENGAL • Sibaq Trainer & Candidate Management</title>
   <meta name="description" content="DH BENGAL operations dashboard for managing candidates, trainers, and stage/non-stage programs with bulk Excel upload and interactive assignment." />
   <link rel="icon" type="image/png" href="/favicon.png" />
+  <link rel="manifest" href="/manifest.json" />
+  <meta name="theme-color" content="#0f172a" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Sibaq Mentoring" />
+  <link rel="apple-touch-icon" href="/logo.png" />
+  <link rel="apple-touch-icon" sizes="192x192" href="/favicon.png" />
+  <link rel="apple-touch-icon" sizes="512x512" href="/logo.png" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
@@ -119,6 +128,12 @@
           <button id="btnDataManage" class="btn btn-secondary btn-sm desktop-only-btn" title="System Data Backup and Demo Options">
             <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
             <span class="btn-data-text">System Data</span>
+          </button>
+
+          <!-- PWA Install App Button (Auto-shows when installable) -->
+          <button id="btnTopInstallApp" class="btn btn-sm btn-pwa-install-pill" title="Install Sibaq Mentoring as Web App" style="display: none; align-items: center; gap: 6px; background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%); color: #ffffff; border: none; font-weight: 700; font-size: 12px; border-radius: 999px; padding: 6px 12px; box-shadow: 0 2px 8px rgba(79, 70, 229, 0.25); cursor: pointer;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
+            <span class="btn-install-text">Install App</span>
           </button>
 
           <!-- User Pill / Profile Circle (Clickable on both Phone & Desktop) -->

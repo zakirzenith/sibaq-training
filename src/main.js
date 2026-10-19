@@ -8,6 +8,7 @@ import { renderCandidatesView } from './components/candidatesView.js';
 import { renderProgramsView } from './components/programsView.js';
 import { renderTrainersView } from './components/trainersView.js';
 import { renderDailyProgressView } from './components/dailyProgressView.js';
+import { renderReportsView } from './components/reportsView.js';
 import { renderTrainerDashboardView } from './components/trainerPortal/trainerDashboardView.js';
 import { renderTrainerDailyProgressView } from './components/trainerPortal/trainerDailyProgressView.js';
 import { openExcelUploadModal } from './components/modals/excelUploadModal.js';
@@ -632,6 +633,7 @@ class App {
       'programs': 'Programs & Assignments',
       'trainers': 'Trainers & Mentors',
       'daily-progress': 'Daily Progress & Scoring',
+      'reports': 'Performance Reports & Dossiers',
       'trainer-dashboard': 'Trainer Dashboard',
       'trainer-daily-progress': 'Trainer Daily Progress'
     };
@@ -883,6 +885,9 @@ class App {
       case 'daily-progress':
       case 'matrix':
         renderDailyProgressView(this.mainContent, navigate);
+        break;
+      case 'reports':
+        renderReportsView(this.mainContent, navigate);
         break;
       case 'trainer-dashboard':
         renderTrainerDashboardView(this.mainContent, navigate);

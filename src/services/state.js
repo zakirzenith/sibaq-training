@@ -1508,6 +1508,263 @@ class StateService {
       return { success: false, error: e.message };
     }
   }
+
+  // --- REPORTING & PERFORMANCE DOSSIER METHODS ---
+  getCandidatePerformanceDossier(candidateId) {
+    const candidate = this.getCandidateById(candidateId);
+    if (!candidate) return null;
+
+    const programs = this.getCandidatePrograms(candidateId);
+    const allMeets = this.getCandidateMeets(candidateId);
+
+    // Group meets by program
+    const programReports = programs.map(prog => {
+      const progMeets = allMeets.filter(m => String(m.programId || '').trim() === String(prog.id).trim());
+      const trainer = prog.trainerId ? this.getTrainerById(prog.trainerId) : null;
+      const meetCount = progMeets.length;
+      const isMet = meetCount > 0;
+      const latestMeet = isMet ? progMeets[progMeets.length - 1] : null;
+      const firstMeet = isMet ? progMeets[0] : null;
+
+      const latestScore = latestMeet ? (Number(latestMeet.percentage) || 0) : 0;
+      const firstScore = firstMeet ? (Number(firstMeet.percentage) || 0) : 0;
+      const scoreDelta = isMet && progMeets.length > 1 ? latestScore - firstScore : 0;
+
+      const avgScore = isMet
+        ? Math.round(progMeets.reduce((sum, m) => sum + (Number(m.percentage) || 0), 0) / meetCount)
+        : 0;
+
+      const status = isMet 
+        ? getProgressStatus(latestScore) 
+        : { label: 'Not Evaluated', key: 'not-evaluated', color: '#64748b', badgeClass: 'badge-neutral' };
+
+      const remarks = progMeets
+        .filter(m => m.remark && m.remark.trim())
+        .map(m => ({
+          text: m.remark.trim(),
+          date: m.date,
+          time: m.time,
+          trainerName: m.trainerId ? (this.getTrainerById(m.trainerId)?.name || 'Trainer') : 'Trainer',
+          percentage: m.percentage
+        }));
+
+      return {
+        program: prog,
+        trainer,
+        meets: progMeets,
+        meetCount,
+        isMet,
+        latestMeet,
+        firstMeet,
+        latestScore,
+        firstScore,
+        scoreDelta,
+        avgScore,
+        status,
+        remarks
+      };
+    });
+
+    const unassociatedMeets = allMeets.filter(m => !m.programId || !programs.some(p => p.id === m.programId));
+
+    const totalPrograms = programs.length;
+    const metProgramsCount = programReports.filter(pr => pr.isMet).length;
+    const evaluatedPrograms = programReports.filter(pr => pr.isMet);
+
+    // Overall readiness score
+    let overallReadiness = 0;
+    let hasEvaluation = false;
+    if (evaluatedPrograms.length > 0) {
+      overallReadiness = Math.round(
+        evaluatedPrograms.reduce((sum, pr) => sum + pr.latestScore, 0) / evaluatedPrograms.length
+      );
+      hasEvaluation = true;
+    } else if (allMeets.length > 0) {
+      overallReadiness = Math.round(
+        allMeets.reduce((sum, m) => sum + (Number(m.percentage) || 0), 0) / allMeets.length
+      );
+      hasEvaluation = true;
+    }
+
+    const overallStatus = hasEvaluation 
+      ? getProgressStatus(overallReadiness)
+      : { label: 'Not Evaluated', key: 'not-evaluated', color: '#64748b', badgeClass: 'badge-neutral' };
+
+    const meetingRatePct = totalPrograms > 0 
+      ? Math.round((metProgramsCount / totalPrograms) * 100) 
+      : (allMeets.length > 0 ? 100 : 0);
+
+    let meetingRateLabel = '0% (No Meets)';
+    if (totalPrograms === 0) {
+      meetingRateLabel = allMeets.length > 0 ? `${allMeets.length} Meets` : 'No Programs';
+    } else if (metProgramsCount === totalPrograms) {
+      meetingRateLabel = `100% (${metProgramsCount}/${totalPrograms} All Met)`;
+    } else if (metProgramsCount > 0) {
+      meetingRateLabel = `${meetingRatePct}% (${metProgramsCount}/${totalPrograms} Partial)`;
+    } else {
+      meetingRateLabel = `0% (0/${totalPrograms} Met)`;
+    }
+
+    // Trajectory & Preparation Momentum
+    const latestMeetEver = allMeets.length > 0 ? allMeets[allMeets.length - 1] : null;
+    let daysSinceLastMeet = null;
+    if (latestMeetEver && latestMeetEver.date) {
+      const lastDate = new Date(latestMeetEver.date);
+      const diffMs = Date.now() - lastDate.getTime();
+      daysSinceLastMeet = Math.max(0, Math.floor(diffMs / (1000 * 60 * 60 * 24)));
+    }
+
+    let momentumKey = 'not-started';
+    let momentumLabel = 'Not Started';
+    let momentumColor = '#64748b';
+    let momentumBadgeClass = 'badge-neutral';
+    let momentumDesc = 'No training meets recorded yet.';
+
+    if (allMeets.length === 0) {
+      momentumKey = 'not-started';
+      momentumLabel = 'Not Started';
+      momentumColor = '#64748b';
+      momentumBadgeClass = 'badge-neutral';
+      momentumDesc = 'Candidate has not checked in for any training session yet.';
+    } else if (overallReadiness >= 80 && (daysSinceLastMeet === null || daysSinceLastMeet <= 7)) {
+      momentumKey = 'stage-ready';
+      momentumLabel = 'Peak Ready & Active';
+      momentumColor = '#10b981';
+      momentumBadgeClass = 'badge-stage';
+      momentumDesc = 'High readiness score with recent check-ins. Well prepared for competition.';
+    } else if (overallReadiness >= 65 && (daysSinceLastMeet === null || daysSinceLastMeet <= 7)) {
+      momentumKey = 'accelerating';
+      momentumLabel = 'Actively Preparing';
+      momentumColor = '#3b82f6';
+      momentumBadgeClass = 'badge-primary-subtle';
+      momentumDesc = 'Consistent attendance and positive scoring trend. Good preparation momentum.';
+    } else if (daysSinceLastMeet !== null && daysSinceLastMeet > 7) {
+      momentumKey = 'stagnant';
+      momentumLabel = 'Needs Intervention';
+      momentumColor = '#f59e0b';
+      momentumBadgeClass = 'badge-amber';
+      momentumDesc = `No check-in recorded for ${daysSinceLastMeet} days. Trainer follow-up needed.`;
+    } else if (overallReadiness < 55) {
+      momentumKey = 'at-risk';
+      momentumLabel = 'Lagging / At Risk';
+      momentumColor = '#ef4444';
+      momentumBadgeClass = 'badge-danger';
+      momentumDesc = 'Readiness score is below benchmark (<55%). Needs focused mentorship.';
+    } else {
+      momentumKey = 'progressing';
+      momentumLabel = 'Steady Progress';
+      momentumColor = '#6366f1';
+      momentumBadgeClass = 'badge-primary-subtle';
+      momentumDesc = 'Candidate is progressing steadily through assigned modules.';
+    }
+
+    const allRemarks = allMeets
+      .filter(m => m.remark && m.remark.trim())
+      .map(m => {
+        const prog = m.programId ? this.getProgramById(m.programId) : null;
+        const trn = m.trainerId ? this.getTrainerById(m.trainerId) : null;
+        return {
+          id: m.id,
+          text: m.remark.trim(),
+          date: m.date,
+          time: m.time,
+          timestamp: m.timestamp,
+          percentage: m.percentage,
+          programCode: prog ? prog.code : null,
+          programName: prog ? prog.name : 'General',
+          trainerName: trn ? trn.name : 'Assigned Trainer',
+          trainerPhoto: trn ? trn.photo : null
+        };
+      })
+      .reverse();
+
+    return {
+      candidate,
+      programs,
+      allMeets,
+      totalMeets: allMeets.length,
+      programReports,
+      unassociatedMeets,
+      totalPrograms,
+      metProgramsCount,
+      overallReadiness,
+      hasEvaluation,
+      overallStatus,
+      meetingRatePct,
+      meetingRateLabel,
+      daysSinceLastMeet,
+      latestMeetEver,
+      momentumKey,
+      momentumLabel,
+      momentumColor,
+      momentumBadgeClass,
+      momentumDesc,
+      allRemarks,
+      latestRemark: allRemarks.length > 0 ? allRemarks[0] : null
+    };
+  }
+
+  getAllCandidatesReportData() {
+    return this.candidates.map(cand => this.getCandidatePerformanceDossier(cand.id)).filter(Boolean);
+  }
+
+  getAllTrainersReportData() {
+    return this.trainers.map(trn => {
+      const assignedPrograms = this.getTrainerPrograms(trn.id);
+      const mentees = this.getTrainerMentees(trn.id);
+      const readiness = this.getTrainerReadiness(trn.id);
+
+      const allMeets = this.dailyMeets.filter(m => String(m.trainerId || '').trim() === String(trn.id).trim());
+
+      const metMenteeIds = new Set(allMeets.map(m => String(m.candidateId).trim()));
+      const uniqueMenteesMetCount = mentees.filter(m => metMenteeIds.has(String(m.id).trim())).length;
+
+      const complianceRate = mentees.length > 0 
+        ? Math.round((uniqueMenteesMetCount / mentees.length) * 100) 
+        : (allMeets.length > 0 ? 100 : 0);
+
+      const sortedMeets = allMeets.slice().sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+      const latestMeet = sortedMeets.length > 0 ? sortedMeets[0] : null;
+
+      let readyCount = 0;
+      let onTrackCount = 0;
+      let needsAttentionCount = 0;
+      let notEvaluatedCount = 0;
+
+      mentees.forEach(cand => {
+        const cMeets = this.getCandidateMeets(cand.id);
+        if (cMeets.length > 0) {
+          const lastScore = cMeets[cMeets.length - 1].percentage;
+          if (lastScore >= 80) readyCount++;
+          else if (lastScore >= 60) onTrackCount++;
+          else needsAttentionCount++;
+        } else {
+          notEvaluatedCount++;
+        }
+      });
+
+      return {
+        trainer: trn,
+        assignedPrograms,
+        programCount: assignedPrograms.length,
+        mentees,
+        menteeCount: mentees.length,
+        allMeets,
+        totalMeetsLogged: allMeets.length,
+        uniqueMenteesMetCount,
+        complianceRate,
+        readiness,
+        averageReadiness: readiness.hasData ? readiness.percentage : 0,
+        latestMeet,
+        distribution: {
+          readyCount,
+          onTrackCount,
+          needsAttentionCount,
+          notEvaluatedCount
+        }
+      };
+    });
+  }
 }
 
 export const state = new StateService();

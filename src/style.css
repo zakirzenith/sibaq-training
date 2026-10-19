@@ -10029,3 +10029,75 @@ body.auth-mode .main-view-container {
     padding: 6px 8px !important;
   }
 }
+
+/* ==========================================================================
+   PERFORMANCE REPORTS & CANDIDATE DOSSIER STYLES
+   ========================================================================== */
+
+.reports-tab-btn:hover {
+  color: #4338ca !important;
+}
+
+.report-candidate-tr:hover {
+  background: #f8fafc !important;
+}
+
+.report-cand-name:hover {
+  color: #4f46e5 !important;
+  text-decoration: underline;
+}
+
+.prog-report-chip {
+  transition: transform 0.1s ease;
+}
+
+.prog-report-chip:hover {
+  transform: translateY(-1px);
+}
+
+/* Print Dossier Modal Rules */
+@media print {
+  body.printing-dossier * {
+    visibility: hidden;
+  }
+
+  body.printing-dossier .candidate-dossier-dialog,
+  body.printing-dossier .candidate-dossier-dialog * {
+    visibility: visible;
+  }
+
+  body.printing-dossier .candidate-dossier-dialog {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-shadow: none !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  body.printing-dossier .dossier-screen-header,
+  body.printing-dossier .dossier-screen-footer,
+  body.printing-dossier .modal-backdrop {
+    display: none !important;
+    background: transparent !important;
+  }
+
+  body.printing-dossier .dossier-print-banner,
+  body.printing-dossier .dossier-print-footer {
+    display: flex !important;
+  }
+
+  body.printing-dossier .dossier-printable-content {
+    overflow: visible !important;
+    padding: 0 !important;
+  }
+
+  body.printing-dossier .dossier-kpi-card,
+  body.printing-dossier .dossier-program-row {
+    break-inside: avoid;
+    border: 1px solid #cbd5e1 !important;
+  }
+}

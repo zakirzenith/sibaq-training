@@ -589,5 +589,91 @@ export const excelService = {
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, program.code || 'Program');
     XLSX.writeFile(workbook, `Roster_${program.code}_${program.name.replace(/[^a-zA-Z0-9]/g, '_')}.xlsx`);
+  },
+
+  /**
+   * Export Full Candidate Performance & Readiness Report
+   */
+  exportCandidatePerformanceReport(dossiers) {
+    const rows = dossiers.map(d => ({
+      'Chest No': d.candidate.chestNo || d.candidate.id,
+      'Candidate Name': d.candidate.name,
+      'Category': d.candidate.category,
+      'Phone': d.candidate.phone || '-',
+      'Institution': d.candidate.institution || 'DH BENGAL',
+      'Assigned Programs': d.programs.map(p => `[${p.code}] ${p.name}`).join('; '),
+      'Total Programs': d.totalPrograms,
+      'Programs Met': d.metProgramsCount,
+      'Meeting Rate (%)': `${d.meetingRatePct}%`,
+      'Meeting Status': d.meetingRateLabel,
+      'Overall Readiness (%)': d.hasEvaluation ? `${d.overallReadiness}%` : 'Not Evaluated',
+      'Readiness Status': d.overallStatus.label,
+      'Total Sessions Logged': d.totalMeets,
+      'Last Session Date': d.latestMeetEver ? `${d.latestMeetEver.date} ${d.latestMeetEver.time || ''}` : 'No Sessions',
+      'Preparation Momentum': d.momentumLabel,
+      'Latest Trainer Remark': d.latestRemark ? d.latestRemark.text : '-'
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(rows);
+    worksheet['!cols'] = [
+      { wch: 10 },
+      { wch: 24 },
+      { wch: 14 },
+      { wch: 16 },
+      { wch: 20 },
+      { wch: 36 },
+      { wch: 14 },
+      { wch: 14 },
+      { wch: 16 },
+      { wch: 24 },
+      { wch: 20 },
+      { wch: 18 },
+      { wch: 20 },
+      { wch: 20 },
+      { wch: 22 },
+      { wch: 38 }
+    ];
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Candidate Performance');
+    XLSX.writeFile(workbook, `Candidate_Performance_Report_${new Date().toISOString().split('T')[0]}.xlsx`);
+  },
+
+  /**
+   * Export Full Trainer Mentorship & Performance Report
+   */
+  exportTrainerPerformanceReport(trainerReports) {
+    const rows = trainerReports.map(t => ({
+      'Trainer Name': t.trainer.name,
+      'Field of Expertise': t.trainer.expertise,
+      'Username': t.trainer.username || '-',
+      'Phone': t.trainer.phone || '-',
+      'Assigned Programs Count': t.programCount,
+      'Assigned Program Codes': t.assignedPrograms.map(p => p.code).join(', '),
+      'Total Mentees': t.menteeCount,
+      'Mentees Met': t.uniqueMenteesMetCount,
+      'Meeting Compliance (%)': `${t.complianceRate}%`,
+      'Average Readiness (%)': t.readiness.hasData ? `${t.averageReadiness}%` : '0%',
+      'Total Sessions Logged': t.totalMeetsLogged,
+      'Last Active Date': t.latestMeet ? `${t.latestMeet.date} ${t.latestMeet.time || ''}` : 'No Sessions Logged'
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(rows);
+    worksheet['!cols'] = [
+      { wch: 24 },
+      { wch: 26 },
+      { wch: 16 },
+      { wch: 16 },
+      { wch: 22 },
+      { wch: 28 },
+      { wch: 14 },
+      { wch: 14 },
+      { wch: 22 },
+      { wch: 20 },
+      { wch: 22 },
+      { wch: 24 }
+    ];
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Trainer Mentorship');
+    XLSX.writeFile(workbook, `Trainer_Mentorship_Report_${new Date().toISOString().split('T')[0]}.xlsx`);
   }
 };

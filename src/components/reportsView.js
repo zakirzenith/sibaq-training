@@ -97,14 +97,18 @@ export function renderReportsView(container, navigateTo) {
 
       <div class="saas-header-actions">
         <!-- Sub-section Tab Switcher -->
-        <div class="reports-tab-capsule" style="display: flex; background: #f1f5f9; padding: 3px; border-radius: 10px; border: 1px solid #e2e8f0;">
-          <button type="button" class="reports-tab-btn active" id="tabBtnCandidates" style="display: flex; align-items: center; gap: 7px; padding: 7px 14px; border-radius: 8px; border: none; font-size: 13px; font-weight: 700; cursor: pointer; background: #ffffff; color: #4338ca; box-shadow: 0 1px 3px rgba(0,0,0,0.06); transition: all 0.15s ease;">
-            ${getIcon('award')} <span>Candidate Reports</span>
-            <span id="tabBadgeCandidates" style="background: #e0e7ff; color: #4338ca; padding: 1px 7px; border-radius: 999px; font-size: 11px; font-weight: 800;">${state.getCandidates().length}</span>
+        <div class="reports-tab-capsule">
+          <button type="button" class="reports-tab-btn active" id="tabBtnCandidates" title="Switch to Candidate Performance Reports">
+            ${getIcon('award')} 
+            <span class="tab-lbl-full">Candidate Reports</span>
+            <span class="tab-lbl-short">Candidates</span>
+            <span id="tabBadgeCandidates" class="reports-tab-badge">${state.getCandidates().length}</span>
           </button>
-          <button type="button" class="reports-tab-btn" id="tabBtnTrainers" style="display: flex; align-items: center; gap: 7px; padding: 7px 14px; border-radius: 8px; border: none; font-size: 13px; font-weight: 700; cursor: pointer; background: transparent; color: #64748b; transition: all 0.15s ease;">
-            ${getIcon('trainers')} <span>Trainer Reports</span>
-            <span id="tabBadgeTrainers" style="background: #e2e8f0; color: #64748b; padding: 1px 7px; border-radius: 999px; font-size: 11px; font-weight: 800;">${state.getTrainers().length}</span>
+          <button type="button" class="reports-tab-btn" id="tabBtnTrainers" title="Switch to Trainer Mentorship Reports">
+            ${getIcon('trainers')} 
+            <span class="tab-lbl-full">Trainer Reports</span>
+            <span class="tab-lbl-short">Trainers</span>
+            <span id="tabBadgeTrainers" class="reports-tab-badge">${state.getTrainers().length}</span>
           </button>
         </div>
 
@@ -134,35 +138,11 @@ export function renderReportsView(container, navigateTo) {
 
   const updateTabStyles = () => {
     if (activeTab === 'candidates') {
-      tabBtnCandidates.style.background = '#ffffff';
-      tabBtnCandidates.style.color = '#4338ca';
-      tabBtnCandidates.style.boxShadow = '0 1px 3px rgba(0,0,0,0.06)';
-      if (tabBadgeCandidates) {
-        tabBadgeCandidates.style.background = '#e0e7ff';
-        tabBadgeCandidates.style.color = '#4338ca';
-      }
-      tabBtnTrainers.style.background = 'transparent';
-      tabBtnTrainers.style.color = '#64748b';
-      tabBtnTrainers.style.boxShadow = 'none';
-      if (tabBadgeTrainers) {
-        tabBadgeTrainers.style.background = '#e2e8f0';
-        tabBadgeTrainers.style.color = '#64748b';
-      }
+      tabBtnCandidates.classList.add('active');
+      tabBtnTrainers.classList.remove('active');
     } else {
-      tabBtnTrainers.style.background = '#ffffff';
-      tabBtnTrainers.style.color = '#4338ca';
-      tabBtnTrainers.style.boxShadow = '0 1px 3px rgba(0,0,0,0.06)';
-      if (tabBadgeTrainers) {
-        tabBadgeTrainers.style.background = '#e0e7ff';
-        tabBadgeTrainers.style.color = '#4338ca';
-      }
-      tabBtnCandidates.style.background = 'transparent';
-      tabBtnCandidates.style.color = '#64748b';
-      tabBtnCandidates.style.boxShadow = 'none';
-      if (tabBadgeCandidates) {
-        tabBadgeCandidates.style.background = '#e2e8f0';
-        tabBadgeCandidates.style.color = '#64748b';
-      }
+      tabBtnTrainers.classList.add('active');
+      tabBtnCandidates.classList.remove('active');
     }
   };
 

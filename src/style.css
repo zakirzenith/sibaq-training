@@ -2125,82 +2125,153 @@ code,
 .assigned-programs-roster {
   display: flex;
   flex-direction: column;
-  gap: 10px;
-  max-height: 340px;
+  gap: 12px;
+  max-height: 440px;
   overflow-y: auto;
+  padding-right: 4px;
 }
 
 .profile-program-card {
   background: #ffffff;
-  border: 1px solid var(--border-card);
-  border-radius: var(--radius-md);
-  padding: 14px 16px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  box-shadow: var(--shadow-sm);
-  flex-wrap: wrap;
+  border: 1.5px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 12px 16px;
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 8px !important;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.profile-program-card:hover {
+  box-shadow: 0 4px 12px rgba(15, 23, 42, 0.05);
 }
 
 .border-stage {
-  border-left: 4px solid var(--stage-color);
+  border-left: 4px solid var(--stage-color) !important;
 }
 
 .border-nonstage {
-  border-left: 4px solid var(--nonstage-color);
+  border-left: 4px solid var(--nonstage-color) !important;
 }
 
-.profile-prog-left {
-  flex: 1;
-  min-width: 200px;
+.profile-prog-top-bar {
   display: flex;
-  flex-direction: column;
-  gap: 4px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  flex-wrap: wrap;
 }
 
-.profile-prog-header {
+.profile-prog-badges {
   display: flex;
   align-items: center;
   gap: 6px;
+  flex-wrap: wrap;
+}
+
+.profile-prog-status {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
 }
 
 .profile-prog-title {
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--text-main);
+  margin: 0 !important;
+  font-size: 14.5px !important;
+  font-weight: 800 !important;
+  color: #0f172a !important;
+  line-height: 1.35 !important;
+  word-break: break-word;
 }
 
-.profile-prog-meta {
+.profile-prog-bottom-bar {
   display: flex;
   align-items: center;
+  justify-content: space-between;
   gap: 12px;
+  flex-wrap: wrap;
+  border-top: 1px dashed #e2e8f0;
+  padding-top: 8px;
+  margin-top: 2px;
 }
 
-.profile-prog-right {
+.profile-mentor-section {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 8px;
+  min-width: 0;
+  flex-wrap: wrap;
 }
 
-.trainer-chip-full {
+.profile-mentor-tag {
+  font-size: 10.5px;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: #64748b;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+.profile-mentor-section .trainer-chip-full {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  padding: 4px 10px;
+  border-radius: 8px;
+  transition: all 0.15s ease;
+  cursor: pointer;
+}
+
+.profile-mentor-section .trainer-chip-full:hover {
+  background: #ffffff;
+  border-color: #6366f1;
+  box-shadow: 0 2px 8px rgba(99, 102, 241, 0.12);
+}
+
+.profile-mentor-section .trainer-avatar-mini {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  font-size: 11px;
+  font-weight: 800;
+  flex-shrink: 0;
+  overflow: hidden;
   display: flex;
   align-items: center;
-  gap: 10px;
-  background: var(--bg-surface);
-  border: 1px solid var(--border-subtle);
-  padding: 6px 12px;
-  border-radius: var(--radius-md);
+  justify-content: center;
+  color: #ffffff;
 }
 
-.trainer-chip-info {
+.profile-mentor-section .trainer-chip-name {
+  font-size: 12px;
+  font-weight: 800;
+  color: #0f172a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 220px;
+  display: block;
+}
+
+.profile-mentor-section .trainer-chip-expertise {
+  font-size: 10.5px;
+  color: #64748b;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 220px;
+  display: block;
+}
+
+.profile-prog-actions-strip {
   display: flex;
-  flex-direction: column;
-}
-
-.trainer-chip-name {
-  font-size: 13px;
-  color: var(--text-main);
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
 }
 
 .mentors-summary-grid {
@@ -8994,26 +9065,26 @@ code,
 
   /* Candidate Profile Modal Program Cards */
   .profile-program-card {
-    flex-direction: column !important;
-    align-items: stretch !important;
-    gap: 10px !important;
-    padding: 12px !important;
+    padding: 11px 13px !important;
+    gap: 7px !important;
   }
 
-  .profile-prog-left {
-    min-width: 0 !important;
-    width: 100% !important;
+  .profile-prog-top-bar {
+    gap: 6px !important;
   }
 
-  .profile-prog-right {
-    width: 100% !important;
-    display: flex !important;
-    align-items: center !important;
-    justify-content: space-between !important;
-    flex-wrap: wrap !important;
+  .profile-prog-title {
+    font-size: 13.5px !important;
+  }
+
+  .profile-prog-bottom-bar {
     gap: 8px !important;
-    border-top: 1px dashed #e2e8f0 !important;
-    padding-top: 8px !important;
+    padding-top: 6px !important;
+  }
+
+  .profile-mentor-section .trainer-chip-name,
+  .profile-mentor-section .trainer-chip-expertise {
+    max-width: 160px !important;
   }
 
   .profile-meet-card {

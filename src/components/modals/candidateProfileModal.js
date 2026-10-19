@@ -126,13 +126,16 @@ export function openCandidateProfileModal({ candidateId, onUpdate = () => {} }) 
 
                       return `
                   <div class="profile-program-card ${isStage ? 'border-stage' : 'border-nonstage'}">
-                    <div class="profile-prog-left">
-                      <div class="profile-prog-header">
+                    <!-- Top Bar: Code, Badges, and Today's Check-in Status -->
+                    <div class="profile-prog-top-bar">
+                      <div class="profile-prog-badges">
                         <span class="program-code-pill">${prog.code}</span>
                         <span class="badge ${isStage ? 'badge-stage' : 'badge-nonstage'}">
                           ${isStage ? getIcon('stage') : getIcon('nonStage')} ${prog.type}
                         </span>
                         <span class="badge badge-neutral-xs">${prog.category}</span>
+                      </div>
+                      <div class="profile-prog-status">
                         ${isMetToday ? `
                           <span class="badge badge-stage text-xs font-semibold" title="Met today: ${latestMeetToday.percentage}%" style="display: inline-flex; align-items: center; gap: 4px;">
                             ${getIcon('checkCircle')} Met Today (${latestMeetToday.percentage}%)
@@ -143,17 +146,17 @@ export function openCandidateProfileModal({ candidateId, onUpdate = () => {} }) 
                           </span>
                         `}
                       </div>
-                      <h4 class="profile-prog-title">${prog.name}</h4>
                     </div>
 
-                    <!-- Designated Trainer for this Program -->
-                    <div class="profile-prog-right">
-                      <div class="trainer-assignment-box">
-                        <div class="tab-label text-xs font-semibold text-muted">Program Mentor</div>
-                        ${
-                          trainer
-                            ? `
-                          <div class="trainer-chip-full clickable-trainer-profile" data-tid="${trainer.id}" style="cursor: pointer;" title="Click to view ${trainer.name}'s profile">
+                    <!-- Program Title -->
+                    <h4 class="profile-prog-title">${prog.name}</h4>
+
+                    <!-- Bottom Bar: Mentor Details & Actions -->
+                    <div class="profile-prog-bottom-bar">
+                      <div class="profile-mentor-section">
+                        <span class="profile-mentor-tag">Mentor:</span>
+                        ${trainer ? `
+                          <div class="trainer-chip-full clickable-trainer-profile" data-tid="${trainer.id}" title="Click to view ${trainer.name}'s profile">
                             <div class="trainer-avatar-mini" style="background: ${trainer.color || '#6366f1'}">
                               ${trainer.photo 
                                 ? `<img src="${trainer.photo}" alt="${trainer.name}" style="width: 100%; height: 100%; object-fit: cover;" />` 
@@ -161,37 +164,35 @@ export function openCandidateProfileModal({ candidateId, onUpdate = () => {} }) 
                             </div>
                             <div class="trainer-chip-info">
                               <strong class="trainer-chip-name">${trainer.name}</strong>
-                              <span class="trainer-chip-expertise text-xs text-muted">${trainer.expertise}</span>
+                              <span class="trainer-chip-expertise text-xs text-muted">${trainer.expertise || 'Specialized Mentor'}</span>
                             </div>
                           </div>
-                        `
-                            : `
+                        ` : `
                           <div class="trainer-unassigned-badge">
-                            <span class="text-warning text-xs font-semibold">No Trainer Assigned Yet</span>
+                            <span class="text-warning text-xs font-semibold">No Mentor Assigned</span>
                           </div>
-                        `
-                        }
+                        `}
                       </div>
 
-                      <div class="profile-prog-actions-strip" style="display: flex; align-items: center; gap: 6px;">
+                      <div class="profile-prog-actions-strip">
                         ${isMyAssignedProgram ? `
                           ${!isMetToday ? `
-                            <button type="button" class="btn btn-outline btn-xs btn-profile-meet-prog" data-pid="${prog.id}" data-tid="${activeTrainer ? activeTrainer.id : (trainer ? trainer.id : '')}" title="Record today's meet for ${prog.code}" style="font-weight: 700;">
-                              ${getIcon('plus')} Record Meet
+                            <button type="button" class="btn btn-primary btn-sm btn-profile-meet-prog" data-pid="${prog.id}" data-tid="${activeTrainer ? activeTrainer.id : (trainer ? trainer.id : '')}" title="Record today's meet for ${prog.code}">
+                              ${getIcon('plus')} <span>Record Meet</span>
                             </button>
                           ` : `
-                            <span class="badge badge-stage text-xs font-semibold" style="display: inline-flex; align-items: center; gap: 4px;">
+                            <span class="badge badge-stage text-xs font-semibold" style="display: inline-flex; align-items: center; gap: 4px; padding: 5px 10px;">
                               ${getIcon('checkCircle')} Completed
                             </span>
                           `}
                           ${!isTrainer ? `
-                            <button class="btn btn-text btn-xs text-danger btn-unenroll-from-prog" data-pid="${prog.id}" title="Remove candidate from this program">
+                            <button class="btn btn-outline btn-sm text-danger btn-unenroll-from-prog" data-pid="${prog.id}" title="Remove candidate from this program" style="border-color: #fecaca; height: 30px; padding: 0 10px; font-size: 11px; font-weight: 700;">
                               ${getIcon('trash')} Unenroll
                             </button>
                           ` : ''}
                         ` : `
-                          <span class="badge badge-neutral-xs" style="color: #64748b; font-size: 11px; padding: 4px 8px; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;" title="Mentored by ${trainer ? trainer.name : 'another trainer'}. You do not have evaluation authority for this program.">
-                            ${getIcon('lock')} Mentored by ${trainer ? trainer.name : 'Other Mentor'}
+                          <span class="badge badge-neutral-xs" style="color: #64748b; font-size: 11px; padding: 4px 10px; font-weight: 600; display: inline-flex; align-items: center; gap: 4px; background: #f8fafc; border: 1px solid #e2e8f0;" title="Mentored by ${trainer ? trainer.name : 'another mentor'}. Evaluation by designated mentor only.">
+                            ${getIcon('lock')} Peer Mentor Program
                           </span>
                         `}
                       </div>

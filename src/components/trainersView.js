@@ -5,6 +5,7 @@ import { openTrainerFormModal } from './modals/trainerFormModal.js';
 import { openTrainerProfileModal } from './modals/trainerProfileModal.js';
 import { openAssignCandidatesModal } from './modals/assignCandidatesModal.js';
 import { openExcelUploadModal } from './modals/excelUploadModal.js';
+import { openTrainerCredentialsBulkModal } from './modals/trainerCredentialsBulkModal.js';
 import { excelService } from '../services/excelService.js';
 import { createFilterBar } from './filterEngine.js';
 
@@ -27,6 +28,9 @@ export function renderTrainersView(container, navigateTo) {
         </button>
         <button id="btnBulkUploadTrainers" class="saas-pill-btn" title="Bulk import trainers via Excel/CSV">
           ${getIcon('upload')} Bulk Upload
+        </button>
+        <button id="btnBulkUpdateCredentials" class="saas-pill-btn desktop-only-btn" title="Bulk update trainer usernames and passwords via Excel">
+          ${getIcon('key')} Bulk Logins (Excel)
         </button>
         <button id="btnExportTrainers" class="saas-pill-btn desktop-only-btn" title="Export all trainers to Excel">
           ${getIcon('download')} Export
@@ -324,6 +328,17 @@ export function renderTrainersView(container, navigateTo) {
     btnBulkUploadTrainers.addEventListener('click', () => {
       openExcelUploadModal({
         type: 'trainers',
+        onComplete: () => {
+          renderGrid();
+        }
+      });
+    });
+  }
+
+  const btnBulkUpdateCredentials = container.querySelector('#btnBulkUpdateCredentials');
+  if (btnBulkUpdateCredentials) {
+    btnBulkUpdateCredentials.addEventListener('click', () => {
+      openTrainerCredentialsBulkModal({
         onComplete: () => {
           renderGrid();
         }

@@ -684,5 +684,202 @@ export const excelService = {
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, 'Trainer Mentorship');
     XLSX.writeFile(workbook, `Trainer_Mentorship_Report_${new Date().toISOString().split('T')[0]}.xlsx`);
+  },
+
+  /**
+   * Download pre-filled template for bulk trainer credentials update
+   */
+  downloadTrainersCredentialsTemplate(trainers = []) {
+    const data = (trainers.length > 0 ? trainers : [
+      { id: 'trn-sample-1', name: 'Mufti Mutheeur Hudawi', username: 'muftimutheer' },
+      { id: 'trn-sample-2', name: 'Kajimaddin Hudawi', username: 'kajimaddin' }
+    ]).map(t => ({
+      'Trainer ID': t.id,
+      'Trainer Name': t.name,
+      'Current Username': t.username || t.name.toLowerCase().replace(/[^a-z0-9]/g, ''),
+      'New Username': t.username || t.name.toLowerCase().replace(/[^a-z0-9]/g, ''),
+      'New Password': ''
+    }));
+
+    const worksheet = XLSX.utils.json_to_sheet(data);
+    worksheet['!cols'] = [
+      { wch: 22 }, // Trainer ID
+      { wch: 28 }, // Trainer Name
+      { wch: 22 }, // Current Username
+      { wch: 22 }, // New Username
+      { wch: 20 }  // New Password
+    ];
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, 'Trainer Credentials');
+    const today = new Date().toISOString().split('T')[0];
+    XLSX.writeFile(workbook, `Trainers_Credentials_Template_${today}.xlsx`);
+  },
+
+  /**
+   * Parse bulk trainer credentials spreadsheet
+   */
+  async parseTrainersCredentialsFile(file, existingTrainers = []) {
+    const arrayBuffer = await file.arrayBuffer();
+    const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+    const firstSheetName = workbook.SheetNames[0];
+    const worksheet = workbook.Sheets[firstSheetName];
+    const rawRows = XLSX.utils.sheet_to_json(worksheet, { defval: '' });
+
+    if (!rawRows || rawRows.length === 0) {
+      throw new Error('The uploaded spreadsheet appears to be empty.');
+    }
+
+    const seenNewUsernames = new Map();
+
+    const results = rawRows.map((row, index) => {
+      let rawId = '';
+      let rawName = '';
+      let rawCurrentUsername = '';
+      let rawNewUsername = '';
+      let rawNewPassword = '';
+
+      for (const [key, val] of Object.entries(row)) {
+        const cleanedKey = cleanKey(key);
+        const strVal = String(val !== undefined && val !== null ? val : '').trim();
+
+        if (['trainerid', 'id', 'trainer_id', 'tid'].includes(cleanedKey)) {
+          rawId = strVal;
+        } else if (['trainername', 'name', 'trainer', 'fullname'].includes(cleanedKey)) {
+          rawName = strVal;
+        } else if (['currentusername', 'oldusername', 'currentuser', 'existingusername'].includes(cleanedKey)) {
+          rawCurrentUsername = strVal;
+        } else if (['newusername', 'newuser', 'updatedusername'].includes(cleanedKey)) {
+          rawNewUsername = strVal;
+        } else if (['newpassword', 'password', 'pass', 'pwd', 'newpass'].includes(cleanedKey)) {
+          rawNewPassword = strVal;
+        } else if (cleanedKey === 'username' && !rawNewUsername) {
+          rawNewUsername = strVal;
+        }
+      }
+
+      // Match trainer
+      let matchedTrainer = null;
+      if (rawId) {
+        matchedTrainer = existingTrainers.find(t => String(t.id).trim().toLowerCase() === rawId.toLowerCase());
+      }
+      if (!matchedTrainer && rawName) {
+        matchedTrainer = existingTrainers.find(t => String(t.name).trim().toLowerCase() === rawName.toLowerCase());
+      }
+      if (!matchedTrainer && rawCurrentUsername) {
+        matchedTrainer = existingTrainers.find(t => {
+          const u = String(t.username || '').trim().toLowerCase();
+          return u === rawCurrentUsername.toLowerCase();
+        });
+      }
+
+      if (!matchedTrainer) {
+        return {
+          rowIndex: index + 2,
+          trainerId: rawId,
+          trainerName: rawName || 'Unknown Trainer',
+          trainer: null,
+          oldUsername: rawCurrentUsername || '-',
+          newUsername: rawNewUsername,
+          newPassword: rawNewPassword,
+          status: 'error',
+          message: 'Trainer not found in database'
+        };
+      }
+
+      const currentUsername = String(matchedTrainer.username || matchedTrainer.name.toLowerCase().replace(/[^a-z0-9]/g, '')).trim().toLowerCase();
+      const currentPassword = String(matchedTrainer.password || '123456').trim();
+
+      // Finalize target username
+      let finalUsername = currentUsername;
+      if (rawNewUsername) {
+        finalUsername = rawNewUsername.toLowerCase().replace(/\s+/g, '');
+      }
+
+      // Finalize target password
+      const finalPassword = rawNewPassword !== '' ? rawNewPassword.trim() : currentPassword;
+
+      const usernameChanged = finalUsername !== currentUsername;
+      const passwordChanged = rawNewPassword !== '' && rawNewPassword.trim() !== currentPassword;
+
+      // Check duplicate usernames within this uploaded batch
+      if (seenNewUsernames.has(finalUsername) && seenNewUsernames.get(finalUsername) !== matchedTrainer.id) {
+        return {
+          rowIndex: index + 2,
+          trainerId: matchedTrainer.id,
+          trainerName: matchedTrainer.name,
+          trainer: matchedTrainer,
+          oldUsername: currentUsername,
+          newUsername: finalUsername,
+          newPassword: rawNewPassword,
+          status: 'error',
+          message: `Duplicate username "@${finalUsername}" in spreadsheet`
+        };
+      }
+      seenNewUsernames.set(finalUsername, matchedTrainer.id);
+
+      // Check if another trainer in the system already uses this username
+      const conflictTrainer = existingTrainers.find(t => 
+        String(t.id).trim() !== String(matchedTrainer.id).trim() &&
+        String(t.username || t.name.toLowerCase().replace(/[^a-z0-9]/g, '')).trim().toLowerCase() === finalUsername
+      );
+      if (conflictTrainer) {
+        return {
+          rowIndex: index + 2,
+          trainerId: matchedTrainer.id,
+          trainerName: matchedTrainer.name,
+          trainer: matchedTrainer,
+          oldUsername: currentUsername,
+          newUsername: finalUsername,
+          newPassword: rawNewPassword,
+          status: 'error',
+          message: `Username "@${finalUsername}" is already used by ${conflictTrainer.name}`
+        };
+      }
+
+      if (!usernameChanged && !passwordChanged) {
+        return {
+          rowIndex: index + 2,
+          trainerId: matchedTrainer.id,
+          trainerName: matchedTrainer.name,
+          trainer: matchedTrainer,
+          oldUsername: currentUsername,
+          newUsername: currentUsername,
+          newPassword: '',
+          usernameChanged: false,
+          passwordChanged: false,
+          status: 'unchanged',
+          message: 'No changes detected'
+        };
+      }
+
+      return {
+        rowIndex: index + 2,
+        trainerId: matchedTrainer.id,
+        trainerName: matchedTrainer.name,
+        trainer: matchedTrainer,
+        oldUsername: currentUsername,
+        newUsername: finalUsername,
+        newPassword: finalPassword,
+        rawPasswordGiven: rawNewPassword !== '',
+        usernameChanged,
+        passwordChanged,
+        status: 'valid',
+        message: [
+          usernameChanged ? `Username: @${currentUsername} → @${finalUsername}` : null,
+          passwordChanged ? 'Password changed' : null
+        ].filter(Boolean).join(' • ')
+      };
+    });
+
+    const validRows = results.filter(r => r.status === 'valid');
+    const unchangedRows = results.filter(r => r.status === 'unchanged');
+    const errorRows = results.filter(r => r.status === 'error');
+
+    return {
+      allRows: results,
+      validRows,
+      unchangedRows,
+      errorRows
+    };
   }
 };

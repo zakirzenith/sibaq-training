@@ -17,6 +17,47 @@ function formatChestNo(cand) {
 }
 
 /**
+ * Harmonious, professional color styling for program readiness chips
+ */
+function getProgramChipStyle(pr) {
+  if (!pr.isMet) {
+    return {
+      bg: '#f8fafc',
+      border: '#e2e8f0',
+      text: '#64748b',
+      dot: '#94a3b8',
+      scoreText: 'Pending'
+    };
+  }
+  const score = pr.latestScore || 0;
+  if (score >= 80) {
+    return {
+      bg: '#ecfdf5',
+      border: '#a7f3d0',
+      text: '#065f46',
+      dot: '#10b981',
+      scoreText: `${score}%`
+    };
+  } else if (score >= 60) {
+    return {
+      bg: '#eff6ff',
+      border: '#bfdbfe',
+      text: '#1e40af',
+      dot: '#3b82f6',
+      scoreText: `${score}%`
+    };
+  } else {
+    return {
+      bg: '#fffbeb',
+      border: '#fde68a',
+      text: '#b45309',
+      dot: '#f59e0b',
+      scoreText: `${score}%`
+    };
+  }
+}
+
+/**
  * Enhanced Performance Reports & Dossiers View
  * Dual-tab central reports hub:
  * 1. Candidate Performance & Readiness Report with deep-dive dossier
@@ -268,70 +309,70 @@ export function renderReportsView(container, navigateTo) {
 
     contentWrapper.innerHTML = `
       <!-- Executive Summary KPI Row -->
-      <div class="saas-stats-grid reports-stats-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 14px; margin-bottom: 16px;">
+      <div class="reports-stats-grid">
         
-        <div class="saas-stat-card">
-          <div class="ssc-top">
-            <span class="ssc-label">Total Candidates</span>
-            <span class="ssc-icon-box p-stage">${getIcon('candidates')}</span>
+        <div class="report-stat-card">
+          <div class="rsc-top">
+            <span class="rsc-label">Total Candidates</span>
+            <span class="rsc-icon-wrap" style="background: #eef2ff; color: #4f46e5; border: 1px solid #c7d2fe;">${getIcon('candidates')}</span>
           </div>
-          <div class="ssc-main">
-            <span class="ssc-value">${totalCount}</span>
-            <span class="ssc-sub-badge badge-neutral">${allPrograms.length} Programs</span>
+          <div class="rsc-main">
+            <span class="rsc-value">${totalCount}</span>
+            <span class="badge badge-primary-subtle rsc-badge">${allPrograms.length} Total Programs</span>
           </div>
-          <div class="ssc-footer text-muted text-xs">
-            Assigned across competitions
+          <div class="rsc-footer">
+            Enrolled across ${categories.length} competition divisions
           </div>
         </div>
 
-        <div class="saas-stat-card">
-          <div class="ssc-top">
-            <span class="ssc-label">Overall Readiness Avg</span>
-            <span class="ssc-icon-box p-stage">${getIcon('award')}</span>
+        <div class="report-stat-card">
+          <div class="rsc-top">
+            <span class="rsc-label">Overall Readiness Avg</span>
+            <span class="rsc-icon-wrap" style="background: #fef3c7; color: #d97706; border: 1px solid #fde68a;">${getIcon('award')}</span>
           </div>
-          <div class="ssc-main">
-            <span class="ssc-value" style="color: ${avgStatus.color};">${avgReadiness}%</span>
-            <span class="badge ${avgStatus.badgeClass} text-xs font-semibold">${avgStatus.label}</span>
+          <div class="rsc-main">
+            <span class="rsc-value" style="color: ${avgStatus.color};">${avgReadiness}%</span>
+            <span class="badge ${avgStatus.badgeClass} rsc-badge">${avgStatus.label}</span>
           </div>
-          <div class="ssc-footer text-muted text-xs">
+          <div class="rsc-footer">
             Evaluated across ${evaluatedDossiers.length} candidates
           </div>
         </div>
 
-        <div class="saas-stat-card">
-          <div class="ssc-top">
-            <span class="ssc-label">Fully Met Candidates</span>
-            <span class="ssc-icon-box p-stage">${getIcon('check')}</span>
+        <div class="report-stat-card">
+          <div class="rsc-top">
+            <span class="rsc-label">Fully Met Candidates</span>
+            <span class="rsc-icon-wrap" style="background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0;">${getIcon('check')}</span>
           </div>
-          <div class="ssc-main">
-            <span class="ssc-value">${fullyMetCount}</span>
-            <span class="badge badge-stage text-xs font-semibold">${totalCount > 0 ? Math.round((fullyMetCount/totalCount)*100) : 0}% Complete</span>
+          <div class="rsc-main">
+            <span class="rsc-value">${fullyMetCount}</span>
+            <span class="badge badge-stage rsc-badge">${totalCount > 0 ? Math.round((fullyMetCount/totalCount)*100) : 0}% Complete</span>
           </div>
-          <div class="ssc-footer text-muted text-xs">
+          <div class="rsc-footer">
             Checked in for all assigned programs
           </div>
         </div>
 
-        <div class="saas-stat-card">
-          <div class="ssc-top">
-            <span class="ssc-label">Follow-Up Required</span>
-            <span class="ssc-icon-box p-danger" style="background:#fee2e2; color:#ef4444;">${getIcon('alertCircle')}</span>
+        <div class="report-stat-card">
+          <div class="rsc-top">
+            <span class="rsc-label">Follow-Up Required</span>
+            <span class="rsc-icon-wrap" style="background: #fee2e2; color: #dc2626; border: 1px solid #fecaca;">${getIcon('alertCircle')}</span>
           </div>
-          <div class="ssc-main">
-            <span class="ssc-value text-danger">${atRiskCount}</span>
-            <span class="badge badge-danger text-xs font-semibold">At Risk / Stagnant</span>
+          <div class="rsc-main">
+            <span class="rsc-value text-danger">${atRiskCount}</span>
+            <span class="badge badge-danger rsc-badge">Needs Attention</span>
           </div>
-          <div class="ssc-footer text-muted text-xs">
+          <div class="rsc-footer">
             Score &lt;55% or inactive &gt;7 days
           </div>
         </div>
       </div>
 
       <!-- Modern Quick Navigation & Search Command Bar -->
-      <div class="reports-command-card" style="background: #ffffff; border: 1.5px solid #e2e8f0; border-radius: 14px; padding: 14px; margin-bottom: 14px; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
+      <div class="reports-command-card">
         
         <!-- Search Row + Sorting + Advanced Toggle -->
-        <div style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+        <div class="reports-command-row" style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
           <div class="reports-search-box">
             <span class="search-icon">${getIcon('search')}</span>
             <input 
@@ -344,8 +385,8 @@ export function renderReportsView(container, navigateTo) {
             ${searchQuery ? `<button type="button" id="btnClearCandSearch" class="search-clear-btn" title="Clear search">${getIcon('x')}</button>` : ''}
           </div>
 
-          <div style="display: flex; align-items: center; gap: 8px;">
-            <select id="selReportSort" class="form-input" style="height: 38px; font-size: 12.5px; padding: 0 10px; width: auto; font-weight: 600;">
+          <div class="reports-command-actions" style="display: flex; align-items: center; gap: 8px;">
+            <select id="selReportSort" class="form-input" style="height: 40px; font-size: 13px; padding: 0 12px; width: auto; font-weight: 600; border-radius: 10px;">
               <option value="chest-asc" ${sortBy === 'chest-asc' ? 'selected' : ''}>Sort: Chest No (Low → High)</option>
               <option value="chest-desc" ${sortBy === 'chest-desc' ? 'selected' : ''}>Sort: Chest No (High → Low)</option>
               <option value="readiness-desc" ${sortBy === 'readiness-desc' ? 'selected' : ''}>Sort: Readiness (Highest)</option>
@@ -354,12 +395,12 @@ export function renderReportsView(container, navigateTo) {
               <option value="name-asc" ${sortBy === 'name-asc' ? 'selected' : ''}>Sort: Name (A → Z)</option>
             </select>
 
-            <button type="button" id="btnToggleAdvancedFilters" class="btn btn-sm ${isAdvancedFiltersOpen || hasActiveDropdownFilters ? 'btn-primary' : 'btn-outline'}" style="height: 38px; padding: 0 12px; font-size: 12px; font-weight: 700; gap: 6px;">
+            <button type="button" id="btnToggleAdvancedFilters" class="btn ${isAdvancedFiltersOpen || hasActiveDropdownFilters ? 'btn-primary' : 'btn-outline'}" style="height: 40px; padding: 0 14px; font-size: 12.5px; font-weight: 700; gap: 6px; border-radius: 10px;">
               ${getIcon('filter')} <span>Filters</span> ${hasActiveDropdownFilters ? `<span style="background: rgba(255,255,255,0.3); border-radius: 999px; padding: 1px 6px; font-size: 10px;">Active</span>` : ''}
             </button>
 
             ${(searchQuery || quickFilter !== 'ALL' || hasActiveDropdownFilters) ? `
-              <button type="button" id="btnResetCandFilters" class="btn btn-sm btn-outline text-danger" style="height: 38px; padding: 0 10px; font-size: 12px; font-weight: 600; border-color: #fecaca;" title="Reset all filters">
+              <button type="button" id="btnResetCandFilters" class="btn btn-outline text-danger" style="height: 40px; padding: 0 12px; font-size: 12.5px; font-weight: 600; border-color: #fecaca; border-radius: 10px;" title="Reset all filters">
                 ${getIcon('x')} <span>Clear</span>
               </button>
             ` : ''}
@@ -368,6 +409,9 @@ export function renderReportsView(container, navigateTo) {
 
         <!-- 1-Click Quick Filter Pills -->
         <div class="reports-quick-pills">
+          <span style="font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 0.05em; color: #94a3b8; white-space: nowrap; margin-right: 2px;">
+            Filter:
+          </span>
           <button type="button" class="quick-pill-btn ${quickFilter === 'ALL' ? 'active' : ''}" data-qf="ALL">
             <span>All</span>
             <span class="qf-count">${totalCount}</span>
@@ -403,7 +447,7 @@ export function renderReportsView(container, navigateTo) {
         <div id="advancedFiltersDrawer" style="display: ${isAdvancedFiltersOpen ? 'grid' : 'none'}; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 10px; margin-top: 14px; padding-top: 12px; border-top: 1px dashed #e2e8f0;">
           <div>
             <label class="form-label text-xs" style="margin-bottom: 3px;">Category</label>
-            <select id="selFilterCategory" class="form-input" style="height: 34px; font-size: 12px; padding: 0 8px;">
+            <select id="selFilterCategory" class="form-input" style="height: 36px; font-size: 12px; padding: 0 8px; border-radius: 8px;">
               <option value="ALL">All Categories</option>
               ${categories.map(c => `<option value="${c}" ${filterCategory === c ? 'selected' : ''}>${c}</option>`).join('')}
             </select>
@@ -411,7 +455,7 @@ export function renderReportsView(container, navigateTo) {
 
           <div>
             <label class="form-label text-xs" style="margin-bottom: 3px;">Program Type</label>
-            <select id="selFilterProgType" class="form-input" style="height: 34px; font-size: 12px; padding: 0 8px;">
+            <select id="selFilterProgType" class="form-input" style="height: 36px; font-size: 12px; padding: 0 8px; border-radius: 8px;">
               <option value="ALL" ${filterProgType === 'ALL' ? 'selected' : ''}>Stage & Non-Stage</option>
               <option value="Stage" ${filterProgType === 'Stage' ? 'selected' : ''}>Stage Only</option>
               <option value="Non-Stage" ${filterProgType === 'Non-Stage' ? 'selected' : ''}>Non-Stage Only</option>
@@ -420,7 +464,7 @@ export function renderReportsView(container, navigateTo) {
 
           <div>
             <label class="form-label text-xs" style="margin-bottom: 3px;">Readiness Score</label>
-            <select id="selFilterReadiness" class="form-input" style="height: 34px; font-size: 12px; padding: 0 8px;">
+            <select id="selFilterReadiness" class="form-input" style="height: 36px; font-size: 12px; padding: 0 8px; border-radius: 8px;">
               <option value="ALL" ${filterReadiness === 'ALL' ? 'selected' : ''}>All Readiness Levels</option>
               <option value="READY" ${filterReadiness === 'READY' ? 'selected' : ''}>Stage Ready (80%+)</option>
               <option value="ON_TRACK" ${filterReadiness === 'ON_TRACK' ? 'selected' : ''}>On Track (60–79%)</option>
@@ -431,7 +475,7 @@ export function renderReportsView(container, navigateTo) {
 
           <div>
             <label class="form-label text-xs" style="margin-bottom: 3px;">Meeting Compliance</label>
-            <select id="selFilterMeetingRate" class="form-input" style="height: 34px; font-size: 12px; padding: 0 8px;">
+            <select id="selFilterMeetingRate" class="form-input" style="height: 36px; font-size: 12px; padding: 0 8px; border-radius: 8px;">
               <option value="ALL" ${filterMeetingRate === 'ALL' ? 'selected' : ''}>All Meeting Rates</option>
               <option value="FULLY_MET" ${filterMeetingRate === 'FULLY_MET' ? 'selected' : ''}>100% Fully Met (All Progs)</option>
               <option value="PARTIAL" ${filterMeetingRate === 'PARTIAL' ? 'selected' : ''}>Partial Met (At least 1)</option>
@@ -441,7 +485,7 @@ export function renderReportsView(container, navigateTo) {
 
           <div>
             <label class="form-label text-xs" style="margin-bottom: 3px;">Assigned Program</label>
-            <select id="selFilterProgramId" class="form-input" style="height: 34px; font-size: 12px; padding: 0 8px;">
+            <select id="selFilterProgramId" class="form-input" style="height: 36px; font-size: 12px; padding: 0 8px; border-radius: 8px;">
               <option value="ALL">All Programs</option>
               ${allPrograms.map(p => `<option value="${p.id}" ${filterProgramId === p.id ? 'selected' : ''}>[${p.code}] ${p.name.slice(0, 20)}</option>`).join('')}
             </select>
@@ -449,7 +493,7 @@ export function renderReportsView(container, navigateTo) {
 
           <div>
             <label class="form-label text-xs" style="margin-bottom: 3px;">Assigned Mentor</label>
-            <select id="selFilterTrainerId" class="form-input" style="height: 34px; font-size: 12px; padding: 0 8px;">
+            <select id="selFilterTrainerId" class="form-input" style="height: 36px; font-size: 12px; padding: 0 8px; border-radius: 8px;">
               <option value="ALL">All Mentors</option>
               ${allTrainers.map(t => `<option value="${t.id}" ${filterTrainerId === t.id ? 'selected' : ''}>${t.name}</option>`).join('')}
             </select>
@@ -459,7 +503,7 @@ export function renderReportsView(container, navigateTo) {
       </div>
 
       <!-- Results Count & Hint -->
-      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px; padding: 0 2px;">
+      <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; padding: 0 2px;">
         <span class="text-xs font-semibold text-muted">
           Showing <strong>${filtered.length}</strong> of <strong>${totalCount}</strong> candidates
         </span>
@@ -468,7 +512,7 @@ export function renderReportsView(container, navigateTo) {
         </span>
       </div>
 
-      <!-- Candidate Report Table -->
+      <!-- Candidate Content: Empty State OR Desktop Table + Mobile Cards -->
       ${filtered.length === 0 ? `
         <div class="empty-state-card" style="background: #ffffff; border: 1.5px solid #e2e8f0; border-radius: 14px; padding: 48px 24px; text-align: center;">
           <div style="width: 52px; height: 52px; border-radius: 50%; background: #f1f5f9; color: #64748b; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 12px; margin-left: auto; margin-right: auto;">
@@ -481,7 +525,8 @@ export function renderReportsView(container, navigateTo) {
           </button>
         </div>
       ` : `
-        <div class="reports-table-container" style="background: #ffffff; border: 1.5px solid #e2e8f0; border-radius: 14px; overflow-x: auto; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
+        <!-- 1. Desktop Table View (>= 769px) -->
+        <div class="desktop-table-view reports-table-container">
           <table class="saas-table reports-cand-table" style="width: 100%; border-collapse: collapse; text-align: left; min-width: 860px;">
             <thead>
               <tr style="background: #f8fafc; border-bottom: 1.5px solid #e2e8f0; font-size: 11px; text-transform: uppercase; color: #64748b; letter-spacing: 0.5px;">
@@ -511,7 +556,7 @@ export function renderReportsView(container, navigateTo) {
                     
                     <!-- Clean Chest No -->
                     <td style="padding: 11px 14px; vertical-align: middle;">
-                      <span class="badge badge-neutral" style="font-weight: 800; font-size: 11px;">
+                      <span class="badge badge-neutral" style="font-weight: 800; font-size: 11px; padding: 4px 8px; border-radius: 6px;">
                         ${cleanChest}
                       </span>
                     </td>
@@ -522,9 +567,9 @@ export function renderReportsView(container, navigateTo) {
                         <strong class="report-cand-name" style="font-size: 13.5px; color: #0f172a; cursor: pointer;" data-action="view-dossier" data-cid="${cand.id}" title="Click to view candidate performance dossier">
                           ${cand.name}
                         </strong>
-                        <div style="font-size: 11px; color: #64748b; margin-top: 1px;">
-                          <span>${cand.category}</span>
-                          ${cand.phone ? `<span> • ${cand.phone}</span>` : ''}
+                        <div style="font-size: 11px; color: #64748b; margin-top: 2px; display: flex; align-items: center; gap: 4px;">
+                          <span class="badge badge-neutral" style="font-size: 9.5px; padding: 0 5px;">${cand.category}</span>
+                          ${cand.phone ? `<span>• ${cand.phone}</span>` : ''}
                         </div>
                       </div>
                     </td>
@@ -536,21 +581,18 @@ export function renderReportsView(container, navigateTo) {
                       ` : `
                         <div style="display: flex; flex-wrap: wrap; gap: 4px; align-items: center; max-width: 290px;">
                           ${visibleChips.map(pr => {
-                            const badgeBg = pr.isMet ? '#ecfdf5' : '#fef2f2';
-                            const badgeBorder = pr.isMet ? '#a7f3d0' : '#fecaca';
-                            const badgeText = pr.isMet ? '#065f46' : '#991b1b';
-                            const scoreText = pr.isMet ? `${pr.latestScore}%` : 'Pending';
-
+                            const chipStyle = getProgramChipStyle(pr);
                             return `
-                              <div class="prog-report-chip" style="display: inline-flex; align-items: center; gap: 4px; padding: 2px 7px; border-radius: 6px; font-size: 10.5px; font-weight: 700; background: ${badgeBg}; border: 1px solid ${badgeBorder}; color: ${badgeText};" title="${pr.program.name} | Readiness: ${scoreText} | Mentor: ${pr.trainer ? pr.trainer.name : 'Unassigned'}">
+                              <div class="prog-report-chip" style="display: inline-flex; align-items: center; gap: 4px; padding: 2.5px 7.5px; border-radius: 6px; font-size: 10.5px; font-weight: 700; background: ${chipStyle.bg}; border: 1px solid ${chipStyle.border}; color: ${chipStyle.text};" title="${pr.program.name} | Readiness: ${chipStyle.scoreText} | Mentor: ${pr.trainer ? pr.trainer.name : 'Unassigned'}">
+                                <span style="width: 5px; height: 5px; border-radius: 50%; background: ${chipStyle.dot}; flex-shrink: 0;"></span>
                                 <span>[${pr.program.code}]</span>
                                 <span>•</span>
-                                <span style="font-weight: 800;">${scoreText}</span>
+                                <span style="font-weight: 800;">${chipStyle.scoreText}</span>
                               </div>
                             `;
                           }).join('')}
                           ${remainingChips > 0 ? `
-                            <span class="badge badge-neutral" style="font-size: 10px; cursor: pointer;" data-action="view-dossier" data-cid="${cand.id}" title="Click to view all ${d.programs.length} programs">
+                            <span class="badge badge-neutral" style="font-size: 10px; cursor: pointer; font-weight: 700; padding: 2.5px 6px;" data-action="view-dossier" data-cid="${cand.id}" title="Click to view all ${d.programs.length} programs in dossier">
                               +${remainingChips} more
                             </span>
                           ` : ''}
@@ -623,6 +665,115 @@ export function renderReportsView(container, navigateTo) {
               }).join('')}
             </tbody>
           </table>
+        </div>
+
+        <!-- 2. Mobile Touch Cards List (< 769px) -->
+        <div class="mobile-cards-view">
+          ${filtered.map(d => {
+            const cand = d.candidate;
+            const cleanChest = formatChestNo(cand);
+            const statusBadge = d.overallStatus;
+            const isMet = d.totalPrograms > 0 && d.metProgramsCount === d.totalPrograms;
+
+            return `
+              <div class="mobile-report-card">
+                <div class="mrc-top">
+                  <div class="mrc-cand-info">
+                    <span class="badge badge-neutral" style="font-weight: 800; font-size: 11.5px; padding: 4px 8px; border-radius: 6px;">
+                      ${cleanChest}
+                    </span>
+                    <div class="mrc-name-col">
+                      <div class="mrc-name" data-action="view-dossier" data-cid="${cand.id}">
+                        ${cand.name}
+                      </div>
+                      <div class="mrc-sub">
+                        <span class="badge badge-neutral" style="font-size: 9.5px; padding: 1px 6px;">${cand.category}</span>
+                        ${cand.phone ? `<span>• ${cand.phone}</span>` : ''}
+                      </div>
+                    </div>
+                  </div>
+                  <div style="text-align: right; flex-shrink: 0;">
+                    <span class="badge ${statusBadge.badgeClass}" style="font-size: 10px; font-weight: 700;">
+                      ${d.hasEvaluation ? `${d.overallReadiness}% ${statusBadge.label}` : 'Not Evaluated'}
+                    </span>
+                  </div>
+                </div>
+
+                <!-- Overall Readiness Progress Bar (Mobile) -->
+                ${d.hasEvaluation ? `
+                  <div style="display: flex; flex-direction: column; gap: 3px;">
+                    <div style="display: flex; justify-content: space-between; font-size: 10px; font-weight: 700; color: #64748b;">
+                      <span>Readiness Progress</span>
+                      <span style="color: ${statusBadge.color};">${d.overallReadiness}%</span>
+                    </div>
+                    <div class="progress-bar-bg" style="height: 5px; border-radius: 999px; background: #e2e8f0; overflow: hidden;">
+                      <div style="width: ${d.overallReadiness}%; height: 100%; background: ${statusBadge.color}; border-radius: 999px;"></div>
+                    </div>
+                  </div>
+                ` : ''}
+
+                <div class="mrc-metrics-strip">
+                  <div class="mrc-metric-item">
+                    <span class="mrc-metric-label">Meeting Compliance</span>
+                    <div class="mrc-metric-val">
+                      <span style="color: ${isMet ? '#059669' : (d.metProgramsCount > 0 ? '#d97706' : '#dc2626')}; font-size: 12px;">
+                        ${d.meetingRateLabel}
+                      </span>
+                      <div style="display: flex; gap: 2px; align-items: center; margin-left: 4px;">
+                        ${d.programReports.map(pr => `
+                          <span style="display: inline-block; width: 8px; height: 4px; border-radius: 1px; background: ${pr.isMet ? '#10b981' : '#fecaca'};"></span>
+                        `).join('')}
+                      </div>
+                    </div>
+                  </div>
+                  <div class="mrc-metric-item">
+                    <span class="mrc-metric-label">Preparation Health</span>
+                    <div class="mrc-metric-val">
+                      <span style="width: 7px; height: 7px; border-radius: 50%; background: ${d.momentumColor}; flex-shrink: 0;"></span>
+                      <span style="font-size: 11.5px;">${d.momentumLabel}</span>
+                    </div>
+                    <div style="font-size: 9.5px; color: #64748b;">
+                      ${d.daysSinceLastMeet !== null ? (d.daysSinceLastMeet === 0 ? 'Active today' : `${d.daysSinceLastMeet}d ago`) : 'No check-ins'}
+                    </div>
+                  </div>
+                </div>
+
+                ${d.programs.length > 0 ? `
+                  <div>
+                    <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; color: #64748b; margin-bottom: 5px; letter-spacing: 0.03em;">
+                      Assigned Programs (${d.programs.length})
+                    </div>
+                    <div class="mrc-programs-strip">
+                      ${d.programReports.slice(0, 4).map(pr => {
+                        const chipStyle = getProgramChipStyle(pr);
+                        return `
+                          <span style="font-size: 10.5px; font-weight: 700; padding: 2px 7px; border-radius: 6px; background: ${chipStyle.bg}; border: 1px solid ${chipStyle.border}; color: ${chipStyle.text}; display: inline-flex; align-items: center; gap: 4px;">
+                            <span style="width: 5px; height: 5px; border-radius: 50%; background: ${chipStyle.dot};"></span>
+                            <span>[${pr.program.code}]</span>
+                            <span>${chipStyle.scoreText}</span>
+                          </span>
+                        `;
+                      }).join('')}
+                      ${d.programReports.length > 4 ? `
+                        <span class="badge badge-neutral" style="font-size: 10px; font-weight: 700; cursor: pointer;" data-action="view-dossier" data-cid="${cand.id}">
+                          +${d.programReports.length - 4} more
+                        </span>
+                      ` : ''}
+                    </div>
+                  </div>
+                ` : ''}
+
+                <div style="display: flex; gap: 8px; margin-top: 2px;">
+                  <button type="button" class="btn btn-primary mrc-action-btn" data-action="view-dossier" data-cid="${cand.id}">
+                    ${getIcon('award')} <span>View Performance Dossier</span>
+                  </button>
+                  <button type="button" class="btn btn-outline" data-action="print-dossier" data-cid="${cand.id}" style="width: 42px; height: 38px; padding: 0; display: flex; align-items: center; justify-content: center; border-radius: 9px; border-color: #cbd5e1;" title="Print Dossier">
+                    ${getIcon('printer')}
+                  </button>
+                </div>
+              </div>
+            `;
+          }).join('')}
         </div>
       `}
     `;
@@ -800,86 +951,93 @@ export function renderReportsView(container, navigateTo) {
 
     contentWrapper.innerHTML = `
       <!-- Executive Summary KPI Row -->
-      <div class="saas-stats-grid reports-stats-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(210px, 1fr)); gap: 14px; margin-bottom: 16px;">
+      <div class="reports-stats-grid">
         
-        <div class="saas-stat-card">
-          <div class="ssc-top">
-            <span class="ssc-label">Specialized Mentors</span>
-            <span class="ssc-icon-box p-stage">${getIcon('trainers')}</span>
+        <div class="report-stat-card">
+          <div class="rsc-top">
+            <span class="rsc-label">Specialized Mentors</span>
+            <span class="rsc-icon-wrap" style="background: #eef2ff; color: #4f46e5; border: 1px solid #c7d2fe;">${getIcon('trainers')}</span>
           </div>
-          <div class="ssc-main">
-            <span class="ssc-value">${totalTrainers}</span>
-            <span class="badge badge-neutral text-xs font-semibold">Active Faculty</span>
+          <div class="rsc-main">
+            <span class="rsc-value">${totalTrainers}</span>
+            <span class="badge badge-neutral rsc-badge">Active Faculty</span>
           </div>
-          <div class="ssc-footer text-muted text-xs">
+          <div class="rsc-footer">
             Evaluating stage & non-stage categories
           </div>
         </div>
 
-        <div class="saas-stat-card">
-          <div class="ssc-top">
-            <span class="ssc-label">Average Mentee Score</span>
-            <span class="ssc-icon-box p-stage">${getIcon('award')}</span>
+        <div class="report-stat-card">
+          <div class="rsc-top">
+            <span class="rsc-label">Average Mentee Score</span>
+            <span class="rsc-icon-wrap" style="background: #fef3c7; color: #d97706; border: 1px solid #fde68a;">${getIcon('award')}</span>
           </div>
-          <div class="ssc-main">
-            <span class="ssc-value" style="color: ${avgStatus.color};">${avgMenteeReadiness}%</span>
-            <span class="badge ${avgStatus.badgeClass} text-xs font-semibold">${avgStatus.label}</span>
+          <div class="rsc-main">
+            <span class="rsc-value" style="color: ${avgStatus.color};">${avgMenteeReadiness}%</span>
+            <span class="badge ${avgStatus.badgeClass} rsc-badge">${avgStatus.label}</span>
           </div>
-          <div class="ssc-footer text-muted text-xs">
+          <div class="rsc-footer">
             Average across all mentored candidates
           </div>
         </div>
 
-        <div class="saas-stat-card">
-          <div class="ssc-top">
-            <span class="ssc-label">Mentee Assignments</span>
-            <span class="ssc-icon-box p-stage">${getIcon('users')}</span>
+        <div class="report-stat-card">
+          <div class="rsc-top">
+            <span class="rsc-label">Mentee Assignments</span>
+            <span class="rsc-icon-wrap" style="background: #ecfeff; color: #0891b2; border: 1px solid #a5f3fc;">${getIcon('users')}</span>
           </div>
-          <div class="ssc-main">
-            <span class="ssc-value">${totalMentorshipPairs}</span>
-            <span class="badge badge-primary-subtle text-xs font-semibold">Candidate Slots</span>
+          <div class="rsc-main">
+            <span class="rsc-value">${totalMentorshipPairs}</span>
+            <span class="badge badge-primary-subtle rsc-badge">Candidate Slots</span>
           </div>
-          <div class="ssc-footer text-muted text-xs">
+          <div class="rsc-footer">
             Across all assigned programs
           </div>
         </div>
 
-        <div class="saas-stat-card">
-          <div class="ssc-top">
-            <span class="ssc-label">Meeting Compliance</span>
-            <span class="ssc-icon-box p-stage">${getIcon('check')}</span>
+        <div class="report-stat-card">
+          <div class="rsc-top">
+            <span class="rsc-label">Meeting Compliance</span>
+            <span class="rsc-icon-wrap" style="background: #ecfdf5; color: #059669; border: 1px solid #a7f3d0;">${getIcon('check')}</span>
           </div>
-          <div class="ssc-main">
-            <span class="ssc-value">${avgCompliance}%</span>
-            <span class="badge ${avgCompliance >= 80 ? 'badge-stage' : (avgCompliance >= 50 ? 'badge-amber' : 'badge-danger')} text-xs font-semibold">
+          <div class="rsc-main">
+            <span class="rsc-value">${avgCompliance}%</span>
+            <span class="badge ${avgCompliance >= 80 ? 'badge-stage' : (avgCompliance >= 50 ? 'badge-amber' : 'badge-danger')} rsc-badge">
               Evaluation Rate
             </span>
           </div>
-          <div class="ssc-footer text-muted text-xs">
+          <div class="rsc-footer">
             Percentage of assigned mentees met
           </div>
         </div>
       </div>
 
       <!-- Search Toolbar -->
-      <div style="display: flex; gap: 10px; align-items: center; margin-bottom: 14px; background: #ffffff; border: 1.5px solid #e2e8f0; border-radius: 14px; padding: 12px 16px;">
-        <div class="reports-search-box">
-          <span class="search-icon">${getIcon('search')}</span>
-          <input 
-            type="text" 
-            id="inpReportTrnSearch" 
-            class="search-input" 
-            placeholder="Search trainer by name, expertise, domain..." 
-            value="${searchQuery}" 
-          />
-          ${searchQuery ? `<button type="button" id="btnClearTrnSearch" class="search-clear-btn" title="Clear search">${getIcon('x')}</button>` : ''}
+      <div class="reports-command-card" style="margin-bottom: 14px;">
+        <div class="reports-command-row" style="display: flex; gap: 10px; align-items: center; flex-wrap: wrap;">
+          <div class="reports-search-box">
+            <span class="search-icon">${getIcon('search')}</span>
+            <input 
+              type="text" 
+              id="inpReportTrnSearch" 
+              class="search-input" 
+              placeholder="Search trainer by name, expertise, domain..." 
+              value="${searchQuery}" 
+            />
+            ${searchQuery ? `<button type="button" id="btnClearTrnSearch" class="search-clear-btn" title="Clear search">${getIcon('x')}</button>` : ''}
+          </div>
+          <div style="display: flex; align-items: center; gap: 10px; font-size: 12.5px; font-weight: 600; color: #64748b; white-space: nowrap;">
+            <span>Showing <strong>${filtered.length}</strong> of <strong>${totalTrainers}</strong> trainers</span>
+            ${searchQuery ? `
+              <button type="button" id="btnResetTrnFilters" class="btn btn-outline text-danger btn-sm" style="height: 36px; padding: 0 12px; border-color: #fecaca; border-radius: 8px;" title="Reset search">
+                ${getIcon('x')} <span>Clear</span>
+              </button>
+            ` : ''}
+          </div>
         </div>
-        <span class="text-xs text-muted" style="white-space: nowrap; font-weight: 600;">
-          Showing <strong>${filtered.length}</strong> of <strong>${totalTrainers}</strong> trainers
-        </span>
       </div>
 
-      <!-- Trainers Performance Table -->
+      <!-- Trainers Performance: Empty State OR Desktop Table + Mobile Cards -->
       ${filtered.length === 0 ? `
         <div class="empty-state-card" style="background: #ffffff; border: 1.5px solid #e2e8f0; border-radius: 14px; padding: 48px 24px; text-align: center;">
           <div style="width: 52px; height: 52px; border-radius: 50%; background: #f1f5f9; color: #64748b; display: inline-flex; align-items: center; justify-content: center; margin-bottom: 12px; margin-left: auto; margin-right: auto;">
@@ -889,7 +1047,8 @@ export function renderReportsView(container, navigateTo) {
           <p style="font-size: 13px; color: #64748b; margin: 0 auto 16px auto; max-width: 380px;">Try searching with a different name or faculty specialization.</p>
         </div>
       ` : `
-        <div class="reports-table-container" style="background: #ffffff; border: 1.5px solid #e2e8f0; border-radius: 14px; overflow-x: auto; box-shadow: 0 1px 3px rgba(0,0,0,0.03);">
+        <!-- 1. Desktop Table View (>= 769px) -->
+        <div class="desktop-table-view reports-table-container">
           <table class="saas-table" style="width: 100%; border-collapse: collapse; text-align: left; min-width: 860px;">
             <thead>
               <tr style="background: #f8fafc; border-bottom: 1.5px solid #e2e8f0; font-size: 11px; text-transform: uppercase; color: #64748b; letter-spacing: 0.5px;">
@@ -917,14 +1076,14 @@ export function renderReportsView(container, navigateTo) {
                     <!-- Trainer Avatar & Name -->
                     <td style="padding: 11px 14px; vertical-align: middle;">
                       <div style="display: flex; align-items: center; gap: 10px;">
-                        <div class="trainer-avatar-mini" style="background: ${trn.color || '#6366f1'}; overflow: hidden; width: 38px; height: 38px;">
+                        <div class="trainer-avatar-mini" style="background: ${trn.color || '#6366f1'}; overflow: hidden; width: 38px; height: 38px; border-radius: 10px;">
                           ${trn.photo ? `<img src="${trn.photo}" alt="${trn.name}" style="width: 100%; height: 100%; object-fit: cover;" />` : trn.name.split(' ').map(n => n[0]).slice(0, 2).join('')}
                         </div>
                         <div>
                           <strong style="font-size: 13.5px; color: #0f172a; cursor: pointer;" data-action="view-trn-profile" data-tid="${trn.id}" title="Click to view trainer profile">
                             ${trn.name}
                           </strong>
-                          <div style="font-size: 11px; color: #64748b;">
+                          <div style="font-size: 11px; color: #64748b; margin-top: 2px;">
                             ${trn.phone ? `${trn.phone} • ` : ''}${t.menteeCount} Mentees
                           </div>
                         </div>
@@ -1012,6 +1171,81 @@ export function renderReportsView(container, navigateTo) {
             </tbody>
           </table>
         </div>
+
+        <!-- 2. Mobile Touch Cards List (< 769px) -->
+        <div class="mobile-cards-view">
+          ${filtered.map(t => {
+            const trn = t.trainer;
+            const rStatus = getProgressStatus(t.averageReadiness);
+
+            return `
+              <div class="mobile-report-card">
+                <div class="mrc-top">
+                  <div class="mrc-cand-info">
+                    <div class="trainer-avatar-mini" style="background: ${trn.color || '#6366f1'}; overflow: hidden; width: 40px; height: 40px; border-radius: 10px; font-size: 13px;">
+                      ${trn.photo ? `<img src="${trn.photo}" alt="${trn.name}" style="width: 100%; height: 100%; object-fit: cover;" />` : trn.name.split(' ').map(n => n[0]).slice(0, 2).join('')}
+                    </div>
+                    <div class="mrc-name-col">
+                      <div class="mrc-name" data-action="view-trn-profile" data-tid="${trn.id}">
+                        ${trn.name}
+                      </div>
+                      <div class="mrc-sub">
+                        <span class="badge badge-primary-subtle" style="font-size: 9.5px; padding: 1px 6px;">${trn.expertise}</span>
+                      </div>
+                    </div>
+                  </div>
+                  <div style="text-align: right; flex-shrink: 0;">
+                    <span class="badge ${t.complianceRate >= 80 ? 'badge-stage' : (t.complianceRate > 0 ? 'badge-amber' : 'badge-danger')}" style="font-size: 10px; font-weight: 800;">
+                      ${t.complianceRate}% Compliance
+                    </span>
+                  </div>
+                </div>
+
+                <div class="mrc-metrics-strip">
+                  <div class="mrc-metric-item">
+                    <span class="mrc-metric-label">Mentees Evaluated</span>
+                    <div class="mrc-metric-val">
+                      <span>${t.uniqueMenteesMetCount} of ${t.menteeCount} met</span>
+                    </div>
+                    <div style="font-size: 10px; color: #64748b;">${t.totalMeetsLogged} total check-ins</div>
+                  </div>
+                  <div class="mrc-metric-item">
+                    <span class="mrc-metric-label">Average Mentee Score</span>
+                    <div class="mrc-metric-val">
+                      <span style="color: ${t.readiness.hasData ? rStatus.color : '#64748b'};">${t.readiness.hasData ? `${t.averageReadiness}%` : 'N/A'}</span>
+                      <span class="badge ${rStatus.badgeClass}" style="font-size: 9.5px;">${t.readiness.hasData ? rStatus.label : 'Pending'}</span>
+                    </div>
+                  </div>
+                </div>
+
+                ${t.assignedPrograms.length > 0 ? `
+                  <div>
+                    <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; color: #64748b; margin-bottom: 5px;">
+                      Assigned Programs (${t.assignedPrograms.length})
+                    </div>
+                    <div class="mrc-programs-strip">
+                      ${t.assignedPrograms.slice(0, 4).map(p => `
+                        <span class="badge badge-neutral" style="font-size: 10.5px; font-weight: 700;">
+                          [${p.code}] ${p.candidateIds ? p.candidateIds.length : 0} cand
+                        </span>
+                      `).join('')}
+                      ${t.assignedPrograms.length > 4 ? `
+                        <span class="badge badge-primary-subtle" style="font-size: 10px; font-weight: 700; cursor: pointer;" data-action="view-trn-profile" data-tid="${trn.id}">
+                          +${t.assignedPrograms.length - 4} more
+                        </span>
+                      ` : ''}
+                    </div>
+                  </div>
+                ` : ''}
+
+                <button type="button" class="btn btn-secondary mrc-action-btn" data-action="view-trn-profile" data-tid="${trn.id}">
+                  <span>View Trainer Profile & Mentorship Roster</span>
+                  <span>&rarr;</span>
+                </button>
+              </div>
+            `;
+          }).join('')}
+        </div>
       `}
     `;
 
@@ -1026,6 +1260,14 @@ export function renderReportsView(container, navigateTo) {
     const btnClearTrnSearch = contentWrapper.querySelector('#btnClearTrnSearch');
     if (btnClearTrnSearch) {
       btnClearTrnSearch.addEventListener('click', () => {
+        searchQuery = '';
+        renderTrainerReportSection();
+      });
+    }
+
+    const btnResetTrn = contentWrapper.querySelector('#btnResetTrnFilters');
+    if (btnResetTrn) {
+      btnResetTrn.addEventListener('click', () => {
         searchQuery = '';
         renderTrainerReportSection();
       });

@@ -969,7 +969,7 @@ class StateService {
       return { success: false, error: 'Please enter both username and password.' };
     }
 
-    if (u === 'sibaq' && p === 'champion2023') {
+    if (u === 'sibaq' && p === 'champion#2029') {
       localStorage.setItem('mentorflow_auth_role', 'controller');
       localStorage.setItem('mentorflow_controller_user', 'sibaq');
       localStorage.setItem('mentorflow_active_portal', 'controller');

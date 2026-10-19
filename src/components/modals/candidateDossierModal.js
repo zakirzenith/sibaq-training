@@ -341,11 +341,7 @@ export function openCandidateDossierModal(candidateId) {
   });
 
   const printDossier = () => {
-    document.body.classList.add('printing-dossier');
-    window.print();
-    setTimeout(() => {
-      document.body.classList.remove('printing-dossier');
-    }, 1000);
+    printCandidateSingleDossierDocument(dossier);
   };
 
   overlay.querySelector('#btnDossierPrint').addEventListener('click', printDossier);
@@ -362,3 +358,418 @@ export function openCandidateDossierModal(candidateId) {
     });
   });
 }
+
+/**
+ * Dedicated, pristine A4 Portrait printable sheet for a single candidate dossier.
+ * Fits the PDF frame without clipping, dark backdrops, or overlapping content.
+ */
+function printCandidateSingleDossierDocument(dossier) {
+  const printWindow = window.open('', '_blank');
+  if (!printWindow) {
+    alert('Please allow popups in your browser to print the candidate dossier.');
+    return;
+  }
+
+  const {
+    candidate,
+    programs,
+    programReports,
+    allMeets,
+    totalMeets,
+    overallReadiness,
+    hasEvaluation,
+    overallStatus,
+    meetingRateLabel,
+    momentumLabel,
+    allRemarks
+  } = dossier;
+
+  const cleanChest = formatChestNo(candidate);
+  const now = new Date();
+  const todayFormatted = now.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+  const timeFormatted = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+  const docRef = `DHB-DOS-${cleanChest.replace('#', '')}-${candidate.category.slice(0, 3).toUpperCase()}`;
+
+  const html = `
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+      <meta charset="utf-8" />
+      <title>DH BENGAL - Candidate Dossier [${cleanChest} ${candidate.name}]</title>
+      <style>
+        @page {
+          size: portrait;
+          margin: 7mm 9mm 7mm 9mm;
+        }
+        *, *::before, *::after {
+          box-sizing: border-box;
+          margin: 0;
+          padding: 0;
+        }
+        body {
+          font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+          color: #0f172a;
+          background: #ffffff;
+          font-size: 10.5px;
+          line-height: 1.35;
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
+        }
+
+        /* Screen Control Bar (Hidden on actual print) */
+        .no-print {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          background: #0f172a;
+          color: #ffffff;
+          padding: 8px 16px;
+          margin-bottom: 12px;
+          border-bottom: 2px solid #6366f1;
+        }
+        .np-btn {
+          cursor: pointer;
+          border: none;
+          border-radius: 4px;
+          padding: 6px 14px;
+          font-size: 11.5px;
+          font-weight: 700;
+        }
+
+        .sheet-container {
+          width: 100%;
+          max-width: 100%;
+        }
+
+        /* Executive Header */
+        .header-box {
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-start;
+          padding-bottom: 8px;
+          border-bottom: 2px solid #0f172a;
+          margin-bottom: 10px;
+        }
+        .brand-org {
+          font-size: 9px;
+          font-weight: 800;
+          letter-spacing: 0.08em;
+          color: #64748b;
+          text-transform: uppercase;
+        }
+        .brand-title {
+          font-size: 16px;
+          font-weight: 900;
+          color: #0f172a;
+          margin: 1px 0 2px 0;
+        }
+        .brand-sub {
+          font-size: 11px;
+          font-weight: 700;
+          color: #4338ca;
+        }
+
+        /* Candidate Profile Card */
+        .profile-strip {
+          background: #f8fafc;
+          border: 1px solid #cbd5e1;
+          border-radius: 8px;
+          padding: 10px 14px;
+          margin-bottom: 10px;
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          flex-wrap: wrap;
+          gap: 10px;
+        }
+        .cand-chest-pill {
+          background: #0f172a;
+          color: #ffffff;
+          font-family: ui-monospace, monospace;
+          font-size: 13px;
+          font-weight: 800;
+          padding: 3px 8px;
+          border-radius: 4px;
+        }
+        .cand-name-title {
+          font-size: 16px;
+          font-weight: 900;
+          color: #0f172a;
+        }
+
+        /* KPI Grid */
+        .kpi-row {
+          display: grid;
+          grid-template-columns: repeat(4, 1fr);
+          gap: 8px;
+          margin-bottom: 12px;
+        }
+        .kpi-card {
+          background: #ffffff;
+          border: 1px solid #cbd5e1;
+          border-radius: 6px;
+          padding: 8px 10px;
+          text-align: center;
+        }
+        .kpi-k {
+          font-size: 8px;
+          font-weight: 700;
+          text-transform: uppercase;
+          color: #64748b;
+          margin-bottom: 3px;
+        }
+        .kpi-v {
+          font-size: 16px;
+          font-weight: 900;
+          color: #0f172a;
+        }
+
+        /* Section Headings */
+        .sec-head {
+          font-size: 11px;
+          font-weight: 800;
+          color: #0f172a;
+          text-transform: uppercase;
+          letter-spacing: 0.04em;
+          border-bottom: 1.5px solid #cbd5e1;
+          padding-bottom: 4px;
+          margin: 12px 0 6px 0;
+        }
+
+        /* Tables */
+        table {
+          width: 100% !important;
+          max-width: 100% !important;
+          border-collapse: collapse;
+          table-layout: fixed;
+          font-size: 9.5px;
+          margin-bottom: 10px;
+        }
+        thead { display: table-header-group; }
+        tr { page-break-inside: avoid; break-inside: avoid; }
+        th {
+          background: #f1f5f9;
+          border: 1px solid #cbd5e1;
+          padding: 5px 6px;
+          font-size: 8.5px;
+          font-weight: 800;
+          text-transform: uppercase;
+          color: #1e293b;
+          text-align: left;
+          overflow-wrap: break-word;
+          word-break: break-word;
+        }
+        td {
+          border: 1px solid #e2e8f0;
+          padding: 4.5px 6px;
+          vertical-align: top;
+          overflow-wrap: break-word;
+          word-break: break-word;
+        }
+        tbody tr:nth-child(even) { background: #f8fafc; }
+
+        .score-pill {
+          display: inline-block;
+          padding: 1.5px 6px;
+          border-radius: 3px;
+          font-weight: 700;
+          font-size: 9px;
+        }
+        .score-met { background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; }
+        .score-pending { background: #f1f5f9; color: #64748b; border: 1px solid #cbd5e1; }
+
+        /* Sign-off Footer */
+        .doc-footer {
+          margin-top: 14px;
+          padding-top: 10px;
+          border-top: 1.5px solid #cbd5e1;
+          display: flex;
+          justify-content: space-between;
+          align-items: flex-end;
+          font-size: 8.5px;
+          color: #64748b;
+        }
+        .sign-line {
+          width: 160px;
+          border-bottom: 1px solid #0f172a;
+          margin-bottom: 3px;
+        }
+
+        @media print {
+          .no-print { display: none !important; }
+          html, body, .sheet-container {
+            width: 100% !important;
+            max-width: 100% !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            overflow: visible !important;
+          }
+        }
+      </style>
+    </head>
+    <body>
+      <div class="no-print">
+        <div>
+          <strong>🖨️ Print Preview: Candidate Dossier</strong>
+          <span style="font-size: 11px; margin-left: 10px; color: #cbd5e1;">Paper size is pre-set to <strong>A4 Portrait</strong></span>
+        </div>
+        <div>
+          <button class="np-btn" onclick="window.print()" style="background: #4f46e5; color: #fff;">Print / Save as PDF</button>
+          <button class="np-btn" onclick="window.close()" style="background: #334155; color: #fff; margin-left: 6px;">Close</button>
+        </div>
+      </div>
+
+      <div class="sheet-container">
+        <!-- Letterhead -->
+        <div class="header-box">
+          <div>
+            <div class="brand-org">DARUL HUDA BENGAL • SIBAQ TRAINING ACADEMY</div>
+            <div class="brand-title">OFFICIAL CANDIDATE PERFORMANCE DOSSIER</div>
+            <div class="brand-sub">Comprehensive Mentorship & Continuous Evaluation Record</div>
+          </div>
+          <div style="text-align: right; font-size: 9.5px; color: #475569;">
+            <div>Date: <strong>${todayFormatted} • ${timeFormatted}</strong></div>
+            <div>Ref: <strong>${docRef}</strong></div>
+          </div>
+        </div>
+
+        <!-- Candidate Profile -->
+        <div class="profile-strip">
+          <div style="display: flex; align-items: center; gap: 10px;">
+            <span class="cand-chest-pill">${cleanChest}</span>
+            <div>
+              <div class="cand-name-title">${candidate.name}</div>
+              <div style="font-size: 11px; color: #64748b;">
+                Category: <strong>${candidate.category}</strong>
+                ${candidate.institution ? ` • Institution: <strong>${candidate.institution}</strong>` : ''}
+              </div>
+            </div>
+          </div>
+          <div style="text-align: right; font-size: 10.5px; color: #475569;">
+            <div>Enrolled Programs: <strong>${programs.length}</strong></div>
+            ${candidate.phone ? `<div>Contact: <strong>${candidate.phone}</strong></div>` : ''}
+          </div>
+        </div>
+
+        <!-- KPI Strip -->
+        <div class="kpi-row">
+          <div class="kpi-card">
+            <div class="kpi-k">Overall Readiness</div>
+            <div class="kpi-v" style="color: ${overallReadiness >= 80 ? '#047857' : (overallReadiness >= 60 ? '#1d4ed8' : '#b91c1c')};">
+              ${hasEvaluation ? `${overallReadiness}%` : 'N/A'}
+            </div>
+            <div style="font-size: 8.5px; font-weight: 700; color: #64748b;">${hasEvaluation ? overallStatus.label : 'Pending'}</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-k">Meeting Compliance</div>
+            <div class="kpi-v">${meetingRateLabel}</div>
+            <div style="font-size: 8.5px; color: #64748b;">Programs Met</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-k">Preparation Momentum</div>
+            <div class="kpi-v" style="font-size: 14px; margin-top: 2px;">${momentumLabel}</div>
+            <div style="font-size: 8.5px; color: #64748b;">${totalMeets} Sessions Logged</div>
+          </div>
+          <div class="kpi-card">
+            <div class="kpi-k">Faculty Coverage</div>
+            <div class="kpi-v" style="font-size: 14px; margin-top: 2px;">${programReports.filter(pr => pr.isMet).length}/${programReports.length}</div>
+            <div style="font-size: 8.5px; color: #64748b;">Evaluated Modules</div>
+          </div>
+        </div>
+
+        <!-- Section 1: Assigned Programs Table -->
+        <div class="sec-head">1. Assigned Training Programs & Module Performance</div>
+        <table>
+          <thead>
+            <tr>
+              <th style="width: 14%;">Code</th>
+              <th style="width: 44%;">Program Title & Domain</th>
+              <th style="width: 24%;">Assigned Faculty Mentor</th>
+              <th style="width: 18%; text-align: right;">Latest Score & Status</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${programReports.map(pr => `
+              <tr>
+                <td style="font-weight: 800; font-family: ui-monospace, monospace; color: #0f172a;">${pr.program.code}</td>
+                <td>
+                  <strong style="color: #0f172a;">${pr.program.name}</strong>
+                  <div style="font-size: 8.5px; color: #64748b;">${pr.program.category || 'General'}</div>
+                </td>
+                <td style="color: #334155;">${pr.trainerName || 'Assigned Faculty'}</td>
+                <td style="text-align: right;">
+                  <span class="score-pill ${pr.isMet ? 'score-met' : 'score-pending'}">
+                    ${pr.isMet ? `${pr.latestScore}% • ${pr.scoreStatus.label}` : 'Pending Check-in'}
+                  </span>
+                </td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+
+        <!-- Section 2: Mentoring Check-ins & Evaluation Log -->
+        <div class="sec-head">2. Mentoring Check-ins & Faculty Remarks Log</div>
+        ${allRemarks.length === 0 ? `
+          <div style="padding: 16px; border: 1px dashed #cbd5e1; border-radius: 6px; text-align: center; color: #64748b; font-size: 10px;">
+            Candidate enrolled in Sibaq Academy; first formal evaluation check-in is pending.
+          </div>
+        ` : `
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 16%;">Date & Time</th>
+                <th style="width: 22%;">Faculty Evaluator</th>
+                <th style="width: 18%;">Module / Program</th>
+                <th style="width: 12%; text-align: center;">Score</th>
+                <th style="width: 32%;">Evaluator Observations & Remarks</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${allRemarks.map(r => `
+                <tr>
+                  <td>
+                    <strong>${r.date}</strong>
+                    <div style="font-size: 8px; color: #64748b;">${r.time || ''}</div>
+                  </td>
+                  <td style="font-weight: 600; color: #0f172a;">${r.trainerName}</td>
+                  <td>${r.programCode ? `[${r.programCode}] ${r.programName}` : 'General Session'}</td>
+                  <td style="text-align: center; font-weight: 800; color: #0f172a;">${r.percentage}%</td>
+                  <td style="font-style: italic; color: #1e293b; line-height: 1.25;">"${r.text}"</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+        `}
+
+        <!-- Document Sign-off -->
+        <div class="doc-footer">
+          <div>
+            <div style="font-weight: 800; color: #0f172a;">DARUL HUDA BENGAL • SIBAQ HUB</div>
+            <div>Official Candidate Performance Dossier • Ref: ${cleanChest}</div>
+          </div>
+          <div style="text-align: center;">
+            <div>Confidential Academic Evaluation</div>
+            <div style="font-size: 8px; color: #94a3b8;">Sibaq Candidate Management System</div>
+          </div>
+          <div style="text-align: right;">
+            <div class="sign-line"></div>
+            <div style="font-weight: 700; color: #0f172a;">Authorized Controller / Sign-Off</div>
+          </div>
+        </div>
+      </div>
+
+      <script>
+        window.focus();
+        setTimeout(function() {
+          try { window.print(); } catch(e) {}
+        }, 300);
+      </script>
+    </body>
+    </html>
+  `;
+
+  printWindow.document.open();
+  printWindow.document.write(html);
+  printWindow.document.close();
+}
+

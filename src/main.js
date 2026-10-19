@@ -11,6 +11,7 @@ import { renderDailyProgressView } from './components/dailyProgressView.js';
 import { renderReportsView } from './components/reportsView.js';
 import { renderTrainerDashboardView } from './components/trainerPortal/trainerDashboardView.js';
 import { renderTrainerDailyProgressView } from './components/trainerPortal/trainerDailyProgressView.js';
+import { renderTrainerReportsView } from './components/trainerPortal/trainerReportsView.js';
 import { openExcelUploadModal } from './components/modals/excelUploadModal.js';
 import { openCloudDatabaseModal } from './components/modals/cloudDatabaseModal.js';
 import { openTrainerLoginModal } from './components/modals/trainerLoginModal.js';
@@ -447,6 +448,10 @@ class App {
             <span class="nav-item-icon">${getIcon('calendar')}</span>
             <span>Daily Progress</span>
           </a>
+          <a class="nav-item ${this.currentView === 'trainer-reports' ? 'active' : ''}" data-view="trainer-reports" id="navTrainerReports">
+            <span class="nav-item-icon">${getIcon('award')}</span>
+            <span>Reports & Dossiers</span>
+          </a>
 
           ${!isRealTrainerSession ? `
             <div class="nav-section-title" style="margin-top: 18px;">Navigation</div>
@@ -492,7 +497,11 @@ class App {
           </button>
           <button class="mobile-nav-btn ${this.currentView === 'trainer-daily-progress' ? 'active' : ''}" data-view="trainer-daily-progress">
             ${getIcon('calendar')}
-            <span>Daily Progress</span>
+            <span>Daily</span>
+          </button>
+          <button class="mobile-nav-btn ${this.currentView === 'trainer-reports' ? 'active' : ''}" data-view="trainer-reports">
+            ${getIcon('award')}
+            <span>Reports</span>
           </button>
           <button class="mobile-nav-btn" data-action="open-profile">
             <span style="display:inline-flex; align-items:center; justify-content:center; width:22px; height:22px; border-radius:50%; background:${activeTrainer.color || '#6366f1'}; color:#fff; font-weight:700; font-size:11px; overflow:hidden;">
@@ -606,7 +615,7 @@ class App {
 
     const session = state.getAuthSession();
     if (session && session.role === 'trainer') {
-      const allowedTrainerViews = ['trainer-dashboard', 'trainer-daily-progress'];
+      const allowedTrainerViews = ['trainer-dashboard', 'trainer-daily-progress', 'trainer-reports'];
       if (!allowedTrainerViews.includes(viewName)) {
         toast.error('Access Restricted: Trainer accounts cannot access Controller views.');
         this.currentView = 'trainer-dashboard';
@@ -635,7 +644,8 @@ class App {
       'daily-progress': 'Daily Progress & Scoring',
       'reports': 'Performance Reports & Dossiers',
       'trainer-dashboard': 'Trainer Dashboard',
-      'trainer-daily-progress': 'Trainer Daily Progress'
+      'trainer-daily-progress': 'Trainer Daily Progress',
+      'trainer-reports': 'Performance & Mentorship Reports'
     };
     const breadcrumbEl = document.getElementById('topbarCurrentViewName');
     if (breadcrumbEl && viewTitleMap[viewName]) {
@@ -894,6 +904,9 @@ class App {
         break;
       case 'trainer-daily-progress':
         renderTrainerDailyProgressView(this.mainContent, navigate);
+        break;
+      case 'trainer-reports':
+        renderTrainerReportsView(this.mainContent, navigate);
         break;
       default:
         if (this.currentPortal === 'trainer') {

@@ -1489,8 +1489,8 @@ export function renderReportsView(container, navigateTo) {
         <title>DH BENGAL - Candidate Performance Report [${scopeName}]</title>
         <style>
           @page {
-            size: A4 landscape;
-            margin: 7mm 9mm 8mm 9mm;
+            size: landscape;
+            margin: 6mm 8mm 6mm 8mm;
           }
           *, *::before, *::after {
             box-sizing: border-box;
@@ -1501,7 +1501,7 @@ export function renderReportsView(container, navigateTo) {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
             color: #0f172a;
             background: #ffffff;
-            font-size: 10.5px;
+            font-size: 9.5px;
             line-height: 1.35;
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
@@ -1747,10 +1747,12 @@ export function renderReportsView(container, navigateTo) {
 
           /* Executive Report Table */
           table {
-            width: 100%;
+            width: 100% !important;
+            max-width: 100% !important;
             border-collapse: collapse;
             table-layout: fixed;
-            font-size: 9.5px;
+            font-size: 9px;
+            box-sizing: border-box;
           }
           thead {
             display: table-header-group;
@@ -1773,12 +1775,16 @@ export function renderReportsView(container, navigateTo) {
             color: #1e293b;
             text-align: left;
             vertical-align: middle;
+            overflow-wrap: break-word;
+            word-break: break-word;
           }
           td {
             border: 1px solid #e2e8f0;
             padding: 4.5px 6px;
             vertical-align: middle;
             line-height: 1.25;
+            overflow-wrap: break-word;
+            word-break: break-word;
           }
           tbody tr:nth-child(even) {
             background: #f8fafc;
@@ -1789,9 +1795,12 @@ export function renderReportsView(container, navigateTo) {
             display: inline-block;
             padding: 2px 5px;
             border-radius: 4px;
-            font-size: 9px;
+            font-size: 8.5px;
             font-weight: 700;
-            white-space: nowrap;
+            white-space: normal;
+            line-height: 1.2;
+            word-break: break-word;
+            text-align: center;
           }
           .badge-ready {
             background: #ecfdf5;
@@ -1820,11 +1829,13 @@ export function renderReportsView(container, navigateTo) {
             border: 1px solid #cbd5e1;
             border-radius: 3px;
             padding: 1px 4px;
-            font-size: 8.5px;
+            font-size: 8px;
             margin: 1px 2px 1px 0;
             font-weight: 600;
             color: #334155;
-            white-space: nowrap;
+            white-space: normal;
+            word-break: break-word;
+            line-height: 1.2;
           }
           .prog-chip.met {
             border-color: #86efac;
@@ -1861,9 +1872,17 @@ export function renderReportsView(container, navigateTo) {
             .no-print {
               display: none !important;
             }
-            body {
+            html, body, .sheet-wrapper {
+              width: 100% !important;
+              max-width: 100% !important;
               margin: 0 !important;
               padding: 0 !important;
+              overflow: visible !important;
+            }
+            table {
+              width: 100% !important;
+              max-width: 100% !important;
+              table-layout: fixed !important;
             }
           }
         </style>
@@ -1940,14 +1959,14 @@ export function renderReportsView(container, navigateTo) {
             <table>
               <thead>
                 <tr>
-                  <th style="width: 48px;">Chest</th>
-                  <th style="width: 175px;">Candidate Name & Institution</th>
-                  <th style="width: 75px;">Category</th>
-                  <th>Assigned Programs & Module Readiness</th>
-                  <th style="width: 110px;">Overall Readiness</th>
-                  <th style="width: 75px;">Meeting Rate</th>
-                  <th style="width: 90px;">Trajectory</th>
-                  <th style="width: 175px;">Latest Trainer Remark</th>
+                  <th style="width: 5%;">Chest</th>
+                  <th style="width: 19%;">Candidate Name & Institution</th>
+                  <th style="width: 8%;">Category</th>
+                  <th style="width: 28%;">Assigned Programs & Module Readiness</th>
+                  <th style="width: 12%;">Overall Readiness</th>
+                  <th style="width: 8%;">Meeting Rate</th>
+                  <th style="width: 8%;">Trajectory</th>
+                  <th style="width: 12%;">Latest Trainer Remark</th>
                 </tr>
               </thead>
               <tbody>
@@ -2061,8 +2080,8 @@ export function renderReportsView(container, navigateTo) {
         <title>DH BENGAL - Trainer Mentorship & Evaluation Report [${scopeName}]</title>
         <style>
           @page {
-            size: A4 landscape;
-            margin: 7mm 9mm 8mm 9mm;
+            size: landscape;
+            margin: 6mm 8mm 6mm 8mm;
           }
           *, *::before, *::after {
             box-sizing: border-box;
@@ -2073,7 +2092,7 @@ export function renderReportsView(container, navigateTo) {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
             color: #0f172a;
             background: #ffffff;
-            font-size: 10.5px;
+            font-size: 9.5px;
             line-height: 1.35;
             -webkit-print-color-adjust: exact !important;
             print-color-adjust: exact !important;
@@ -2391,9 +2410,17 @@ export function renderReportsView(container, navigateTo) {
             .no-print {
               display: none !important;
             }
-            body {
+            html, body, .sheet-wrapper {
+              width: 100% !important;
+              max-width: 100% !important;
               margin: 0 !important;
               padding: 0 !important;
+              overflow: visible !important;
+            }
+            table {
+              width: 100% !important;
+              max-width: 100% !important;
+              table-layout: fixed !important;
             }
           }
         </style>
@@ -2474,14 +2501,13 @@ export function renderReportsView(container, navigateTo) {
             <table>
               <thead>
                 <tr>
-                  <th style="width: 160px;">Trainer Name & Contact</th>
-                  <th style="width: 125px;">Specialization</th>
-                  <th>Assigned Programs</th>
-                  <th style="width: 65px;">Mentees</th>
-                  <th style="width: 120px;">Meeting Compliance</th>
-                  <th style="width: 100px;">Avg Readiness</th>
-                  <th style="width: 140px;">Score Breakdown</th>
-                  <th style="width: 90px;">Last Session</th>
+                  <th style="width: 18%;">Trainer Name & Contact</th>
+                  <th style="width: 13%;">Specialization</th>
+                  <th style="width: 24%;">Assigned Programs</th>
+                  <th style="width: 7%;">Mentees</th>
+                  <th style="width: 13%;">Meeting Compliance</th>
+                  <th style="width: 11%;">Avg Readiness</th>
+                  <th style="width: 14%;">Score Breakdown</th>
                 </tr>
               </thead>
               <tbody>

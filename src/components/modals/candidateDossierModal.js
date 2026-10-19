@@ -1,5 +1,6 @@
 import { state } from '../../services/state.js';
 import { getIcon } from '../icons.js';
+import { openProgramQuickViewModal } from './programQuickViewModal.js';
 
 function formatChestNo(cand) {
   if (cand.chestNo && cand.chestNo.trim()) return `#${cand.chestNo.trim()}`;
@@ -181,7 +182,7 @@ export function openCandidateDossierModal(candidateId) {
                       
                       <!-- Left: Program info & Mentor -->
                       <div style="display: flex; align-items: center; gap: 10px; flex: 1; min-width: 250px;">
-                        <span class="badge ${progTypeClass}" style="font-size: 11.5px; font-weight: 800; padding: 4px 8px; border-radius: 6px;">
+                        <span class="badge ${progTypeClass} prog-report-chip" data-action="view-program" data-pid="${pr.program.id}" style="font-size: 11.5px; font-weight: 800; padding: 4px 8px; border-radius: 6px; cursor: pointer; transition: all 0.15s ease;" title="Click to view [${pr.program.code}] ${pr.program.name} program details & roster">
                           ${pr.program.code}
                         </span>
                         <div>
@@ -349,4 +350,15 @@ export function openCandidateDossierModal(candidateId) {
 
   overlay.querySelector('#btnDossierPrint').addEventListener('click', printDossier);
   overlay.querySelector('#btnDossierPrintBottom').addEventListener('click', printDossier);
+
+  // Wire click on program code rectangle
+  overlay.querySelectorAll('[data-action="view-program"]').forEach(el => {
+    el.addEventListener('click', e => {
+      e.stopPropagation();
+      const pid = el.getAttribute('data-pid');
+      if (pid) {
+        openProgramQuickViewModal(pid, candidate.id);
+      }
+    });
+  });
 }

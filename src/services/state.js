@@ -1731,15 +1731,49 @@ class StateService {
       let needsAttentionCount = 0;
       let notEvaluatedCount = 0;
 
+      const readyCandidates = [];
+      const onTrackCandidates = [];
+      const needsAttentionCandidates = [];
+      const notEvaluatedCandidates = [];
+
       mentees.forEach(cand => {
         const cMeets = this.getCandidateMeets(cand.id);
-        if (cMeets.length > 0) {
-          const lastScore = cMeets[cMeets.length - 1].percentage;
-          if (lastScore >= 80) readyCount++;
-          else if (lastScore >= 60) onTrackCount++;
-          else needsAttentionCount++;
+        const sharedPrograms = assignedPrograms.filter(p => (p.candidateIds || []).some(cid => String(cid).trim() === String(cand.id).trim()));
+
+        if (cMeets && cMeets.length > 0) {
+          const trainerMeet = cMeets.slice().reverse().find(m => String(m.trainerId || '').trim() === String(trn.id).trim());
+          const latestMeet = trainerMeet || cMeets[cMeets.length - 1];
+          const lastScore = Number(latestMeet.percentage) || 0;
+
+          const candInfo = {
+            candidate: cand,
+            latestScore: lastScore,
+            status: getProgressStatus(lastScore),
+            latestMeet,
+            meetsCount: cMeets.length,
+            sharedPrograms
+          };
+
+          if (lastScore >= 80) {
+            readyCount++;
+            readyCandidates.push(candInfo);
+          } else if (lastScore >= 60) {
+            onTrackCount++;
+            onTrackCandidates.push(candInfo);
+          } else {
+            needsAttentionCount++;
+            needsAttentionCandidates.push(candInfo);
+          }
         } else {
           notEvaluatedCount++;
+          notEvaluatedCandidates.push({
+            candidate: cand,
+            latestScore: null,
+            status: { label: 'Not Evaluated', color: '#64748b', badgeClass: 'badge-neutral' },
+            latestMeet: null,
+            meetsCount: 0,
+            sharedPrograms
+          });
         }
       });
 
@@ -1760,7 +1794,11 @@ class StateService {
           readyCount,
           onTrackCount,
           needsAttentionCount,
-          notEvaluatedCount
+          notEvaluatedCount,
+          readyCandidates,
+          onTrackCandidates,
+          needsAttentionCandidates,
+          notEvaluatedCandidates
         }
       };
     });

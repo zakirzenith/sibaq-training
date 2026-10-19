@@ -2,6 +2,8 @@ import { state, getProgressStatus } from '../services/state.js';
 import { getIcon } from './icons.js';
 import { openCandidateDossierModal } from './modals/candidateDossierModal.js';
 import { openTrainerProfileModal } from './modals/trainerProfileModal.js';
+import { openProgramQuickViewModal } from './modals/programQuickViewModal.js';
+import { openTrainerAllProgramsModal, openTrainerMenteesBreakdownModal } from './modals/trainerReportsModals.js';
 import { excelService } from '../services/excelService.js';
 import { toast } from './toast.js';
 
@@ -583,7 +585,7 @@ export function renderReportsView(container, navigateTo) {
                           ${visibleChips.map(pr => {
                             const chipStyle = getProgramChipStyle(pr);
                             return `
-                              <div class="prog-report-chip" style="display: inline-flex; align-items: center; gap: 4px; padding: 2.5px 7.5px; border-radius: 6px; font-size: 10.5px; font-weight: 700; background: ${chipStyle.bg}; border: 1px solid ${chipStyle.border}; color: ${chipStyle.text};" title="${pr.program.name} | Readiness: ${chipStyle.scoreText} | Mentor: ${pr.trainer ? pr.trainer.name : 'Unassigned'}">
+                              <div class="prog-report-chip" data-action="view-program" data-pid="${pr.program.id}" data-cid="${cand.id}" style="display: inline-flex; align-items: center; gap: 4px; padding: 2.5px 7.5px; border-radius: 6px; font-size: 10.5px; font-weight: 700; background: ${chipStyle.bg}; border: 1px solid ${chipStyle.border}; color: ${chipStyle.text}; cursor: pointer; transition: all 0.15s ease;" title="${pr.program.name} | Readiness: ${chipStyle.scoreText} • Click to open program details & roster">
                                 <span style="width: 5px; height: 5px; border-radius: 50%; background: ${chipStyle.dot}; flex-shrink: 0;"></span>
                                 <span>[${pr.program.code}]</span>
                                 <span>•</span>
@@ -747,7 +749,7 @@ export function renderReportsView(container, navigateTo) {
                       ${d.programReports.slice(0, 4).map(pr => {
                         const chipStyle = getProgramChipStyle(pr);
                         return `
-                          <span style="font-size: 10.5px; font-weight: 700; padding: 2px 7px; border-radius: 6px; background: ${chipStyle.bg}; border: 1px solid ${chipStyle.border}; color: ${chipStyle.text}; display: inline-flex; align-items: center; gap: 4px;">
+                          <span class="prog-report-chip" data-action="view-program" data-pid="${pr.program.id}" data-cid="${cand.id}" style="font-size: 10.5px; font-weight: 700; padding: 2.5px 7.5px; border-radius: 6px; background: ${chipStyle.bg}; border: 1px solid ${chipStyle.border}; color: ${chipStyle.text}; display: inline-flex; align-items: center; gap: 4px; cursor: pointer; transition: all 0.15s ease;" title="${pr.program.name} | Readiness: ${chipStyle.scoreText} • Click to open program details">
                             <span style="width: 5px; height: 5px; border-radius: 50%; background: ${chipStyle.dot};"></span>
                             <span>[${pr.program.code}]</span>
                             <span>${chipStyle.scoreText}</span>
@@ -906,6 +908,16 @@ export function renderReportsView(container, navigateTo) {
             if (printBtn) printBtn.click();
           }, 300);
         }
+      });
+    });
+
+    // Wire Program Quick View Modal from program chips
+    contentWrapper.querySelectorAll('[data-action="view-program"]').forEach(el => {
+      el.addEventListener('click', e => {
+        e.stopPropagation();
+        const pid = el.getAttribute('data-pid');
+        const cid = el.getAttribute('data-cid');
+        if (pid) openProgramQuickViewModal(pid, cid);
       });
     });
 
@@ -1104,12 +1116,12 @@ export function renderReportsView(container, navigateTo) {
                       ` : `
                         <div style="display: flex; flex-wrap: wrap; gap: 4px; align-items: center; max-width: 250px;">
                           ${visibleProgs.map(p => `
-                            <span class="badge badge-neutral" style="font-size: 10px; font-weight: 700;" title="${p.name} (${p.candidateIds ? p.candidateIds.length : 0} candidates)">
+                            <span class="badge badge-neutral prog-report-chip" data-action="view-program" data-pid="${p.id}" style="font-size: 10px; font-weight: 700; cursor: pointer; transition: all 0.15s ease;" title="${p.name} (${p.candidateIds ? p.candidateIds.length : 0} candidates) • Click to view program details & roster">
                               [${p.code}] ${p.candidateIds ? p.candidateIds.length : 0} cand
                             </span>
                           `).join('')}
                           ${remainingProgs > 0 ? `
-                            <span class="badge badge-primary-subtle" style="font-size: 10px; font-weight: 700; cursor: pointer;" data-action="view-trn-profile" data-tid="${trn.id}" title="${t.assignedPrograms.slice(maxProgs).map(p => `[${p.code}] ${p.name}`).join(', ')}">
+                            <span class="badge badge-primary-subtle" style="font-size: 10px; font-weight: 700; cursor: pointer; transition: all 0.15s ease;" data-action="view-trainer-all-progs" data-tid="${trn.id}" title="Click to view all ${t.assignedPrograms.length} assigned programs">
                               +${remainingProgs} more
                             </span>
                           ` : ''}
@@ -1151,11 +1163,17 @@ export function renderReportsView(container, navigateTo) {
                       </div>
                     </td>
 
-                    <!-- Score Distribution -->
+                    <!-- Score Distribution (Clickable breakdown pills) -->
                     <td style="padding: 11px 14px; vertical-align: middle;">
-                      <div style="display: flex; flex-direction: column; gap: 3px; font-size: 10.5px;">
-                        <span class="badge badge-stage" style="padding: 1px 6px; font-size: 9.5px;" title="Stage Ready (80%+)">${t.distribution.readyCount} Ready</span>
-                        <span class="badge badge-amber" style="padding: 1px 6px; font-size: 9.5px;" title="Needs Attention (<60%)">${t.distribution.needsAttentionCount} Lagging</span>
+                      <div style="display: flex; flex-direction: column; gap: 4px; font-size: 10.5px;">
+                        <span class="badge badge-stage" style="padding: 2.5px 7px; font-size: 10px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; justify-content: space-between; gap: 6px; transition: transform 0.1s ease;" data-action="view-trainer-mentees" data-tid="${trn.id}" data-type="READY" title="Click to view all ready candidates (&ge;80%)">
+                          <span>${t.distribution.readyCount} Ready</span>
+                          <span style="font-size: 9px; opacity: 0.85;">&rarr;</span>
+                        </span>
+                        <span class="badge badge-amber" style="padding: 2.5px 7px; font-size: 10px; font-weight: 700; cursor: pointer; display: inline-flex; align-items: center; justify-content: space-between; gap: 6px; transition: transform 0.1s ease;" data-action="view-trainer-mentees" data-tid="${trn.id}" data-type="LAGGING" title="Click to view all lagging candidates (&lt;60%)">
+                          <span>${t.distribution.needsAttentionCount} Lagging</span>
+                          <span style="font-size: 9px; opacity: 0.85;">&rarr;</span>
+                        </span>
                       </div>
                     </td>
 
@@ -1218,19 +1236,31 @@ export function renderReportsView(container, navigateTo) {
                   </div>
                 </div>
 
+                <!-- Score Breakdown Mobile Pills -->
+                <div style="display: flex; gap: 6px; align-items: center; margin-top: 6px;">
+                  <span class="badge badge-stage" style="padding: 4px 8px; font-size: 10.5px; font-weight: 700; cursor: pointer; flex: 1; text-align: center; display: inline-flex; align-items: center; justify-content: center; gap: 4px;" data-action="view-trainer-mentees" data-tid="${trn.id}" data-type="READY" title="Click to view ready mentees (&ge;80%)">
+                    <span>${t.distribution.readyCount} Ready</span>
+                    <span style="font-size: 9px;">&rarr;</span>
+                  </span>
+                  <span class="badge badge-amber" style="padding: 4px 8px; font-size: 10.5px; font-weight: 700; cursor: pointer; flex: 1; text-align: center; display: inline-flex; align-items: center; justify-content: center; gap: 4px;" data-action="view-trainer-mentees" data-tid="${trn.id}" data-type="LAGGING" title="Click to view lagging mentees (&lt;60%)">
+                    <span>${t.distribution.needsAttentionCount} Lagging</span>
+                    <span style="font-size: 9px;">&rarr;</span>
+                  </span>
+                </div>
+
                 ${t.assignedPrograms.length > 0 ? `
-                  <div>
+                  <div style="margin-top: 6px;">
                     <div style="font-size: 10px; font-weight: 700; text-transform: uppercase; color: #64748b; margin-bottom: 5px;">
                       Assigned Programs (${t.assignedPrograms.length})
                     </div>
                     <div class="mrc-programs-strip">
                       ${t.assignedPrograms.slice(0, 4).map(p => `
-                        <span class="badge badge-neutral" style="font-size: 10.5px; font-weight: 700;">
+                        <span class="badge badge-neutral prog-report-chip" data-action="view-program" data-pid="${p.id}" style="font-size: 10.5px; font-weight: 700; cursor: pointer;" title="Click to view program details & roster">
                           [${p.code}] ${p.candidateIds ? p.candidateIds.length : 0} cand
                         </span>
                       `).join('')}
                       ${t.assignedPrograms.length > 4 ? `
-                        <span class="badge badge-primary-subtle" style="font-size: 10px; font-weight: 700; cursor: pointer;" data-action="view-trn-profile" data-tid="${trn.id}">
+                        <span class="badge badge-primary-subtle" style="font-size: 10px; font-weight: 700; cursor: pointer;" data-action="view-trainer-all-progs" data-tid="${trn.id}" title="Click to view all ${t.assignedPrograms.length} assigned programs">
                           +${t.assignedPrograms.length - 4} more
                         </span>
                       ` : ''}
@@ -1278,6 +1308,51 @@ export function renderReportsView(container, navigateTo) {
         const tid = btn.getAttribute('data-tid');
         const trn = state.getTrainerById(tid);
         if (trn) openTrainerProfileModal(trn);
+      });
+    });
+
+    // Wire Program Quick View Modal from trainer report program chips
+    contentWrapper.querySelectorAll('[data-action="view-program"]').forEach(el => {
+      el.addEventListener('click', e => {
+        e.stopPropagation();
+        const pid = el.getAttribute('data-pid');
+        if (pid) openProgramQuickViewModal(pid);
+      });
+    });
+
+    // Wire All Programs Modal from "+X more" chips
+    contentWrapper.querySelectorAll('[data-action="view-trainer-all-progs"]').forEach(el => {
+      el.addEventListener('click', e => {
+        e.stopPropagation();
+        const tid = el.getAttribute('data-tid');
+        const reportData = allTrainerReports.find(x => x.trainer.id === tid);
+        if (reportData) {
+          openTrainerAllProgramsModal({
+            trainer: reportData.trainer,
+            assignedPrograms: reportData.assignedPrograms
+          });
+        }
+      });
+    });
+
+    // Wire Mentees Breakdown Modal from "0 Ready" and "2 Lagging" badges
+    contentWrapper.querySelectorAll('[data-action="view-trainer-mentees"]').forEach(el => {
+      el.addEventListener('click', e => {
+        e.stopPropagation();
+        const tid = el.getAttribute('data-tid');
+        const filterType = el.getAttribute('data-type'); // 'READY' or 'LAGGING'
+        const reportData = allTrainerReports.find(x => x.trainer.id === tid);
+        if (reportData) {
+          const candidates = filterType === 'READY'
+            ? (reportData.distribution.readyCandidates || [])
+            : (reportData.distribution.needsAttentionCandidates || []);
+          openTrainerMenteesBreakdownModal({
+            trainer: reportData.trainer,
+            filterType,
+            candidates,
+            totalMentees: reportData.menteeCount
+          });
+        }
       });
     });
 

@@ -78,8 +78,8 @@ export function renderTrainerDashboardView(container, navigateTo) {
 
           <div class="thc-top-row" style="position: relative; z-index: 1; display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap;">
             <div class="thc-identity" style="display: flex; align-items: center; gap: 14px; flex: 1; min-width: 220px;">
-              <div class="thc-avatar" style="width: 58px; height: 58px; border-radius: 50%; background: ${currentTrainer.color || '#6366f1'}; color: #ffffff; font-weight: 800; font-size: 20px; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 0 3px rgba(255,255,255,0.25), 0 4px 14px rgba(0,0,0,0.3); flex-shrink: 0;">
-                ${currentTrainer.name.split(' ').map(n => n[0]).slice(0, 2).join('')}
+              <div class="thc-avatar" style="width: 58px; height: 58px; border-radius: 50%; background: ${currentTrainer.color || '#6366f1'}; color: #ffffff; font-weight: 800; font-size: 20px; display: flex; align-items: center; justify-content: center; box-shadow: 0 0 0 3px rgba(255,255,255,0.25), 0 4px 14px rgba(0,0,0,0.3); flex-shrink: 0; overflow: hidden;">
+                ${currentTrainer.photo ? `<img src="${currentTrainer.photo}" alt="${currentTrainer.name}" style="width: 100%; height: 100%; object-fit: cover;" />` : currentTrainer.name.split(' ').map(n => n[0]).slice(0, 2).join('')}
               </div>
               <div class="thc-info" style="flex: 1; min-width: 0;">
                 <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap; margin-bottom: 4px;">

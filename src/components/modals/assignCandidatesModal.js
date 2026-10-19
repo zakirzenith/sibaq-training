@@ -191,7 +191,9 @@ export function openAssignCandidatesModal({ programId, onSave = () => {} }) {
       trainerDetailsPreview.innerHTML = `
         <div class="saas-trainer-mini-card">
           <div class="stc-avatar" style="background: ${trn.color || '#6366f1'}">
-            ${trn.name.split(' ').map(n => n[0]).slice(0, 2).join('')}
+            ${trn.photo 
+              ? `<img src="${trn.photo}" alt="${trn.name}" style="width: 100%; height: 100%; object-fit: cover;" />` 
+              : trn.name.split(' ').map(n => n[0]).slice(0, 2).join('')}
           </div>
           <div class="stc-info">
             <strong class="stc-name">${trn.name}</strong>

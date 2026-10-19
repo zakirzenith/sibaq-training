@@ -195,7 +195,9 @@ class App {
           <div style="background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); border: 1px solid #e2e8f0; border-radius: 14px; padding: 16px; text-align: center; margin-bottom: 14px;">
             <div style="display: inline-flex; align-items: center; justify-content: center; width: 62px; height: 62px; border-radius: 50%; background: ${isTrainer && activeTrainer ? (activeTrainer.color || '#6366f1') : '#ffffff'}; color: #fff; font-size: 22px; font-weight: 800; box-shadow: 0 4px 12px rgba(0,0,0,0.08); border: 3px solid #ffffff; margin-bottom: 10px; overflow: hidden;">
               ${isTrainer && activeTrainer 
-                ? activeTrainer.name.split(' ').map(n => n[0]).slice(0, 2).join('') 
+                ? (activeTrainer.photo 
+                    ? `<img src="${activeTrainer.photo}" alt="${activeTrainer.name}" style="width: 100%; height: 100%; object-fit: cover;" />` 
+                    : activeTrainer.name.split(' ').map(n => n[0]).slice(0, 2).join(''))
                 : `<img src="/logo.png" alt="Logo" style="width: 100%; height: 100%; object-fit: contain; padding: 4px;" />`}
             </div>
             <h3 style="font-size: 16.5px; font-weight: 800; color: #0f172a; margin: 0 0 4px 0;">${userName}</h3>
@@ -404,8 +406,10 @@ class App {
       }
       if (userPill) {
         userPill.innerHTML = `
-          <div class="sup-avatar" style="width: 28px; height: 28px; border-radius: 50%; background: ${activeTrainer.color || '#6366f1'}; color: #fff; font-weight: 700; font-size: 11px; display: flex; align-items: center; justify-content: center;">
-            ${activeTrainer.name.split(' ').map(n => n[0]).slice(0, 2).join('')}
+          <div class="sup-avatar" style="width: 28px; height: 28px; border-radius: 50%; background: ${activeTrainer.color || '#6366f1'}; color: #fff; font-weight: 700; font-size: 11px; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+            ${activeTrainer.photo 
+              ? `<img src="${activeTrainer.photo}" alt="${activeTrainer.name}" style="width: 100%; height: 100%; object-fit: cover;" />` 
+              : activeTrainer.name.split(' ').map(n => n[0]).slice(0, 2).join('')}
           </div>
           <div class="sup-info">
             <span class="sup-name">${activeTrainer.name}</span>
@@ -490,8 +494,10 @@ class App {
             <span>Daily Progress</span>
           </button>
           <button class="mobile-nav-btn" data-action="open-profile">
-            <span style="display:inline-flex; align-items:center; justify-content:center; width:22px; height:22px; border-radius:50%; background:${activeTrainer.color || '#6366f1'}; color:#fff; font-weight:700; font-size:11px;">
-              ${activeTrainer.name.split(' ').map(n => n[0]).slice(0, 2).join('')}
+            <span style="display:inline-flex; align-items:center; justify-content:center; width:22px; height:22px; border-radius:50%; background:${activeTrainer.color || '#6366f1'}; color:#fff; font-weight:700; font-size:11px; overflow:hidden;">
+              ${activeTrainer.photo 
+                ? `<img src="${activeTrainer.photo}" alt="${activeTrainer.name}" style="width: 100%; height: 100%; object-fit: cover;" />` 
+                : activeTrainer.name.split(' ').map(n => n[0]).slice(0, 2).join('')}
             </span>
             <span>Profile</span>
           </button>

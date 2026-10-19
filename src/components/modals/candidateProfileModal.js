@@ -142,7 +142,9 @@ export function openCandidateProfileModal({ candidateId, onUpdate = () => {} }) 
                             ? `
                           <div class="trainer-chip-full clickable-trainer-profile" data-tid="${trainer.id}" style="cursor: pointer;" title="Click to view ${trainer.name}'s profile">
                             <div class="trainer-avatar-mini" style="background: ${trainer.color || '#6366f1'}">
-                              ${trainer.name.split(' ').map(n => n[0]).slice(0, 2).join('')}
+                              ${trainer.photo 
+                                ? `<img src="${trainer.photo}" alt="${trainer.name}" style="width: 100%; height: 100%; object-fit: cover;" />` 
+                                : trainer.name.split(' ').map(n => n[0]).slice(0, 2).join('')}
                             </div>
                             <div class="trainer-chip-info">
                               <strong class="trainer-chip-name">${trainer.name}</strong>
@@ -205,7 +207,9 @@ export function openCandidateProfileModal({ candidateId, onUpdate = () => {} }) 
                     return `
                 <div class="mentor-summary-pill clickable-trainer-profile" data-tid="${trn.id}" style="cursor: pointer;" title="Click to view ${trn.name}'s profile">
                   <div class="trainer-avatar-mini" style="background: ${trn.color || '#6366f1'}">
-                    ${trn.name.split(' ').map(n => n[0]).slice(0, 2).join('')}
+                    ${trn.photo 
+                      ? `<img src="${trn.photo}" alt="${trn.name}" style="width: 100%; height: 100%; object-fit: cover;" />` 
+                      : trn.name.split(' ').map(n => n[0]).slice(0, 2).join('')}
                   </div>
                   <div>
                     <strong>${trn.name}</strong>

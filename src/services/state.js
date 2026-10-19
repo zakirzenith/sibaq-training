@@ -778,6 +778,7 @@ class StateService {
       email: String(trainerData.email || '').trim(),
       status: trainerData.status || 'Active',
       color: trainerData.color || randomColor,
+      photo: trainerData.photo !== undefined ? trainerData.photo : null,
       createdAt: trainerData.createdAt || new Date().toISOString()
     };
 
@@ -813,7 +814,8 @@ class StateService {
       username: updateData.username !== undefined ? String(updateData.username).trim().toLowerCase() : (current.username || current.name.toLowerCase().replace(/[^a-z0-9]/g, '')),
       password: updateData.password !== undefined ? String(updateData.password).trim() : (current.password || '123456'),
       phone: updateData.phone !== undefined ? String(updateData.phone).trim() : (current.phone || ''),
-      email: updateData.email !== undefined ? String(updateData.email).trim() : (current.email || '')
+      email: updateData.email !== undefined ? String(updateData.email).trim() : (current.email || ''),
+      photo: updateData.photo !== undefined ? updateData.photo : (current.photo || null)
     };
 
     this.saveState();

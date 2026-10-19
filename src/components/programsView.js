@@ -468,7 +468,9 @@ export function renderProgramsView(container, navigateTo) {
               ? `
             <div class="assigned-trainer-profile-card">
               <div class="atpc-avatar" style="background: ${assignedTrainer.color || '#6366f1'}; cursor: pointer;" title="Click to view trainer profile">
-                ${(assignedTrainer.name || 'T').split(' ').map(n => n[0]).slice(0, 2).join('')}
+                ${assignedTrainer.photo 
+                  ? `<img src="${assignedTrainer.photo}" alt="${assignedTrainer.name}" style="width: 100%; height: 100%; object-fit: cover;" />` 
+                  : (assignedTrainer.name || 'T').split(' ').map(n => n[0]).slice(0, 2).join('')}
               </div>
               <div class="atpc-info">
                 <strong class="atpc-name" style="cursor: pointer;" title="Click to view trainer profile">${assignedTrainer.name}</strong>

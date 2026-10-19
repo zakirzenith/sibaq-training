@@ -130,7 +130,9 @@ export function openTrainerPickerModal({
       item.className = `tpm-trainer-item ${isCurrent ? 'is-current' : ''}`;
       item.innerHTML = `
         <div class="tpm-avatar" style="background: ${t.color || '#6366f1'};">
-          ${t.name.split(' ').map(n => n[0]).slice(0, 2).join('')}
+          ${t.photo 
+            ? `<img src="${t.photo}" alt="${t.name}" style="width: 100%; height: 100%; object-fit: cover;" />` 
+            : t.name.split(' ').map(n => n[0]).slice(0, 2).join('')}
         </div>
         <div class="tpm-info">
           <div class="tpm-name-row">

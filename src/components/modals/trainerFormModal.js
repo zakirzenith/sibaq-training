@@ -26,6 +26,32 @@ export function openTrainerFormModal({ trainer = null, onSave = () => {} }) {
       </div>
 
       <form id="trainerForm" class="modal-body" style="display: flex; flex-direction: column; gap: 14px;">
+        <!-- Trainer Profile Photo Row -->
+        <div class="trainer-photo-upload-row" style="display: flex; align-items: center; gap: 14px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px 14px;">
+          <div style="position: relative; width: 62px; height: 62px; flex-shrink: 0;">
+            <div id="trainerPhotoPreview" style="width: 100%; height: 100%; border-radius: 50%; background: ${trainer && trainer.color ? trainer.color : '#6366f1'}; color: #ffffff; font-weight: 800; font-size: 20px; display: flex; align-items: center; justify-content: center; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1); border: 2px solid #ffffff;">
+              ${trainer && trainer.photo 
+                ? `<img src="${trainer.photo}" alt="Trainer Photo" style="width: 100%; height: 100%; object-fit: cover;" />`
+                : (trainer ? trainer.name.split(' ').map(n => n[0]).slice(0, 2).join('') : 'TR')}
+            </div>
+          </div>
+
+          <div style="flex: 1; min-width: 0;">
+            <div style="font-size: 13px; font-weight: 700; color: #0f172a; margin-bottom: 2px;">Profile Photo</div>
+            <div style="font-size: 11.5px; color: #64748b; margin-bottom: 6px;">Upload a photo of the trainer (JPG, PNG, WebP).</div>
+            
+            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+              <input type="file" id="inpTrainerPhotoFile" accept="image/*" style="display: none;" />
+              <button type="button" id="btnUploadTrainerPhoto" class="btn btn-sm btn-outline" style="font-size: 11.5px; height: 30px; padding: 0 10px; gap: 5px; font-weight: 700; border-radius: 7px; border-color: #cbd5e1; background: #ffffff; cursor: pointer;">
+                ${getIcon('upload')} <span>${trainer && trainer.photo ? 'Change Photo' : 'Upload Photo'}</span>
+              </button>
+              <button type="button" id="btnRemoveTrainerPhoto" class="btn btn-sm text-danger" style="font-size: 11.5px; height: 30px; padding: 0 8px; gap: 4px; font-weight: 600; border: none; background: transparent; display: ${trainer && trainer.photo ? 'inline-flex' : 'none'}; cursor: pointer;">
+                ${getIcon('trash')} <span>Remove</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
         <div class="form-group">
           <label class="form-label" for="txtTrainerName">Trainer Name *</label>
           <input 
@@ -86,15 +112,16 @@ export function openTrainerFormModal({ trainer = null, onSave = () => {} }) {
                   value="${defaultPassword}"
                   style="font-size: 13px; padding-right: 32px;"
                 />
-                <button type="button" id="btnTogglePwdView" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #94a3b8; cursor: pointer; padding: 2px;" title="Show/Hide Password">
-                  👁️
+                <button type="button" id="btnTogglePwdView" style="position: absolute; right: 8px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #94a3b8; cursor: pointer; padding: 2px; display: flex; align-items: center; justify-content: center;" title="Show/Hide Password">
+                  ${getIcon('eye')}
                 </button>
               </div>
             </div>
           </div>
 
-          <div style="font-size: 11px; color: #64748b; margin-top: 8px; line-height: 1.4;">
-            ℹ️ The trainer will use these credentials to log in to their personal Trainer Panel.
+          <div style="font-size: 11px; color: #64748b; margin-top: 8px; line-height: 1.4; display: flex; align-items: center; gap: 5px;">
+            <span style="color: #6366f1; display: inline-flex;">${getIcon('info')}</span>
+            <span>The trainer will use these credentials to log in to their personal Trainer Panel.</span>
           </div>
         </div>
 
@@ -140,13 +167,97 @@ export function openTrainerFormModal({ trainer = null, onSave = () => {} }) {
   const btnSubmit = overlay.querySelector('#btnSubmitTrainer');
   const btnTogglePwd = overlay.querySelector('#btnTogglePwdView');
 
+  // Photo state & DOM elements
+  let currentPhotoData = trainer && trainer.photo ? trainer.photo : null;
+  const photoPreview = overlay.querySelector('#trainerPhotoPreview');
+  const inpPhotoFile = overlay.querySelector('#inpTrainerPhotoFile');
+  const btnUploadPhoto = overlay.querySelector('#btnUploadTrainerPhoto');
+  const btnRemovePhoto = overlay.querySelector('#btnRemoveTrainerPhoto');
+
+  const updatePreview = () => {
+    if (currentPhotoData) {
+      photoPreview.innerHTML = `<img src="${currentPhotoData}" alt="Trainer Photo" style="width: 100%; height: 100%; object-fit: cover;" />`;
+      btnRemovePhoto.style.display = 'inline-flex';
+      btnUploadPhoto.querySelector('span').textContent = 'Change Photo';
+    } else {
+      const nameVal = txtName.value.trim();
+      const initials = nameVal 
+        ? nameVal.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase() 
+        : (trainer ? trainer.name.split(' ').map(n => n[0]).slice(0, 2).join('') : 'TR');
+      photoPreview.innerHTML = initials;
+      btnRemovePhoto.style.display = 'none';
+      btnUploadPhoto.querySelector('span').textContent = 'Upload Photo';
+    }
+  };
+
+  btnUploadPhoto.addEventListener('click', () => {
+    inpPhotoFile.click();
+  });
+
+  btnRemovePhoto.addEventListener('click', () => {
+    currentPhotoData = null;
+    inpPhotoFile.value = '';
+    updatePreview();
+    toast.info('Trainer photo removed.');
+  });
+
+  inpPhotoFile.addEventListener('change', (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please select a valid image file (JPG, PNG, WebP).');
+      return;
+    }
+
+    // Client-side image optimization (max 400x400)
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const img = new Image();
+      img.onload = () => {
+        const canvas = document.createElement('canvas');
+        const maxDim = 400;
+        let width = img.width;
+        let height = img.height;
+
+        if (width > height) {
+          if (width > maxDim) {
+            height = Math.round((height * maxDim) / width);
+            width = maxDim;
+          }
+        } else {
+          if (height > maxDim) {
+            width = Math.round((width * maxDim) / height);
+            height = maxDim;
+          }
+        }
+
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+
+        const compressedBase64 = canvas.toDataURL('image/jpeg', 0.85);
+        currentPhotoData = compressedBase64;
+        updatePreview();
+        toast.success('Photo uploaded! Click save to apply changes.');
+      };
+      img.src = event.target.result;
+    };
+    reader.readAsDataURL(file);
+  });
+
   // Auto-generate username from name if adding new trainer
+  txtName.addEventListener('input', () => {
+    if (!isEdit && !txtUsername.dataset.userEdited) {
+      txtUsername.value = txtName.value.toLowerCase().replace(/[^a-z0-9]/g, '');
+    }
+    if (!currentPhotoData) {
+      updatePreview();
+    }
+  });
+
   if (!isEdit) {
-    txtName.addEventListener('input', () => {
-      if (!txtUsername.dataset.userEdited) {
-        txtUsername.value = txtName.value.toLowerCase().replace(/[^a-z0-9]/g, '');
-      }
-    });
     txtUsername.addEventListener('input', () => {
       txtUsername.dataset.userEdited = 'true';
     });
@@ -157,10 +268,10 @@ export function openTrainerFormModal({ trainer = null, onSave = () => {} }) {
     btnTogglePwd.addEventListener('click', () => {
       if (txtPassword.type === 'password') {
         txtPassword.type = 'text';
-        btnTogglePwd.textContent = '🔒';
+        btnTogglePwd.innerHTML = getIcon('eyeOff');
       } else {
         txtPassword.type = 'password';
-        btnTogglePwd.textContent = '👁️';
+        btnTogglePwd.innerHTML = getIcon('eye');
       }
     });
   }
@@ -202,12 +313,13 @@ export function openTrainerFormModal({ trainer = null, onSave = () => {} }) {
       expertise,
       username,
       password,
-      phone
+      phone,
+      photo: currentPhotoData
     };
 
     if (!isEdit) {
       state.addTrainer(payload);
-      toast.success(`Trainer "${name}" added with credentials!`);
+      toast.success(`Trainer "${name}" added successfully!`);
     } else {
       state.updateTrainer(trainer.id, payload);
       toast.success(`Trainer "${name}" updated successfully!`);

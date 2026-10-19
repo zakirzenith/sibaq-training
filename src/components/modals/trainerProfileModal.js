@@ -39,8 +39,8 @@ export function openTrainerProfileModal({ trainerId, onUpdate = () => {} }) {
         <div class="profile-header-meta">
           <div class="modal-badge">${getIcon('trainers')} Trainer & Mentor Profile</div>
           <div class="profile-name-row">
-            <div class="tpm-avatar-lg" style="background: ${trainer.color || '#6366f1'}">
-              ${(trainer.name || 'T').split(' ').map(n => n[0]).slice(0, 2).join('')}
+            <div class="tpm-avatar-lg" style="background: ${trainer.color || '#6366f1'}; overflow: hidden;">
+              ${trainer.photo ? `<img src="${trainer.photo}" alt="${trainer.name}" style="width: 100%; height: 100%; object-fit: cover;" />` : (trainer.name || 'T').split(' ').map(n => n[0]).slice(0, 2).join('')}
             </div>
             <div>
               <h2 class="modal-title" style="margin: 0; line-height: 1.2;">${trainer.name}</h2>

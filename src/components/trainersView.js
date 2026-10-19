@@ -189,8 +189,8 @@ export function renderTrainersView(container, navigateTo) {
 
       card.innerHTML = `
         <div class="stc-top">
-          <div class="stc-avatar-wrap" style="background: ${t.color || '#6366f1'}; cursor: pointer;" title="Click to view ${t.name}'s profile">
-            ${t.name.split(' ').map(n => n[0]).slice(0, 2).join('')}
+          <div class="stc-avatar-wrap" style="background: ${t.color || '#6366f1'}; cursor: pointer; overflow: hidden;" title="Click to view ${t.name}'s profile">
+            ${t.photo ? `<img src="${t.photo}" alt="${t.name}" style="width: 100%; height: 100%; object-fit: cover;" />` : t.name.split(' ').map(n => n[0]).slice(0, 2).join('')}
           </div>
           <div class="stc-meta">
             <h3 class="stc-title" style="cursor: pointer;" title="Click to view ${t.name}'s profile">${t.name}</h3>

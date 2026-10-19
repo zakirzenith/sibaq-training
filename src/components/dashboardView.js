@@ -193,8 +193,10 @@ export function renderDashboardView(container, navigateTo) {
 
             return `
               <div class="trainer-workload-row">
-                <div class="trainer-avatar-mini" style="background: ${t.color || '#6366f1'}">
-                  ${t.name.split(' ').map(n => n[0]).slice(0, 2).join('')}
+                <div class="trainer-avatar-mini" style="background: ${t.color || '#6366f1'}; overflow: hidden;">
+                  ${t.photo 
+                    ? `<img src="${t.photo}" alt="${t.name}" style="width: 100%; height: 100%; object-fit: cover;" />` 
+                    : t.name.split(' ').map(n => n[0]).slice(0, 2).join('')}
                 </div>
                 <div class="trainer-workload-info">
                   <div class="trainer-wl-name">

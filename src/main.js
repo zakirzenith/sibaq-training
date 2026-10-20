@@ -11,8 +11,9 @@ import { renderDailyProgressView } from './components/dailyProgressView.js';
 import { renderReportsView } from './components/reportsView.js';
 import { renderTrainerDashboardView } from './components/trainerPortal/trainerDashboardView.js';
 import { renderTrainerDailyProgressView } from './components/trainerPortal/trainerDailyProgressView.js';
-import { renderTrainerReportsView } from './components/trainerPortal/trainerReportsView.js';
 import { renderMenteeDashboardView } from './components/menteePortal/menteeDashboardView.js';
+import { renderMenteePracticeView } from './components/menteePortal/menteePracticeView.js';
+import { renderMenteeCompareView } from './components/menteePortal/menteeCompareView.js';
 import { openCandidateDossierModal } from './components/modals/candidateDossierModal.js';
 import { openExcelUploadModal } from './components/modals/excelUploadModal.js';
 import { openCloudDatabaseModal } from './components/modals/cloudDatabaseModal.js';
@@ -577,7 +578,15 @@ class App {
           <div class="nav-section-title">Mentee Workspace</div>
           <a class="nav-item ${this.currentView === 'mentee-dashboard' ? 'active' : ''}" data-view="mentee-dashboard" id="navMenteeDashboard">
             <span class="nav-item-icon">${getIcon('dashboard')}</span>
-            <span>My Practice &amp; Tasks</span>
+            <span>Dashboard</span>
+          </a>
+          <a class="nav-item ${this.currentView === 'mentee-practice' ? 'active' : ''}" data-view="mentee-practice" id="navMenteePractice">
+            <span class="nav-item-icon">${getIcon('calendar')}</span>
+            <span>My Practice</span>
+          </a>
+          <a class="nav-item ${this.currentView === 'mentee-compare' ? 'active' : ''}" data-view="mentee-compare" id="navMenteeCompare">
+            <span class="nav-item-icon">${getIcon('chart')}</span>
+            <span>Compare</span>
           </a>
           <a class="nav-item" data-action="view-my-dossier" id="navMenteeDossier" style="cursor: pointer;">
             <span class="nav-item-icon">${getIcon('award')}</span>
@@ -610,7 +619,15 @@ class App {
         mobileNav.innerHTML = `
           <button class="mobile-nav-btn ${this.currentView === 'mentee-dashboard' ? 'active' : ''}" data-view="mentee-dashboard">
             ${getIcon('dashboard')}
+            <span>Dashboard</span>
+          </button>
+          <button class="mobile-nav-btn ${this.currentView === 'mentee-practice' ? 'active' : ''}" data-view="mentee-practice">
+            ${getIcon('calendar')}
             <span>Practice</span>
+          </button>
+          <button class="mobile-nav-btn ${this.currentView === 'mentee-compare' ? 'active' : ''}" data-view="mentee-compare">
+            ${getIcon('chart')}
+            <span>Compare</span>
           </button>
           <button class="mobile-nav-btn" data-action="view-my-dossier">
             ${getIcon('award')}
@@ -745,9 +762,9 @@ class App {
     }
 
     if (session && session.role === 'mentee') {
-      const allowedMenteeViews = ['mentee-dashboard'];
+      const allowedMenteeViews = ['mentee-dashboard', 'mentee-practice', 'mentee-compare'];
       if (!allowedMenteeViews.includes(viewName)) {
-        toast.error('Access Restricted: Candidates can only access their personal dashboard.');
+        toast.error('Access Restricted: Candidates can only access candidate portal views.');
         this.currentView = 'mentee-dashboard';
         this.render();
         return;
@@ -1041,6 +1058,12 @@ class App {
         break;
       case 'mentee-dashboard':
         renderMenteeDashboardView(this.mainContent, navigate);
+        break;
+      case 'mentee-practice':
+        renderMenteePracticeView(this.mainContent, navigate);
+        break;
+      case 'mentee-compare':
+        renderMenteeCompareView(this.mainContent, navigate);
         break;
       default:
         if (this.currentPortal === 'trainer') {

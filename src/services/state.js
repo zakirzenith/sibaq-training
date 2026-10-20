@@ -1978,6 +1978,166 @@ class StateService {
     };
   }
 
+  getCandidateComparisonData(candidateId) {
+    const candidate = this.getCandidateById(candidateId);
+    if (!candidate) return null;
+
+    const myCategory = normalizeCategory(candidate.category || 'BIDĀYA');
+    const myDossier = this.getCandidatePerformanceDossier(candidateId);
+    if (!myDossier) return null;
+
+    // All candidates in the same category
+    const categoryPeers = this.candidates.filter(c => normalizeCategory(c.category) === myCategory);
+
+    // Calculate performance dossiers for all peers in category
+    const now = new Date();
+    const launchDateStr = '2026-10-19';
+
+    const peerDossiers = categoryPeers.map(c => {
+      const dos = this.getCandidatePerformanceDossier(c.id);
+      if (!dos) return null;
+
+      // Compute streak for peer
+      let streak = 0;
+      for (let i = 0; i < 60; i++) {
+        const d = new Date(now);
+        d.setDate(d.getDate() - i);
+        const dStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+        if (dStr < launchDateStr) break;
+        const hasMeet = this.dailyMeets.some(m => m.candidateId === c.id && m.date === dStr);
+        if (hasMeet) streak++;
+        else if (i > 0) break;
+      }
+
+      return {
+        candidate: c,
+        dossier: dos,
+        overallReadiness: dos.overallReadiness || 0,
+        totalMeets: dos.totalMeets || 0,
+        programReports: dos.programReports || [],
+        streak,
+        isCurrent: c.id === candidateId
+      };
+    }).filter(Boolean);
+
+    // Sort leaderboard by overall readiness desc, then meets desc, then name asc
+    peerDossiers.sort((a, b) => {
+      if (b.overallReadiness !== a.overallReadiness) {
+        return b.overallReadiness - a.overallReadiness;
+      }
+      if (b.totalMeets !== a.totalMeets) {
+        return b.totalMeets - a.totalMeets;
+      }
+      return a.candidate.name.localeCompare(b.candidate.name);
+    });
+
+    // Assign rank to each peer
+    peerDossiers.forEach((p, idx) => {
+      p.rank = idx + 1;
+    });
+
+    const totalInCat = peerDossiers.length;
+    const myPeerData = peerDossiers.find(p => p.candidate.id === candidateId) || {
+      candidate,
+      dossier: myDossier,
+      overallReadiness: myDossier.overallReadiness || 0,
+      totalMeets: myDossier.totalMeets || 0,
+      programReports: myDossier.programReports || [],
+      streak: 0,
+      rank: 1,
+      isCurrent: true
+    };
+
+    const myRank = myPeerData.rank;
+    const percentile = totalInCat > 1 
+      ? Math.round(((totalInCat - myRank) / (totalInCat - 1)) * 100) 
+      : 100;
+
+    // Category aggregate metrics
+    const catTotalReadiness = peerDossiers.reduce((acc, p) => acc + p.overallReadiness, 0);
+    const catAvgReadiness = totalInCat > 0 ? Math.round(catTotalReadiness / totalInCat) : 0;
+    const catTopReadiness = peerDossiers.length > 0 ? peerDossiers[0].overallReadiness : 0;
+
+    const catTotalMeets = peerDossiers.reduce((acc, p) => acc + p.totalMeets, 0);
+    const catAvgMeets = totalInCat > 0 ? +(catTotalMeets / totalInCat).toFixed(1) : 0;
+    const catTopMeets = peerDossiers.length > 0 ? Math.max(...peerDossiers.map(p => p.totalMeets)) : 0;
+
+    const catTotalStreak = peerDossiers.reduce((acc, p) => acc + p.streak, 0);
+    const catAvgStreak = totalInCat > 0 ? +(catTotalStreak / totalInCat).toFixed(1) : 0;
+    const catTopStreak = peerDossiers.length > 0 ? Math.max(...peerDossiers.map(p => p.streak)) : 0;
+
+    // Program-by-program comparison for all programs enrolled by the candidate
+    const programComparisons = myDossier.programReports.map(pr => {
+      const prog = pr.program;
+      const myScore = pr.latestScore || 0;
+      const isMet = pr.isMet;
+
+      // Find all competitor reports for this program across category peers
+      const competitors = [];
+      peerDossiers.forEach(pd => {
+        const match = pd.programReports.find(r => r.program.id === prog.id);
+        if (match) {
+          competitors.push({
+            candidate: pd.candidate,
+            score: match.latestScore || 0,
+            meets: match.meetCount || 0,
+            isMet: match.isMet,
+            isCurrent: pd.isCurrent
+          });
+        }
+      });
+
+      const evaluatedCompetitors = competitors.filter(c => c.isMet && c.score > 0);
+      const progCompetitorCount = competitors.length;
+      const progAvgScore = evaluatedCompetitors.length > 0 
+        ? Math.round(evaluatedCompetitors.reduce((acc, c) => acc + c.score, 0) / evaluatedCompetitors.length)
+        : (isMet ? myScore : 0);
+      const progTopScore = evaluatedCompetitors.length > 0 
+        ? Math.max(...evaluatedCompetitors.map(c => c.score))
+        : (isMet ? myScore : 0);
+
+      // Rank in program
+      competitors.sort((a, b) => b.score - a.score);
+      const myProgRank = competitors.findIndex(c => c.isCurrent) + 1;
+
+      const deltaFromAvg = myScore - progAvgScore;
+      const isLeader = isMet && myScore >= progTopScore && progTopScore > 0;
+
+      return {
+        program: prog,
+        myScore,
+        myProgRank: myProgRank || 1,
+        competitorCount: progCompetitorCount,
+        progAvgScore,
+        progTopScore,
+        deltaFromAvg,
+        isLeader,
+        isMet,
+        status: pr.status
+      };
+    });
+
+    return {
+      candidate,
+      myCategory,
+      myRank,
+      totalInCat,
+      percentile,
+      myDossier,
+      myReadiness: myDossier.overallReadiness || 0,
+      myTotalMeets: myDossier.totalMeets || 0,
+      myStreak: myPeerData.streak || 0,
+      catAvgReadiness,
+      catTopReadiness,
+      catAvgMeets,
+      catTopMeets,
+      catAvgStreak,
+      catTopStreak,
+      peerDossiers,
+      programComparisons
+    };
+  }
+
   getAllCandidatesReportData() {
     return this.candidates.map(cand => this.getCandidatePerformanceDossier(cand.id)).filter(Boolean);
   }

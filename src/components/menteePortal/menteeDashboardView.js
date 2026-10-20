@@ -77,6 +77,14 @@ export function renderMenteeDashboardView(container, navigate) {
         </div>
 
         <div class="mentee-hero-actions">
+          <button type="button" class="btn btn-outline mentee-btn-nav" id="btnHeroGoPractice" title="Open My Practice drills and date switcher">
+            ${getIcon('calendar')}
+            <span>My Practice</span>
+          </button>
+          <button type="button" class="btn btn-outline mentee-btn-nav" id="btnHeroGoCompare" title="Compare your performance with peers">
+            ${getIcon('chart')}
+            <span>Compare</span>
+          </button>
           <button type="button" class="btn btn-primary mentee-btn-dossier" id="btnOpenMyDossier">
             ${getIcon('award')}
             <span>Official Dossier</span>
@@ -299,41 +307,46 @@ export function renderMenteeDashboardView(container, navigate) {
         </div>
       </div>
 
-      <!-- ================= 🎯 SECTION: MY PRACTICE (DYNAMIC DATE DRILLDOWN) ================= -->
-      <div class="mentee-section-card mentee-practice-section" id="myPracticeSection">
-        <div class="practice-section-header">
-          <div class="psh-title-wrap">
-            <div class="icon-circle-sm" style="background: #eef2ff; color: #4f46e5;">
+      <!-- ================= 🚀 SECTION: QUICK PORTAL HUB (MY PRACTICE & COMPARE) ================= -->
+      <div class="mentee-quick-hub-grid">
+        <!-- Hub Card 1: My Practice -->
+        <div class="mentee-quick-hub-card card-practice">
+          <div class="mqhc-icon-header">
+            <div class="icon-circle" style="background: #eef2ff; color: #4f46e5;">
               ${getIcon('calendar')}
             </div>
-            <div>
-              <h3 class="sch-title" style="margin: 0; font-size: 17px; font-weight: 800; color: #0f172a;">
-                My Practice &bull; Daily Activity &amp; Remarks
-              </h3>
-              <p class="sch-desc" style="margin: 2px 0 0 0; font-size: 12.5px; color: #64748b;">
-                Switch dates below to review daily rehearsals, program scores, and assigned mentors' reviews.
-              </p>
-            </div>
+            <span class="badge ${todayStatus?.isMet ? 'badge-stage' : 'badge-amber'}">
+              ${todayStatus?.isMet ? '✅ Met Today' : '⏳ Action Required'}
+            </span>
           </div>
-
-          <!-- Interactive Date Switcher Controls -->
-          <div class="practice-date-bar">
-            <button type="button" class="pdb-btn" id="btnPracticePrevDay" title="Previous day">&larr;</button>
-            <div class="pdb-quick-pills">
-              <button type="button" class="pdb-pill active" id="btnPracticeToday" data-day="today">Today</button>
-              <button type="button" class="pdb-pill" id="btnPracticeYesterday" data-day="yesterday">Yesterday</button>
-            </div>
-            <div class="practice-date-input-wrap">
-              <span style="font-size: 11px; color: #64748b;">📅</span>
-              <input type="date" id="practiceDatePicker" min="${launchDateStr}" max="${todayStr}" value="${todayStr}" title="Select specific date" />
-            </div>
-            <button type="button" class="pdb-btn" id="btnPracticeNextDay" title="Next day">&rarr;</button>
-          </div>
+          <h3 class="mqhc-title">My Practice &bull; Daily Drills Tracker</h3>
+          <p class="mqhc-desc">
+            Review detailed day-by-day rehearsals, switch dates, inspect individual program scores, and read personalized mentor feedback.
+          </p>
+          <button type="button" class="btn btn-primary mqhc-btn" id="btnHubGoPractice">
+            <span>Open My Practice &bull; Date Switcher</span>
+            <span class="mqhc-arrow">&rarr;</span>
+          </button>
         </div>
 
-        <!-- Dynamic Day Container populated via renderPracticeDay(dateStr) -->
-        <div id="practiceDayContainer" class="practice-day-container">
-          <!-- Dynamically populated -->
+        <!-- Hub Card 2: Compare with Peers -->
+        <div class="mentee-quick-hub-card card-compare">
+          <div class="mqhc-icon-header">
+            <div class="icon-circle" style="background: #ecfdf5; color: #059669;">
+              ${getIcon('chart')}
+            </div>
+            <span class="badge badge-category-subtle">
+              ${candidate.category} Arena
+            </span>
+          </div>
+          <h3 class="mqhc-title">Compare with Others &bull; Standings</h3>
+          <p class="mqhc-desc">
+            Benchmark your overall readiness, rehearsal consistency, and program-by-program scores against peers in your category.
+          </p>
+          <button type="button" class="btn btn-outline mqhc-btn" id="btnHubGoCompare">
+            <span>View Category Standings &bull; Compare</span>
+            <span class="mqhc-arrow">&rarr;</span>
+          </button>
         </div>
       </div>
 
@@ -544,371 +557,39 @@ export function renderMenteeDashboardView(container, navigate) {
     });
   }
 
-  // ================= 🎯 MY PRACTICE DATE SWITCHING CONTROLS =================
-  let currentPracticeDate = todayStr;
-  const practiceDayContainer = container.querySelector('#practiceDayContainer');
-  const datePicker = container.querySelector('#practiceDatePicker');
-  const btnToday = container.querySelector('#btnPracticeToday');
-  const btnYesterday = container.querySelector('#btnPracticeYesterday');
-  const btnPrev = container.querySelector('#btnPracticePrevDay');
-  const btnNext = container.querySelector('#btnPracticeNextDay');
-
-  function renderPracticeDay(dateStr) {
-    if (!practiceDayContainer) return;
-    const dayStatus = state.getCandidateDailyStatus(candidateId, dateStr);
-    if (!dayStatus) {
-      practiceDayContainer.innerHTML = `
-        <div class="empty-state-card" style="padding: 24px; text-align: center;">
-          <p class="text-muted">No practice records available for ${dateStr}.</p>
-        </div>
-      `;
-      return;
-    }
-
-    const parts = dateStr.split('-');
-    const dObj = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
-    const fullDisplayDate = dObj.toLocaleDateString('en-US', {
-      weekday: 'long',
-      month: 'short',
-      day: 'numeric',
-      year: 'numeric'
-    });
-
-    const isToday = dateStr === todayStr;
-    const isYesterday = dateStr === yesterdayStr;
-    const relLabel = isToday ? 'Today' : (isYesterday ? 'Yesterday' : 'Archived Drill');
-
-    const bannerClass = dayStatus.isMet ? 'banner-met' : (dayStatus.isMissed ? 'banner-missed' : 'banner-pending');
-
-    // Overall score calculation for this day
-    let avgScore = null;
-    let scoreStatus = null;
-    if (dayStatus.meets && dayStatus.meets.length > 0) {
-      const sumPct = dayStatus.meets.reduce((acc, m) => acc + (Number(m.percentage) || 0), 0);
-      avgScore = Math.round(sumPct / dayStatus.meets.length);
-      scoreStatus = getProgressStatus(avgScore);
-    }
-
-    // All remarks from mentors on this day
-    const dayRemarks = (dayStatus.meets || []).filter(m => m.remark && m.remark.trim());
-
-    practiceDayContainer.innerHTML = `
-      <!-- Date Banner -->
-      <div class="practice-date-banner ${bannerClass}">
-        <div class="pdb-date-row">
-          <span style="font-size: 22px;">📅</span>
-          <div>
-            <div class="pdb-full-date">${fullDisplayDate}</div>
-            <div style="font-size: 12px; color: #64748b; font-weight: 600;">
-              ${relLabel} &bull; ${dateStr}
-            </div>
-          </div>
-        </div>
-
-        <div class="pdb-right">
-          ${dayStatus.isMet ? `
-            <span class="status-chip chip-met">
-              🟢 Fully Met &bull; Rehearsals Completed
-            </span>
-          ` : dayStatus.isPartiallyMet ? `
-            <span class="status-chip chip-pending">
-              🟡 Partially Met (${dayStatus.metProgramsCount}/${dayStatus.totalPrograms} Programs)
-            </span>
-          ` : dayStatus.isMissed ? `
-            <span class="status-chip chip-missed">
-              🔴 Missed &bull; No Rehearsal Logged
-            </span>
-          ` : `
-            <span class="status-chip chip-pending">
-              ⏳ Pending Today &bull; Action Required
-            </span>
-          `}
-        </div>
-      </div>
-
-      <!-- 3 Overall Day Stats Grid -->
-      <div class="practice-day-stats-grid">
-        <!-- Tile 1: Status / Completion -->
-        <div class="pds-card">
-          <span class="pds-label">Day Status</span>
-          <div class="pds-val-row">
-            <span class="pds-val" style="color: ${dayStatus.isMet ? '#059669' : (dayStatus.isMissed ? '#dc2626' : '#d97706')};">
-              ${dayStatus.isMet ? 'Completed' : (dayStatus.isPartiallyMet ? `${dayStatus.metProgramsCount}/${dayStatus.totalPrograms}` : (dayStatus.isMissed ? 'Missed' : 'Pending'))}
-            </span>
-            <span class="badge ${dayStatus.isMet ? 'badge-stage' : (dayStatus.isMissed ? 'badge-danger' : 'badge-amber')}" style="font-size: 10px;">
-              ${dayStatus.isMet ? '100% Met' : (dayStatus.isMissed ? '0%' : 'In Progress')}
-            </span>
-          </div>
-          <span class="pds-sub">
-            ${dayStatus.totalPrograms > 0 ? `${dayStatus.metProgramsCount} of ${dayStatus.totalPrograms} program${dayStatus.totalPrograms > 1 ? 's' : ''} met` : `${dayStatus.meetCount} meet logged`}
-          </span>
-        </div>
-
-        <!-- Tile 2: Overall Score -->
-        <div class="pds-card">
-          <span class="pds-label">Daily Evaluation</span>
-          <div class="pds-val-row">
-            <span class="pds-val" style="color: ${scoreStatus ? scoreStatus.color : '#64748b'};">
-              ${avgScore !== null ? `${avgScore}%` : '—'}
-            </span>
-            ${scoreStatus ? `
-              <span class="badge ${scoreStatus.badgeClass}" style="font-size: 10px;">
-                ${scoreStatus.label}
-              </span>
-            ` : ''}
-          </div>
-          <span class="pds-sub">
-            ${avgScore !== null ? `Average across ${dayStatus.meetCount} session${dayStatus.meetCount > 1 ? 's' : ''}` : (dayStatus.isMissed ? 'No score logged' : 'Awaiting evaluation')}
-          </span>
-        </div>
-
-        <!-- Tile 3: Sessions Logged -->
-        <div class="pds-card">
-          <span class="pds-label">Drills Clocked</span>
-          <div class="pds-val-row">
-            <span class="pds-val" style="color: #4f46e5;">
-              ${dayStatus.meetCount}
-            </span>
-            <span class="badge badge-neutral" style="font-size: 10px;">
-              ${dayStatus.meetCount === 1 ? '1 Session' : `${dayStatus.meetCount} Sessions`}
-            </span>
-          </div>
-          <span class="pds-sub">
-            ${dayStatus.latestMeet ? `Latest at ${dayStatus.latestMeet.time || 'Today'}` : (dayStatus.isMissed ? 'Session missed' : 'Open session')}
-          </span>
-        </div>
-      </div>
-
-      <!-- Program-by-Program Breakdown -->
-      <div class="practice-programs-section">
-        <div class="pps-header">
-          <h4 class="pps-title">Programs Practiced on this Date</h4>
-          <span class="badge badge-neutral-xs">${dayStatus.programBreakdown ? dayStatus.programBreakdown.length : programs.length} Enrolled</span>
-        </div>
-
-        <div class="practice-programs-list">
-          ${dayStatus.programBreakdown && dayStatus.programBreakdown.length > 0 ? dayStatus.programBreakdown.map(pb => {
-            const prog = pb.program;
-            const trn = pb.trainer;
-            const isStage = prog.type === 'Stage';
-            const isProgMet = pb.isMet;
-            const latest = pb.latestMeet;
-            const prScoreStatus = latest ? getProgressStatus(latest.percentage) : null;
-            const progRemarks = pb.meets ? pb.meets.filter(m => m.remark && m.remark.trim()) : [];
-
-            return `
-              <div class="practice-prog-row ${isProgMet ? 'row-met' : (dayStatus.isMissed ? 'row-missed' : 'row-pending')}">
-                <div class="ppr-top">
-                  <div class="ppr-info">
-                    <div class="ppr-badges">
-                      <span class="badge badge-code-pill">${prog.code}</span>
-                      <span class="badge ${isStage ? 'badge-stage' : 'badge-neutral'}">${isStage ? '🎭 Stage' : '📝 Non-Stage'}</span>
-                      <span class="badge badge-category-subtle">${prog.category}</span>
-                    </div>
-                    <span class="ppr-title">${prog.name}</span>
-                  </div>
-
-                  <div class="ppr-score-wrap">
-                    ${isProgMet && latest ? `
-                      <span class="ppr-score-badge" style="background: ${prScoreStatus.bg}; color: ${prScoreStatus.color}; border: 1px solid ${prScoreStatus.border};">
-                        Score: ${latest.percentage}% &bull; ${prScoreStatus.label}
-                      </span>
-                      <span class="ppr-clock-time">Clocked at ${latest.time || 'Logged'}</span>
-                    ` : dayStatus.isMissed ? `
-                      <span class="badge badge-danger">Missed Rehearsal</span>
-                      <span class="ppr-clock-time">No session logged</span>
-                    ` : `
-                      <span class="badge badge-warning">Pending Today</span>
-                      <span class="ppr-clock-time">Rehearsal required</span>
-                    `}
-                  </div>
-                </div>
-
-                <!-- Assigned Mentor Strip -->
-                <div class="ppr-mentor-strip">
-                  <div class="mcc-avatar" style="width: 28px; height: 28px; background: ${trn?.color || '#4f46e5'}; border-radius: 50%; overflow: hidden; display: flex; align-items: center; justify-content: center; flex-shrink: 0; color: #ffffff; font-weight: 700; font-size: 11px;">
-                    ${trn && trn.photo 
-                      ? `<img src="${trn.photo}" alt="${trn.name}" style="width: 100%; height: 100%; object-fit: cover;" />` 
-                      : (trn ? trn.name.split(' ').map(n => n[0]).slice(0, 2).join('') : 'M')}
-                  </div>
-                  <div class="ppr-mentor-info">
-                    <span class="ppr-mentor-role">Assigned Mentor:</span>
-                    <span class="ppr-mentor-name">${trn ? trn.name : 'Mentor to be assigned'}</span>
-                    ${trn?.expertise ? `<span class="ppr-mentor-exp">(${trn.expertise})</span>` : ''}
-                  </div>
-                </div>
-
-                <!-- Mentor's Program Remarks -->
-                ${progRemarks.length > 0 ? progRemarks.map(m => `
-                  <div class="ppr-remark-box">
-                    <span class="ppr-remark-label">💬 Mentor's Practice Note (${m.time || 'Session'}):</span>
-                    <p class="ppr-remark-text">&ldquo;${m.remark.trim()}&rdquo;</p>
-                  </div>
-                `).join('') : isProgMet ? `
-                  <div class="ppr-remark-box" style="background: #f8fafc; border: 1px dashed #e2e8f0;">
-                    <p class="ppr-remark-text text-muted" style="font-size: 12px;">Drill recorded with evaluation score of ${latest?.percentage}%. Continue working on speed and stage precision.</p>
-                  </div>
-                ` : dayStatus.isMissed ? `
-                  <div class="ppr-remark-box" style="background: #fef2f2; border: 1px solid #fee2e2;">
-                    <p class="ppr-remark-text" style="color: #991b1b; font-size: 12px;">⚠️ Missed: Candidate did not attend rehearsals for this program on this date.</p>
-                  </div>
-                ` : `
-                  <div class="ppr-remark-box" style="background: #fffbeb; border: 1px solid #fef3c7;">
-                    <p class="ppr-remark-text" style="color: #92400e; font-size: 12px;">⏳ Practice drill pending with ${trn ? trn.name : 'assigned mentor'}. Connect before end of day!</p>
-                  </div>
-                `}
-              </div>
-            `;
-          }).join('') : `
-            <div class="empty-state-card" style="padding: 18px; text-align: center;">
-              <p class="text-muted">No programs enrolled yet.</p>
-            </div>
-          `}
-        </div>
-      </div>
-
-      <!-- Mentors' Guidance & Remarks Feed -->
-      <div class="practice-remarks-feed-section">
-        <div class="prfs-header">
-          <h4 class="prfs-title">Mentors' Remarks &amp; Feedback Feed</h4>
-          <span class="badge badge-neutral-xs">${dayRemarks.length} Note${dayRemarks.length === 1 ? '' : 's'}</span>
-        </div>
-
-        <div class="practice-remarks-feed-list">
-          ${dayRemarks.length > 0 ? dayRemarks.map(m => {
-            const trn = state.getTrainerById(m.trainerId);
-            const prog = programs.find(p => p.id === m.programId);
-            const scoreStatus = getProgressStatus(m.percentage);
-
-            return `
-              <div class="practice-remark-feed-card">
-                <div class="prfc-header">
-                  <div class="prfc-mentor">
-                    <div class="mcc-avatar" style="width: 28px; height: 28px; background: ${trn?.color || '#4f46e5'}; border-radius: 50%; overflow: hidden; display: flex; align-items: center; justify-content: center; color: #ffffff; font-size: 11px; font-weight: 700;">
-                      ${trn && trn.photo 
-                        ? `<img src="${trn.photo}" alt="${trn.name}" style="width: 100%; height: 100%; object-fit: cover;" />` 
-                        : (trn ? trn.name.split(' ').map(n => n[0]).slice(0, 2).join('') : 'M')}
-                    </div>
-                    <div>
-                      <span class="prfc-name">${trn ? trn.name : 'Assigned Mentor'}</span>
-                      <span class="prfc-prog">${prog ? `[${prog.code}] ${prog.name}` : 'Competition Practice'}</span>
-                    </div>
-                  </div>
-
-                  <div class="prfc-meta">
-                    <span class="badge ${scoreStatus.badgeClass}" style="font-size: 10.5px;">${m.percentage}% &bull; ${scoreStatus.label}</span>
-                    <span class="prfc-time">${m.time || 'Clocked'}</span>
-                  </div>
-                </div>
-
-                <div class="prfc-quote">
-                  &ldquo;${m.remark.trim()}&rdquo;
-                </div>
-              </div>
-            `;
-          }).join('') : `
-            <div class="empty-feedback-box">
-              <p class="efb-text">
-                ${dayStatus.isMet 
-                  ? 'No detailed written critique recorded for this date. Numerical scores were recorded in program logs.' 
-                  : dayStatus.isMissed 
-                    ? 'No mentor feedback recorded because no practice session took place on this date.' 
-                    : 'Today\'s practice session is still pending. Meet your mentor to receive personalized critique & guidance.'}
-              </p>
-            </div>
-          `}
-        </div>
-      </div>
-    `;
+  // ================= 🎯 ATTACH MENTEE PORTAL ACTIONS =================
+  const btnHeroPractice = container.querySelector('#btnHeroGoPractice');
+  const btnHubPractice = container.querySelector('#btnHubGoPractice');
+  if (btnHeroPractice) {
+    btnHeroPractice.onclick = () => {
+      if (typeof navigate === 'function') navigate('mentee-practice');
+    };
+  }
+  if (btnHubPractice) {
+    btnHubPractice.onclick = () => {
+      if (typeof navigate === 'function') navigate('mentee-practice');
+    };
   }
 
-  function setPracticeDate(dateStr) {
-    if (!dateStr) return;
-    let target = dateStr;
-    if (target < launchDateStr) target = launchDateStr;
-    if (target > todayStr) target = todayStr;
-
-    currentPracticeDate = target;
-
-    if (datePicker) {
-      datePicker.value = currentPracticeDate;
-      datePicker.min = launchDateStr;
-      datePicker.max = todayStr;
-    }
-
-    if (btnToday) {
-      btnToday.classList.toggle('active', currentPracticeDate === todayStr);
-    }
-    if (btnYesterday) {
-      btnYesterday.classList.toggle('active', currentPracticeDate === yesterdayStr);
-    }
-
-    if (btnPrev) {
-      const pParts = currentPracticeDate.split('-');
-      const pDate = new Date(parseInt(pParts[0], 10), parseInt(pParts[1], 10) - 1, parseInt(pParts[2], 10));
-      pDate.setDate(pDate.getDate() - 1);
-      const prevStr = `${pDate.getFullYear()}-${String(pDate.getMonth() + 1).padStart(2, '0')}-${String(pDate.getDate()).padStart(2, '0')}`;
-      btnPrev.disabled = prevStr < launchDateStr;
-    }
-
-    if (btnNext) {
-      const nParts = currentPracticeDate.split('-');
-      const nDate = new Date(parseInt(nParts[0], 10), parseInt(nParts[1], 10) - 1, parseInt(nParts[2], 10));
-      nDate.setDate(nDate.getDate() + 1);
-      const nextStr = `${nDate.getFullYear()}-${String(nDate.getMonth() + 1).padStart(2, '0')}-${String(nDate.getDate()).padStart(2, '0')}`;
-      btnNext.disabled = nextStr > todayStr;
-    }
-
-    renderPracticeDay(currentPracticeDate);
+  const btnHeroCompare = container.querySelector('#btnHeroGoCompare');
+  const btnHubCompare = container.querySelector('#btnHubGoCompare');
+  if (btnHeroCompare) {
+    btnHeroCompare.onclick = () => {
+      if (typeof navigate === 'function') navigate('mentee-compare');
+    };
+  }
+  if (btnHubCompare) {
+    btnHubCompare.onclick = () => {
+      if (typeof navigate === 'function') navigate('mentee-compare');
+    };
   }
 
-  // Attach date control events
-  if (btnToday) {
-    btnToday.addEventListener('click', () => setPracticeDate(todayStr));
-  }
-  if (btnYesterday) {
-    btnYesterday.addEventListener('click', () => setPracticeDate(yesterdayStr));
-  }
-  if (datePicker) {
-    datePicker.addEventListener('change', (e) => {
-      if (e.target.value) setPracticeDate(e.target.value);
-    });
-  }
-  if (btnPrev) {
-    btnPrev.addEventListener('click', () => {
-      const parts = currentPracticeDate.split('-');
-      const d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
-      d.setDate(d.getDate() - 1);
-      const newStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-      setPracticeDate(newStr);
-    });
-  }
-  if (btnNext) {
-    btnNext.addEventListener('click', () => {
-      const parts = currentPracticeDate.split('-');
-      const d = new Date(parseInt(parts[0], 10), parseInt(parts[1], 10) - 1, parseInt(parts[2], 10));
-      d.setDate(d.getDate() + 1);
-      const newStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
-      setPracticeDate(newStr);
-    });
-  }
-
-  // Row clicks on consistency log
+  // Row clicks on consistency log jump to dedicated My Practice
   container.querySelectorAll('.day-log-row[data-date]').forEach(row => {
     row.addEventListener('click', () => {
-      const dateVal = row.getAttribute('data-date');
-      if (dateVal) {
-        setPracticeDate(dateVal);
-        const practiceSection = container.querySelector('#myPracticeSection');
-        if (practiceSection) {
-          practiceSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
-        }
-      }
+      if (typeof navigate === 'function') navigate('mentee-practice');
     });
   });
-
-  // Initial render on today
-  setPracticeDate(todayStr);
 
   // Handle logout buttons
   container.querySelectorAll('[data-action="logout"]').forEach(btn => {

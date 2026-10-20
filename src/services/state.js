@@ -83,6 +83,58 @@ export function getProgressStatus(percentage) {
   };
 }
 
+/**
+ * 4 Canonical Competition Categories for Sibaq
+ * (BIDĀYA, ŪLĀ, THĀNAWIYYAH, ʿĀLIYAH)
+ */
+export const CANONICAL_CATEGORIES = ['BIDĀYA', 'ŪLĀ', 'THĀNAWIYYAH', 'ʿĀLIYAH'];
+
+/**
+ * Normalizes any category string or spelling variant to one of the 4 canonical categories:
+ * - 'BIDĀYAH', 'BIDAYA', etc. -> 'BIDĀYA'
+ * - 'ULA', 'OOLA', etc. -> 'ŪLĀ'
+ * - 'THANAWIYAH', 'THANAWIYYAH', etc. -> 'THĀNAWIYYAH'
+ * - '‘ĀLIYAH', 'ALIYAH', 'AALIYAH', etc. -> 'ʿĀLIYAH'
+ */
+export function normalizeCategory(cat) {
+  if (!cat) return '';
+  const s = String(cat).trim();
+  if (!s) return '';
+
+  // Canonical exact matches
+  if (s === 'BIDĀYA' || s === 'ŪLĀ' || s === 'THĀNAWIYYAH' || s === 'ʿĀLIYAH') {
+    return s;
+  }
+
+  // Strip all variations of quotes, ayn (ʿ / ‘ / ’ / ` / etc.) and diacritics
+  const clean = s
+    .replace(/[\u02BF\u02BE\u02BC\u2018\u2019\u201A\u201B\u2032\u2035'`"״]/g, '')
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toUpperCase()
+    .trim();
+
+  if (clean === 'BIDAYA' || clean === 'BIDAYAH' || clean.startsWith('BIDAY')) {
+    return 'BIDĀYA';
+  }
+  if (clean === 'ULA' || clean === 'OOLA') {
+    return 'ŪLĀ';
+  }
+  if (clean.startsWith('THANAW') || clean.startsWith('SANAW')) {
+    return 'THĀNAWIYYAH';
+  }
+  if (clean === 'ALIYAH' || clean === 'ALIYA' || clean === 'AALIYAH' || clean === 'AALIYA') {
+    return 'ʿĀLIYAH';
+  }
+
+  // Filter out legacy non-competition groupings if matched
+  if (['SENIOR', 'JUNIOR', 'SUB-JUNIOR', 'GENERAL'].includes(clean)) {
+    return 'BIDĀYA';
+  }
+
+  return s;
+}
+
 class StateService {
   constructor() {
     this.subscribers = new Set();
@@ -98,9 +150,13 @@ class StateService {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) {
         const parsed = JSON.parse(stored);
-        this.candidates = Array.isArray(parsed.candidates) ? parsed.candidates : [];
+        this.candidates = (Array.isArray(parsed.candidates) ? parsed.candidates : []).map(c => ({
+          ...c,
+          category: normalizeCategory(c.category || 'BIDĀYA')
+        }));
         this.programs = (Array.isArray(parsed.programs) ? parsed.programs : []).map(p => ({
           ...p,
+          category: normalizeCategory(p.category || 'BIDĀYA'),
           id: String(p.id || '').trim(),
           trainerId: p.trainerId && String(p.trainerId).trim() ? String(p.trainerId).trim() : null,
           candidateIds: Array.isArray(p.candidateIds) ? p.candidateIds.map(id => String(id).trim()).filter(Boolean) : []
@@ -187,7 +243,8 @@ class StateService {
     const unsubCandidates = firebaseService.subscribe('candidates', (items) => {
       this.candidates = items.map(c => ({
         ...c,
-        id: String(c.id || '').trim()
+        id: String(c.id || '').trim(),
+        category: normalizeCategory(c.category || 'BIDĀYA')
       }));
       this.saveState();
     });
@@ -196,6 +253,7 @@ class StateService {
       this.programs = items.map(p => ({
         ...p,
         id: String(p.id || '').trim(),
+        category: normalizeCategory(p.category || 'BIDĀYA'),
         trainerId: p.trainerId && String(p.trainerId).trim() ? String(p.trainerId).trim() : null,
         candidateIds: Array.isArray(p.candidateIds) ? p.candidateIds.map(id => String(id).trim()).filter(Boolean) : []
       }));
@@ -294,24 +352,9 @@ class StateService {
   }
 
   getAvailableCategories() {
-    const defaultCategories = ['BIDĀYAH', 'ŪLĀ', 'THĀNAWIYYAH', '‘ĀLIYAH', 'KULLIYYAH', 'BIDĀYAH & ŪLĀ'];
-    const existing = new Set(defaultCategories);
-
-    (this.programs || []).forEach(p => {
-      const cat = String(p.category || '').trim();
-      if (cat && !['Senior', 'Junior', 'Sub-Junior', 'General'].includes(cat)) {
-        existing.add(cat);
-      }
-    });
-
-    (this.candidates || []).forEach(c => {
-      const cat = String(c.category || '').trim();
-      if (cat && !['Senior', 'Junior', 'Sub-Junior', 'General'].includes(cat)) {
-        existing.add(cat);
-      }
-    });
-
-    return Array.from(existing);
+    // Return strictly the 4 canonical competition categories without duplicates:
+    // (BIDĀYA, ŪLĀ, THĀNAWIYYAH, ʿĀLIYAH)
+    return [...CANONICAL_CATEGORIES];
   }
 
   addCandidate(candidateData) {
@@ -329,7 +372,7 @@ class StateService {
       adNo: String(candidateData.adNo || candidateData.chestNo || '').trim(),
       chestNo: String(candidateData.chestNo || candidateData.adNo || '').trim(),
       name: String(candidateData.name || '').trim(),
-      category: String(candidateData.category || 'General').trim(),
+      category: normalizeCategory(candidateData.category || 'BIDĀYA'),
       class: String(candidateData.class || '').trim(),
       createdAt: candidateData.createdAt || new Date().toISOString()
     };
@@ -370,7 +413,7 @@ class StateService {
       adNo: String(updateData.adNo ?? this.candidates[index].adNo ?? '').trim(),
       chestNo: String(updateData.chestNo ?? updateData.adNo ?? this.candidates[index].chestNo ?? this.candidates[index].adNo ?? '').trim(),
       name: String(updateData.name ?? this.candidates[index].name).trim(),
-      category: String(updateData.category ?? this.candidates[index].category).trim(),
+      category: normalizeCategory(updateData.category ?? this.candidates[index].category ?? 'BIDĀYA'),
       class: String(updateData.class ?? this.candidates[index].class).trim()
     };
 
@@ -438,7 +481,7 @@ class StateService {
           this.candidates[existingIndex] = {
             ...this.candidates[existingIndex],
             name: name,
-            category: String(item.category || this.candidates[existingIndex].category || 'General').trim(),
+            category: normalizeCategory(item.category || this.candidates[existingIndex].category || 'BIDĀYA'),
             class: String(item.class || this.candidates[existingIndex].class || '').trim()
           };
           newOrUpdated.push(this.candidates[existingIndex]);
@@ -451,7 +494,7 @@ class StateService {
           id: `cnd-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
           adNo,
           name,
-          category: String(item.category || 'General').trim(),
+          category: normalizeCategory(item.category || 'BIDĀYA'),
           class: String(item.class || '').trim(),
           createdAt: new Date().toISOString()
         };
@@ -508,7 +551,7 @@ class StateService {
       id: programData.id ? String(programData.id).trim() : `prg-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
       code: String(programData.code || '').trim().toUpperCase(),
       name: String(programData.name || '').trim(),
-      category: String(programData.category || 'General').trim(),
+      category: normalizeCategory(programData.category || 'BIDĀYA'),
       type: typeNormalized,
       trainerId: programData.trainerId && String(programData.trainerId).trim() ? String(programData.trainerId).trim() : null,
       candidateIds: Array.isArray(programData.candidateIds) ? programData.candidateIds.map(id => String(id).trim()).filter(Boolean) : [],
@@ -549,7 +592,7 @@ class StateService {
       trainerId: updatedTrainerId,
       code: updateData.code ? String(updateData.code).trim().toUpperCase() : this.programs[index].code,
       name: updateData.name ? String(updateData.name).trim() : this.programs[index].name,
-      category: updateData.category ? String(updateData.category).trim() : this.programs[index].category
+      category: updateData.category ? normalizeCategory(updateData.category) : this.programs[index].category
     };
 
     this.saveState();
@@ -646,7 +689,7 @@ class StateService {
           this.programs[existingIndex] = {
             ...this.programs[existingIndex],
             name,
-            category: String(item.category || this.programs[existingIndex].category || 'General').trim(),
+            category: normalizeCategory(item.category || this.programs[existingIndex].category || 'BIDĀYA'),
             type: typeNormalized
           };
           newOrUpdated.push(this.programs[existingIndex]);
@@ -659,7 +702,7 @@ class StateService {
           id: `prg-${Date.now()}-${Math.floor(Math.random() * 10000)}`,
           code,
           name,
-          category: String(item.category || 'General').trim(),
+          category: normalizeCategory(item.category || 'BIDĀYA'),
           type: typeNormalized,
           trainerId: null,
           candidateIds: [],
@@ -984,7 +1027,7 @@ class StateService {
   // --- MENTEE AUTHENTICATION ---
   authenticateMentee(adNo, category) {
     const rawAd = String(adNo || '').trim();
-    const rawCat = String(category || '').trim().toLowerCase();
+    const rawCat = normalizeCategory(category);
 
     if (!rawAd) {
       return { success: false, error: 'Please enter your Admission / Chest Number.' };
@@ -1001,12 +1044,12 @@ class StateService {
       };
     }
 
-    // Verify category matches (case-insensitive and trimmed)
-    const candCat = String(candidate.category || '').trim().toLowerCase();
-    if (candCat !== rawCat) {
+    // Verify category matches using normalized forms
+    const candCat = normalizeCategory(candidate.category);
+    if (candCat !== rawCat && candCat.toLowerCase() !== rawCat.toLowerCase()) {
       return { 
         success: false, 
-        error: `Category mismatch for ${candidate.name}. You are registered under "${candidate.category}", but "${category}" was selected.` 
+        error: `Category mismatch for ${candidate.name}. You are registered under "${candCat || candidate.category}", but "${category}" was selected.` 
       };
     }
 

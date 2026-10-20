@@ -24,7 +24,7 @@ export function openCandidateFormModal({
 
   const initialCategory = candidate
     ? candidate.category
-    : (defaultCategory || (allCategories.includes('BIDĀYAH') ? 'BIDĀYAH' : (allCategories[0] || 'General')));
+    : (defaultCategory || (allCategories.includes('BIDĀYA') ? 'BIDĀYA' : (allCategories[0] || 'BIDĀYA')));
 
   let currentProgramSearch = '';
   let programCategoryFilter = 'MATCH_CANDIDATE'; // 'MATCH_CANDIDATE', 'ALL', or specific category

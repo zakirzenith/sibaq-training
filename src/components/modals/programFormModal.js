@@ -62,7 +62,7 @@ export function openProgramFormModal({ program = null, onSave = () => {} }) {
             <label class="form-label" for="selProgCategory">Category *</label>
             <select id="selProgCategory" class="form-select">
               ${state.getAvailableCategories().map(cat => `
-                <option value="${cat}" ${program && program.category === cat ? 'selected' : (!program && cat === 'BIDĀYAH' ? 'selected' : '')}>
+                <option value="${cat}" ${program && program.category === cat ? 'selected' : (!program && cat === 'BIDĀYA' ? 'selected' : '')}>
                   ${cat}
                 </option>
               `).join('')}

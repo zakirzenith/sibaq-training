@@ -1,4 +1,5 @@
 import * as XLSX from 'xlsx';
+import { normalizeCategory } from './state.js';
 
 /**
  * Excel Parsing and Export Service for MentorFlow Controller
@@ -138,7 +139,7 @@ export const excelService = {
         rowNumber: index + 2, // 1-indexed row in Excel
         adNo,
         name,
-        category: category || 'General',
+        category: normalizeCategory(category || 'BIDĀYA'),
         class: studentClass,
         programCodes,
         isValid,
@@ -258,7 +259,7 @@ export const excelService = {
         rowNumber: headerRowIdx + index + 2,
         code,
         name,
-        category: category || 'General',
+        category: normalizeCategory(category || 'BIDĀYA'),
         type: normalizedType,
         isValid,
         error: errors.join(', ')
@@ -336,13 +337,13 @@ export const excelService = {
       {
         'Admission No': '1081',
         'Candidate Name': 'Golam Ahmad SK',
-        'Category': 'BIDĀYAH',
+        'Category': 'BIDĀYA',
         'Class': '1'
       },
       {
         'Admission No': '1082',
         'Candidate Name': 'Tohid Reza Mondal',
-        'Category': 'BIDĀYAH',
+        'Category': 'BIDĀYA',
         'Class': '2'
       },
       {
@@ -360,7 +361,7 @@ export const excelService = {
       {
         'Admission No': '1085',
         'Candidate Name': 'Rafiul Islam',
-        'Category': '‘ĀLIYAH',
+        'Category': 'ʿĀLIYAH',
         'Class': '7'
       }
     ];
@@ -388,13 +389,13 @@ export const excelService = {
       {
         'Program Code': 'BS01',
         'Program Name': 'Qur\'an Thilawath',
-        'Category': 'BIDĀYAH',
+        'Category': 'BIDĀYA',
         'Type (Stage or Non Stage)': 'Stage'
       },
       {
         'Program Code': 'BNN02',
         'Program Name': 'Pencil Drawing',
-        'Category': 'BIDĀYAH',
+        'Category': 'BIDĀYA',
         'Type (Stage or Non Stage)': 'Non-Stage'
       },
       {

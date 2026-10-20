@@ -18,8 +18,8 @@ export function renderLoginView(container, onLoginSuccess, options = {}) {
     container.innerHTML = `
       <div class="auth-page-wrapper">
         <!-- Ambient Decorative Glows -->
-        <div class="auth-glow auth-glow-1"></div>
-        <div class="auth-glow auth-glow-2"></div>
+        <div class="auth-glow auth-glow-1 glow-${activeTab}"></div>
+        <div class="auth-glow auth-glow-2 glow-${activeTab}"></div>
 
         <div class="auth-card-container">
           <!-- Official Brand Header -->
@@ -32,38 +32,61 @@ export function renderLoginView(container, onLoginSuccess, options = {}) {
           </div>
 
           <!-- Triple Portal Role Switcher Tabs -->
-          <div class="auth-role-tabs" style="grid-template-columns: repeat(3, 1fr);">
+          <div class="auth-role-tabs" role="tablist" aria-label="Portal Selection">
             <button 
               type="button" 
               id="tabController" 
+              data-role="controller"
               class="auth-tab-btn ${activeTab === 'controller' ? 'active' : ''}"
+              role="tab"
+              aria-selected="${activeTab === 'controller'}"
+              title="Official Controller Portal"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <rect width="7" height="9" x="3" y="3" rx="1"/><rect width="7" height="5" x="14" y="3" rx="1"/><rect width="7" height="9" x="14" y="12" rx="1"/><rect width="7" height="5" x="3" y="16" rx="1"/>
-              </svg>
-              <span>Controller</span>
+              <span class="auth-tab-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <rect width="7" height="9" x="3" y="3" rx="1.5"/><rect width="7" height="5" x="14" y="3" rx="1.5"/><rect width="7" height="9" x="14" y="12" rx="1.5"/><rect width="7" height="5" x="3" y="16" rx="1.5"/>
+                </svg>
+              </span>
+              <span class="auth-tab-label">Controller</span>
+              <span class="auth-tab-indicator"></span>
             </button>
 
             <button 
               type="button" 
               id="tabTrainer" 
+              data-role="trainer"
               class="auth-tab-btn ${activeTab === 'trainer' ? 'active' : ''}"
+              role="tab"
+              aria-selected="${activeTab === 'trainer'}"
+              title="Mentor Guidance Portal"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <circle cx="12" cy="8" r="5"/><path d="M20 21a8 8 0 1 0-16 0"/>
-              </svg>
-              <span>Mentor</span>
+              <span class="auth-tab-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/>
+                  <circle cx="12" cy="7" r="4"/>
+                </svg>
+              </span>
+              <span class="auth-tab-label">Mentor</span>
+              <span class="auth-tab-indicator"></span>
             </button>
 
             <button 
               type="button" 
               id="tabMentee" 
+              data-role="mentee"
               class="auth-tab-btn ${activeTab === 'mentee' ? 'active' : ''}"
+              role="tab"
+              aria-selected="${activeTab === 'mentee'}"
+              title="Candidate Mentee Portal"
             >
-              <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
-                <path d="M22 10v6M2 10l10-5 10 5-10 5z"/><path d="M6 12v5c3 3 9 3 12 0v-5"/>
-              </svg>
-              <span>Mentee</span>
+              <span class="auth-tab-icon">
+                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                  <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
+                  <path d="M6 12v5c3 3 9 3 12 0v-5"/>
+                </svg>
+              </span>
+              <span class="auth-tab-label">Mentee</span>
+              <span class="auth-tab-indicator"></span>
             </button>
           </div>
 

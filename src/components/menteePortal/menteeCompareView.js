@@ -154,8 +154,14 @@ export function renderMenteeCompareView(container, navigate) {
               <span class="cmc-title">Overall Readiness Score</span>
               <span class="cmc-sub">Average readiness across all programs</span>
             </div>
-            <div class="cmc-tag ${myReadiness >= catAvgReadiness ? 'tag-positive' : 'tag-neutral'}">
-              ${myReadiness >= catAvgReadiness ? `+${myReadiness - catAvgReadiness}% vs Avg` : `${myReadiness - catAvgReadiness}% vs Avg`}
+            <div class="cmc-tag ${myReadiness > 0 && myReadiness >= catAvgReadiness ? 'tag-positive' : 'tag-neutral'}">
+              ${myReadiness === 0 
+                ? 'Awaiting Evaluation' 
+                : (myReadiness >= catTopReadiness && catTopReadiness > 0 
+                  ? '🏆 Category Leader' 
+                  : (myReadiness >= catAvgReadiness 
+                    ? `+${myReadiness - catAvgReadiness}% vs Avg` 
+                    : `${myReadiness - catAvgReadiness}% vs Avg`))}
             </div>
           </div>
 
@@ -202,8 +208,12 @@ export function renderMenteeCompareView(container, navigate) {
               <span class="cmc-title">Rehearsals Attended</span>
               <span class="cmc-sub">Total logged check-in sessions</span>
             </div>
-            <div class="cmc-tag ${myTotalMeets >= catAvgMeets ? 'tag-positive' : 'tag-neutral'}">
-              ${myTotalMeets >= catAvgMeets ? 'High Consistency' : 'Average Attendance'}
+            <div class="cmc-tag ${myTotalMeets > 0 && myTotalMeets >= catAvgMeets ? 'tag-positive' : 'tag-neutral'}">
+              ${myTotalMeets === 0 
+                ? 'No Sessions Yet' 
+                : (myTotalMeets >= catTopMeets && catTopMeets > 0 
+                  ? '🏆 Top Attendance' 
+                  : (myTotalMeets >= catAvgMeets ? 'High Consistency' : 'Below Average'))}
             </div>
           </div>
 
@@ -251,7 +261,11 @@ export function renderMenteeCompareView(container, navigate) {
               <span class="cmc-sub">Consecutive days checked in</span>
             </div>
             <div class="cmc-tag ${myStreak > 0 ? 'tag-positive' : 'tag-neutral'}">
-              ${myStreak > 1 ? '🔥 On Fire' : myStreak > 0 ? 'Active' : 'Start Today'}
+              ${myStreak === 0 
+                ? 'Start Today' 
+                : (myStreak >= catTopStreak && catTopStreak > 0 
+                  ? '🏆 Top Streak' 
+                  : (myStreak > 1 ? '🔥 Active Streak' : '1 Day Active'))}
             </div>
           </div>
 

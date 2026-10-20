@@ -39,7 +39,7 @@ class App {
       this.isAuthenticated = false;
       this.currentPortal = 'login';
       this.currentView = 'login';
-      this.loginDefaultRole = 'controller';
+      this.loginDefaultRole = 'mentee';
       document.body.classList.add('auth-mode');
     } else {
       this.isAuthenticated = true;
@@ -156,7 +156,7 @@ class App {
     this.isAuthenticated = false;
     this.currentPortal = 'login';
     this.currentView = 'login';
-    this.loginDefaultRole = 'controller';
+    this.loginDefaultRole = 'mentee';
     document.body.classList.add('auth-mode');
     toast.info('You have been signed out.');
     this.render();
@@ -1002,7 +1002,7 @@ class App {
       renderLoginView(
         this.mainContent,
         (role, data) => this.handleLoginSuccess(role, data),
-        { defaultRole: this.loginDefaultRole || 'controller' }
+        { defaultRole: this.loginDefaultRole || 'mentee' }
       );
       return;
     }

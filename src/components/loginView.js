@@ -9,7 +9,7 @@ import { getIcon } from './icons.js';
  * @param {Object} options - Optional initial configuration: { defaultRole: 'controller' | 'trainer' }
  */
 export function renderLoginView(container, onLoginSuccess, options = {}) {
-  let activeTab = options.defaultRole === 'trainer' ? 'trainer' : (options.defaultRole === 'mentee' ? 'mentee' : 'controller');
+  let activeTab = options.defaultRole === 'controller' ? 'controller' : (options.defaultRole === 'trainer' ? 'trainer' : 'mentee');
 
   const trainers = state.getTrainers();
   const categories = state.getAvailableCategories();

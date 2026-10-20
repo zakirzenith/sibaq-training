@@ -5,34 +5,34 @@ import { getIcon } from './icons.js';
 // Canonical floating bubble configs: large sweeping paths moving smoothly across and behind the login box
 const CANONICAL_BUBBLE_CONFIGS = [
   // Trajectory 1: Glides from Left across center behind login box to Right
-  { top: '15%', left: '-2%', size: 66, dur: 28, delay: -4, anim: 'passLeftToRight' },
-  { top: '55%', left: '2%', size: 60, dur: 34, delay: -16, anim: 'passLeftToRight' },
+  { top: '15%', left: '-2%', size: 66, dur: 62, delay: -6, anim: 'passLeftToRight' },
+  { top: '55%', left: '2%', size: 60, dur: 68, delay: -24, anim: 'passLeftToRight' },
 
   // Trajectory 2: Glides from Right across center behind login box to Left
-  { top: '25%', right: '-2%', size: 70, dur: 32, delay: -9, anim: 'passRightToLeft' },
-  { top: '68%', right: '2%', size: 54, dur: 30, delay: -22, anim: 'passRightToLeft' },
+  { top: '25%', right: '-2%', size: 70, dur: 64, delay: -14, anim: 'passRightToLeft' },
+  { top: '68%', right: '2%', size: 54, dur: 58, delay: -32, anim: 'passRightToLeft' },
 
   // Trajectory 3: Glides from Bottom-Left diagonally up across behind login box to Top-Right
-  { bottom: '8%', left: '6%', size: 68, dur: 36, delay: -12, anim: 'passBottomLeftToTopRight' },
-  { bottom: '25%', left: '14%', size: 52, dur: 32, delay: -26, anim: 'passBottomLeftToTopRight' },
+  { bottom: '8%', left: '6%', size: 68, dur: 74, delay: -18, anim: 'passBottomLeftToTopRight' },
+  { bottom: '25%', left: '14%', size: 52, dur: 64, delay: -38, anim: 'passBottomLeftToTopRight' },
 
   // Trajectory 4: Glides from Top-Right diagonally down across behind login box to Bottom-Left
-  { top: '8%', right: '8%', size: 64, dur: 35, delay: -7, anim: 'passTopRightToBottomLeft' },
-  { top: '35%', right: '12%', size: 56, dur: 31, delay: -19, anim: 'passTopRightToBottomLeft' },
+  { top: '8%', right: '8%', size: 64, dur: 72, delay: -12, anim: 'passTopRightToBottomLeft' },
+  { top: '35%', right: '12%', size: 56, dur: 62, delay: -28, anim: 'passTopRightToBottomLeft' },
 
   // Trajectory 5: Glides from Bottom-Right diagonally up across behind login box to Top-Left
-  { bottom: '10%', right: '6%', size: 62, dur: 34, delay: -14, anim: 'passBottomRightToTopLeft' },
-  { bottom: '30%', right: '14%', size: 50, dur: 29, delay: -24, anim: 'passBottomRightToTopLeft' },
+  { bottom: '10%', right: '6%', size: 62, dur: 70, delay: -20, anim: 'passBottomRightToTopLeft' },
+  { bottom: '30%', right: '14%', size: 50, dur: 58, delay: -36, anim: 'passBottomRightToTopLeft' },
 
   // Trajectory 6: Glides from Top-Left diagonally down across behind login box to Bottom-Right
-  { top: '6%', left: '10%', size: 68, dur: 33, delay: -5, anim: 'passTopLeftToBottomRight' },
-  { top: '32%', left: '16%', size: 54, dur: 28, delay: -18, anim: 'passTopLeftToBottomRight' },
+  { top: '6%', left: '10%', size: 68, dur: 66, delay: -8, anim: 'passTopLeftToBottomRight' },
+  { top: '32%', left: '16%', size: 54, dur: 56, delay: -26, anim: 'passTopLeftToBottomRight' },
 
   // Trajectory 7 & 8: Cross diagonal roaming
-  { top: '45%', left: '5%', size: 58, dur: 36, delay: -11, anim: 'passCrossDiagonal1' },
-  { top: '48%', right: '5%', size: 62, dur: 38, delay: -25, anim: 'passCrossDiagonal2' },
-  { top: '82%', left: '22%', size: 52, dur: 30, delay: -8, anim: 'passLeftToRight' },
-  { top: '10%', right: '24%', size: 50, dur: 32, delay: -21, anim: 'passRightToLeft' }
+  { top: '45%', left: '5%', size: 58, dur: 74, delay: -16, anim: 'passCrossDiagonal1' },
+  { top: '48%', right: '5%', size: 62, dur: 78, delay: -38, anim: 'passCrossDiagonal2' },
+  { top: '82%', left: '22%', size: 52, dur: 60, delay: -12, anim: 'passLeftToRight' },
+  { top: '10%', right: '24%', size: 50, dur: 66, delay: -34, anim: 'passRightToLeft' }
 ];
 
 const FALLBACK_CANDIDATES = [
@@ -121,6 +121,165 @@ function getCandidateBubblesHTML(rawCandidates = []) {
 }
 
 /**
+ * Returns HTML markup for the active tab's authentication form
+ */
+function getFormCardHTML(role, categories = []) {
+  if (role === 'controller') {
+    return `
+      <!-- ================= CONTROLLER LOGIN FORM ================= -->
+      <div class="auth-form-header">
+        <div class="auth-badge-pill badge-controller">
+          <span class="auth-badge-dot"></span> Official Controller Access
+        </div>
+        <h2 class="auth-form-title">Controller Sign In</h2>
+        <p class="auth-form-desc">
+          Access overall operations, candidate assignments, programs roster, and live scoring.
+        </p>
+      </div>
+
+      <form id="formControllerLogin" class="auth-form-body">
+        <div class="form-group">
+          <label class="form-label" for="ctrlUsername">Controller Username</label>
+          <div class="auth-input-wrap">
+            <span class="auth-input-icon">${getIcon('user')}</span>
+            <input 
+              type="text" 
+              id="ctrlUsername" 
+              class="form-input auth-input" 
+              required 
+              placeholder="Enter controller username"
+              autocomplete="username"
+            />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="ctrlPassword">Security Password</label>
+          <div class="auth-input-wrap">
+            <span class="auth-input-icon">${getIcon('lock')}</span>
+            <input 
+              type="password" 
+              id="ctrlPassword" 
+              class="form-input auth-input" 
+              required 
+              placeholder="Enter controller password"
+              autocomplete="current-password"
+            />
+            <button type="button" class="btn-toggle-pwd" id="btnToggleCtrlPwd" title="Show/Hide Password">
+              👁️
+            </button>
+          </div>
+        </div>
+
+        <button type="submit" id="btnSubmitCtrl" class="btn btn-primary auth-submit-btn" style="background: linear-gradient(135deg, #4338ca, #4f46e5); border: none; box-shadow: 0 4px 14px rgba(79, 70, 229, 0.32);">
+          <span>Sign In to Controller Panel</span>
+          <span class="auth-btn-arrow">&rarr;</span>
+        </button>
+      </form>
+    `;
+  } else if (role === 'trainer') {
+    return `
+      <!-- ================= TRAINER LOGIN FORM ================= -->
+      <div class="auth-form-header">
+        <div class="auth-badge-pill badge-trainer">
+          <span class="auth-badge-dot" style="background: #6366f1;"></span> Mentor Portal
+        </div>
+        <h2 class="auth-form-title">Mentor Sign In</h2>
+        <p class="auth-form-desc">
+          Access your assigned mentees, enrolled programs, and report daily progress.
+        </p>
+      </div>
+
+      <form id="formTrainerLogin" class="auth-form-body">
+        <div class="form-group">
+          <label class="form-label" for="trnUsername">Mentor Username / ID</label>
+          <div class="auth-input-wrap">
+            <span class="auth-input-icon">${getIcon('user')}</span>
+            <input 
+              type="text" 
+              id="trnUsername" 
+              class="form-input auth-input" 
+              required 
+              placeholder="Enter your assigned username"
+              autocomplete="username"
+            />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="trnPassword">Mentor Password</label>
+          <div class="auth-input-wrap">
+            <span class="auth-input-icon">${getIcon('lock')}</span>
+            <input 
+              type="password" 
+              id="trnPassword" 
+              class="form-input auth-input" 
+              required 
+              placeholder="Enter your assigned password"
+              autocomplete="current-password"
+            />
+            <button type="button" class="btn-toggle-pwd" id="btnToggleTrnPwd" title="Show/Hide Password">
+              👁️
+            </button>
+          </div>
+        </div>
+
+        <button type="submit" id="btnSubmitTrn" class="btn btn-primary auth-submit-btn" style="background: linear-gradient(135deg, #6d28d9, #7c3aed); border: none; box-shadow: 0 4px 14px rgba(124, 58, 237, 0.32);">
+          <span>Sign In to Mentor Panel</span>
+          <span class="auth-btn-arrow">&rarr;</span>
+        </button>
+      </form>
+    `;
+  } else {
+    return `
+      <!-- ================= MENTEE LOGIN FORM ================= -->
+      <div class="auth-form-header">
+        <div class="auth-badge-pill badge-mentee" style="background: #ecfdf5; color: #047857; border-color: #a7f3d0;">
+          <span class="auth-badge-dot" style="background: #10b981;"></span> Candidate Portal
+        </div>
+        <h2 class="auth-form-title">Mentee Sign In</h2>
+        <p class="auth-form-desc">
+          Access your daily practice tasks, assigned mentors, enrolled programs, and mentor reviews.
+        </p>
+      </div>
+
+      <form id="formMenteeLogin" class="auth-form-body">
+        <div class="form-group">
+          <label class="form-label" for="menteeAdNo">Admission / Chest Number</label>
+          <div class="auth-input-wrap">
+            <span class="auth-input-icon">${getIcon('user')}</span>
+            <input 
+              type="text" 
+              id="menteeAdNo" 
+              class="form-input auth-input" 
+              required 
+              placeholder="e.g. AD-2026-01 or 101"
+              autocomplete="username"
+            />
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label class="form-label" for="menteeCategory">Competition Category</label>
+          <div class="auth-input-wrap">
+            <span class="auth-input-icon" style="color: #059669;">${getIcon('award')}</span>
+            <select id="menteeCategory" class="form-select auth-input" required style="width: 100%; cursor: pointer;">
+              <option value="">-- Choose Your Category --</option>
+              ${categories.map(cat => `<option value="${cat}">${cat}</option>`).join('')}
+            </select>
+          </div>
+        </div>
+
+        <button type="submit" id="btnSubmitMentee" class="btn btn-primary auth-submit-btn" style="background: linear-gradient(135deg, #047857, #059669); border: none; box-shadow: 0 4px 14px rgba(5, 150, 105, 0.32);">
+          <span>Sign In to Mentee Portal</span>
+          <span class="auth-btn-arrow">&rarr;</span>
+        </button>
+      </form>
+    `;
+  }
+}
+
+/**
  * Render Official Login Page with Dual Portals (Controller & Trainer)
  * @param {HTMLElement} container - The DOM element where the login view is mounted
  * @param {Function} onLoginSuccess - Callback when login succeeds: (role, userOrTrainer) => void
@@ -138,15 +297,19 @@ export function renderLoginView(container, onLoginSuccess, options = {}) {
   let photoRotationTimer = null;
   let candidateIndexOffset = 0;
 
+  function stopPhotoRotation() {
+    if (photoRotationTimer) {
+      clearInterval(photoRotationTimer);
+      photoRotationTimer = null;
+    }
+  }
+
   function stopAllTimers() {
     if (countdownTimer) {
       clearInterval(countdownTimer);
       countdownTimer = null;
     }
-    if (photoRotationTimer) {
-      clearInterval(photoRotationTimer);
-      photoRotationTimer = null;
-    }
+    stopPhotoRotation();
   }
 
   function startCountdown() {
@@ -282,9 +445,179 @@ export function renderLoginView(container, onLoginSuccess, options = {}) {
     }, 2000);
   }
 
+  function switchTab(newRole) {
+    if (activeTab === newRole) return;
+    activeTab = newRole;
+
+    // 1. Update tab buttons
+    const tabCtrl = container.querySelector('#tabController');
+    const tabTrn = container.querySelector('#tabTrainer');
+    const tabMnt = container.querySelector('#tabMentee');
+
+    if (tabCtrl) {
+      tabCtrl.classList.toggle('active', activeTab === 'controller');
+      tabCtrl.setAttribute('aria-selected', activeTab === 'controller');
+    }
+    if (tabTrn) {
+      tabTrn.classList.toggle('active', activeTab === 'trainer');
+      tabTrn.setAttribute('aria-selected', activeTab === 'trainer');
+    }
+    if (tabMnt) {
+      tabMnt.classList.toggle('active', activeTab === 'mentee');
+      tabMnt.setAttribute('aria-selected', activeTab === 'mentee');
+    }
+
+    // 2. Update ambient glow classes
+    const glow1 = container.querySelector('.auth-glow-1');
+    const glow2 = container.querySelector('.auth-glow-2');
+    ['glow-controller', 'glow-trainer', 'glow-mentee'].forEach(cls => {
+      if (glow1) glow1.classList.remove(cls);
+      if (glow2) glow2.classList.remove(cls);
+    });
+    if (glow1) glow1.classList.add(`glow-${activeTab}`);
+    if (glow2) glow2.classList.add(`glow-${activeTab}`);
+
+    // 3. Floating Candidate Bubbles Layer:
+    // When in 'mentee' tab, photos glide peacefully across the background.
+    // When user switches to 'controller' or 'trainer' (mentor), all photos smoothly remove/disperse outside.
+    const layer = container.querySelector('.auth-floating-candidates-layer');
+    if (layer) {
+      if (activeTab === 'mentee') {
+        layer.classList.remove('layer-dispersed');
+        startPhotoRotation();
+      } else {
+        layer.classList.add('layer-dispersed');
+        stopPhotoRotation();
+      }
+    }
+
+    // 4. Update Form Card with smooth subtle animation
+    const formCard = container.querySelector('.auth-form-card');
+    if (formCard) {
+      formCard.innerHTML = getFormCardHTML(activeTab, categories);
+      formCard.style.animation = 'none';
+      formCard.offsetHeight; // trigger reflow
+      formCard.style.animation = '';
+      attachFormEvents();
+    }
+  }
+
+  function attachGlobalEvents() {
+    const tabCtrl = container.querySelector('#tabController');
+    const tabTrn = container.querySelector('#tabTrainer');
+    const tabMnt = container.querySelector('#tabMentee');
+
+    if (tabCtrl) tabCtrl.addEventListener('click', () => switchTab('controller'));
+    if (tabTrn) tabTrn.addEventListener('click', () => switchTab('trainer'));
+    if (tabMnt) tabMnt.addEventListener('click', () => switchTab('mentee'));
+
+    // Candidate bubble interactive touch
+    container.querySelectorAll('.auth-candidate-bubble').forEach(bubble => {
+      bubble.addEventListener('click', () => {
+        const title = bubble.getAttribute('title') || '';
+        if (title) {
+          toast.info(`Sibaq Candidate: ${title}`);
+        }
+      });
+    });
+  }
+
+  function attachFormEvents() {
+    if (activeTab === 'controller') {
+      const formCtrl = container.querySelector('#formControllerLogin');
+      const txtCtrlUser = container.querySelector('#ctrlUsername');
+      const txtCtrlPwd = container.querySelector('#ctrlPassword');
+      const btnToggle = container.querySelector('#btnToggleCtrlPwd');
+
+      if (btnToggle && txtCtrlPwd) {
+        btnToggle.addEventListener('click', () => {
+          txtCtrlPwd.type = txtCtrlPwd.type === 'password' ? 'text' : 'password';
+          btnToggle.textContent = txtCtrlPwd.type === 'password' ? '👁️' : '🔒';
+        });
+      }
+
+      if (formCtrl) {
+        formCtrl.addEventListener('submit', (e) => {
+          e.preventDefault();
+          const username = txtCtrlUser.value.trim();
+          const password = txtCtrlPwd.value.trim();
+
+          const result = state.authenticateController(username, password);
+          if (!result.success) {
+            toast.error(result.error);
+            txtCtrlPwd.classList.add('input-error');
+            setTimeout(() => txtCtrlPwd.classList.remove('input-error'), 1000);
+            return;
+          }
+
+          toast.success('Controller authentication successful! Welcome to DH BENGAL.');
+          stopAllTimers();
+          onLoginSuccess('controller', { user: 'sibaq' });
+        });
+      }
+    } else if (activeTab === 'trainer') {
+      const formTrn = container.querySelector('#formTrainerLogin');
+      const txtTrnUser = container.querySelector('#trnUsername');
+      const txtTrnPwd = container.querySelector('#trnPassword');
+      const btnToggleTrn = container.querySelector('#btnToggleTrnPwd');
+
+      if (btnToggleTrn && txtTrnPwd) {
+        btnToggleTrn.addEventListener('click', () => {
+          txtTrnPwd.type = txtTrnPwd.type === 'password' ? 'text' : 'password';
+          btnToggleTrn.textContent = txtTrnPwd.type === 'password' ? '👁️' : '🔒';
+        });
+      }
+
+      if (formTrn) {
+        formTrn.addEventListener('submit', (e) => {
+          e.preventDefault();
+          const username = txtTrnUser.value.trim();
+          const password = txtTrnPwd.value.trim();
+
+          const result = state.authenticateTrainer(username, password);
+          if (!result.success) {
+            toast.error(result.error);
+            txtTrnPwd.classList.add('input-error');
+            setTimeout(() => txtTrnPwd.classList.remove('input-error'), 1000);
+            return;
+          }
+
+          toast.success(`Welcome back, ${result.trainer.name}!`);
+          stopAllTimers();
+          onLoginSuccess('trainer', result.trainer);
+        });
+      }
+    } else if (activeTab === 'mentee') {
+      const formMnt = container.querySelector('#formMenteeLogin');
+      const txtAdNo = container.querySelector('#menteeAdNo');
+      const selCat = container.querySelector('#menteeCategory');
+
+      if (formMnt) {
+        formMnt.addEventListener('submit', (e) => {
+          e.preventDefault();
+          const adNo = txtAdNo.value.trim();
+          const category = selCat.value.trim();
+
+          const result = state.authenticateMentee(adNo, category);
+          if (!result.success) {
+            toast.error(result.error);
+            txtAdNo.classList.add('input-error');
+            setTimeout(() => txtAdNo.classList.remove('input-error'), 1000);
+            return;
+          }
+
+          toast.success(`Welcome back, ${result.candidate.name}!`);
+          stopAllTimers();
+          onLoginSuccess('mentee', result.candidate);
+        });
+      }
+    }
+  }
+
   function render() {
     stopAllTimers();
     const candidates = state.getCandidates();
+    const isMenteeActive = activeTab === 'mentee';
 
     container.innerHTML = `
       <div class="auth-page-wrapper">
@@ -293,7 +626,8 @@ export function renderLoginView(container, onLoginSuccess, options = {}) {
         <div class="auth-glow auth-glow-2 glow-${activeTab}"></div>
 
         <!-- Floating Candidates Circular Ambient Bubbles Layer -->
-        <div class="auth-floating-candidates-layer" aria-hidden="true">
+        <!-- Only visible when on the Mentee tab. When switched to Controller/Mentor, dispersed smoothly outside -->
+        <div class="auth-floating-candidates-layer ${isMenteeActive ? '' : 'layer-dispersed'}" aria-hidden="true">
           ${getCandidateBubblesHTML(candidates)}
         </div>
 
@@ -410,153 +744,7 @@ export function renderLoginView(container, onLoginSuccess, options = {}) {
 
           <!-- Dynamic Authentication Forms -->
           <div class="auth-form-card">
-            ${activeTab === 'controller' ? `
-              <!-- ================= CONTROLLER LOGIN FORM ================= -->
-              <div class="auth-form-header">
-                <div class="auth-badge-pill badge-controller">
-                  <span class="auth-badge-dot"></span> Official Controller Access
-                </div>
-                <h2 class="auth-form-title">Controller Sign In</h2>
-                <p class="auth-form-desc">
-                  Access overall operations, candidate assignments, programs roster, and live scoring.
-                </p>
-              </div>
-
-              <form id="formControllerLogin" class="auth-form-body">
-                <div class="form-group">
-                  <label class="form-label" for="ctrlUsername">Controller Username</label>
-                  <div class="auth-input-wrap">
-                    <span class="auth-input-icon">${getIcon('user')}</span>
-                    <input 
-                      type="text" 
-                      id="ctrlUsername" 
-                      class="form-input auth-input" 
-                      required 
-                      placeholder="Enter controller username"
-                      autocomplete="username"
-                    />
-                  </div>
-                </div>
-
-                <div class="form-group">
-                  <label class="form-label" for="ctrlPassword">Security Password</label>
-                  <div class="auth-input-wrap">
-                    <span class="auth-input-icon">${getIcon('lock')}</span>
-                    <input 
-                      type="password" 
-                      id="ctrlPassword" 
-                      class="form-input auth-input" 
-                      required 
-                      placeholder="Enter controller password"
-                      autocomplete="current-password"
-                    />
-                    <button type="button" class="btn-toggle-pwd" id="btnToggleCtrlPwd" title="Show/Hide Password">
-                      👁️
-                    </button>
-                  </div>
-                </div>
-
-                <button type="submit" id="btnSubmitCtrl" class="btn btn-primary auth-submit-btn" style="background: linear-gradient(135deg, #4338ca, #4f46e5); border: none; box-shadow: 0 4px 14px rgba(79, 70, 229, 0.32);">
-                  <span>Sign In to Controller Panel</span>
-                  <span class="auth-btn-arrow">&rarr;</span>
-                </button>
-              </form>
-            ` : activeTab === 'trainer' ? `
-              <!-- ================= TRAINER LOGIN FORM ================= -->
-              <div class="auth-form-header">
-                <div class="auth-badge-pill badge-trainer">
-                  <span class="auth-badge-dot" style="background: #6366f1;"></span> Mentor Portal
-                </div>
-                <h2 class="auth-form-title">Mentor Sign In</h2>
-                <p class="auth-form-desc">
-                  Access your assigned mentees, enrolled programs, and report daily progress.
-                </p>
-              </div>
-
-              <form id="formTrainerLogin" class="auth-form-body">
-                <div class="form-group">
-                  <label class="form-label" for="trnUsername">Mentor Username / ID</label>
-                  <div class="auth-input-wrap">
-                    <span class="auth-input-icon">${getIcon('user')}</span>
-                    <input 
-                      type="text" 
-                      id="trnUsername" 
-                      class="form-input auth-input" 
-                      required 
-                      placeholder="Enter your assigned username"
-                      autocomplete="username"
-                    />
-                  </div>
-                </div>
-
-                <div class="form-group">
-                  <label class="form-label" for="trnPassword">Mentor Password</label>
-                  <div class="auth-input-wrap">
-                    <span class="auth-input-icon">${getIcon('lock')}</span>
-                    <input 
-                      type="password" 
-                      id="trnPassword" 
-                      class="form-input auth-input" 
-                      required 
-                      placeholder="Enter your assigned password"
-                      autocomplete="current-password"
-                    />
-                    <button type="button" class="btn-toggle-pwd" id="btnToggleTrnPwd" title="Show/Hide Password">
-                      👁️
-                    </button>
-                  </div>
-                </div>
-
-                <button type="submit" id="btnSubmitTrn" class="btn btn-primary auth-submit-btn" style="background: linear-gradient(135deg, #6d28d9, #7c3aed); border: none; box-shadow: 0 4px 14px rgba(124, 58, 237, 0.32);">
-                  <span>Sign In to Mentor Panel</span>
-                  <span class="auth-btn-arrow">&rarr;</span>
-                </button>
-              </form>
-            ` : `
-              <!-- ================= MENTEE LOGIN FORM ================= -->
-              <div class="auth-form-header">
-                <div class="auth-badge-pill badge-mentee" style="background: #ecfdf5; color: #047857; border-color: #a7f3d0;">
-                  <span class="auth-badge-dot" style="background: #10b981;"></span> Candidate Portal
-                </div>
-                <h2 class="auth-form-title">Mentee Sign In</h2>
-                <p class="auth-form-desc">
-                  Access your daily practice tasks, assigned mentors, enrolled programs, and mentor reviews.
-                </p>
-              </div>
-
-              <form id="formMenteeLogin" class="auth-form-body">
-                <div class="form-group">
-                  <label class="form-label" for="menteeAdNo">Admission / Chest Number</label>
-                  <div class="auth-input-wrap">
-                    <span class="auth-input-icon">${getIcon('user')}</span>
-                    <input 
-                      type="text" 
-                      id="menteeAdNo" 
-                      class="form-input auth-input" 
-                      required 
-                      placeholder="e.g. AD-2026-01 or 101"
-                      autocomplete="username"
-                    />
-                  </div>
-                </div>
-
-                <div class="form-group">
-                  <label class="form-label" for="menteeCategory">Competition Category</label>
-                  <div class="auth-input-wrap">
-                    <span class="auth-input-icon" style="color: #059669;">${getIcon('award')}</span>
-                    <select id="menteeCategory" class="form-select auth-input" required style="width: 100%; cursor: pointer;">
-                      <option value="">-- Choose Your Category --</option>
-                      ${categories.map(cat => `<option value="${cat}">${cat}</option>`).join('')}
-                    </select>
-                  </div>
-                </div>
-
-                <button type="submit" id="btnSubmitMentee" class="btn btn-primary auth-submit-btn" style="background: linear-gradient(135deg, #047857, #059669); border: none; box-shadow: 0 4px 14px rgba(5, 150, 105, 0.32);">
-                  <span>Sign In to Mentee Portal</span>
-                  <span class="auth-btn-arrow">&rarr;</span>
-                </button>
-              </form>
-            `}
+            ${getFormCardHTML(activeTab, categories)}
           </div>
 
           <!-- Small Mobile Bottom Countdown (Exclusive to phone view at the bottom of login box) -->
@@ -584,149 +772,11 @@ export function renderLoginView(container, onLoginSuccess, options = {}) {
       </div>
     `;
 
-    attachEvents();
+    attachGlobalEvents();
+    attachFormEvents();
     startCountdown();
-    startPhotoRotation();
-  }
-
-  function attachEvents() {
-    // 1. Tab Switchers
-    const tabCtrl = container.querySelector('#tabController');
-    const tabTrn = container.querySelector('#tabTrainer');
-    const tabMnt = container.querySelector('#tabMentee');
-
-    if (tabCtrl) {
-      tabCtrl.addEventListener('click', () => {
-        if (activeTab !== 'controller') {
-          activeTab = 'controller';
-          render();
-        }
-      });
-    }
-
-    if (tabTrn) {
-      tabTrn.addEventListener('click', () => {
-        if (activeTab !== 'trainer') {
-          activeTab = 'trainer';
-          render();
-        }
-      });
-    }
-
-    if (tabMnt) {
-      tabMnt.addEventListener('click', () => {
-        if (activeTab !== 'mentee') {
-          activeTab = 'mentee';
-          render();
-        }
-      });
-    }
-
-    // Candidate bubble interactive touch
-    container.querySelectorAll('.auth-candidate-bubble').forEach(bubble => {
-      bubble.addEventListener('click', () => {
-        const title = bubble.getAttribute('title') || '';
-        if (title) {
-          toast.info(`Sibaq Candidate: ${title}`);
-        }
-      });
-    });
-
-    // 2. Controller Form Logic
-    if (activeTab === 'controller') {
-      const formCtrl = container.querySelector('#formControllerLogin');
-      const txtCtrlUser = container.querySelector('#ctrlUsername');
-      const txtCtrlPwd = container.querySelector('#ctrlPassword');
-      const btnToggle = container.querySelector('#btnToggleCtrlPwd');
-
-      if (btnToggle && txtCtrlPwd) {
-        btnToggle.addEventListener('click', () => {
-          txtCtrlPwd.type = txtCtrlPwd.type === 'password' ? 'text' : 'password';
-          btnToggle.textContent = txtCtrlPwd.type === 'password' ? '👁️' : '🔒';
-        });
-      }
-
-      if (formCtrl) {
-        formCtrl.addEventListener('submit', (e) => {
-          e.preventDefault();
-          const username = txtCtrlUser.value.trim();
-          const password = txtCtrlPwd.value.trim();
-
-          const result = state.authenticateController(username, password);
-          if (!result.success) {
-            toast.error(result.error);
-            txtCtrlPwd.classList.add('input-error');
-            setTimeout(() => txtCtrlPwd.classList.remove('input-error'), 1000);
-            return;
-          }
-
-          toast.success('Controller authentication successful! Welcome to DH BENGAL.');
-          stopAllTimers();
-          onLoginSuccess('controller', { user: 'sibaq' });
-        });
-      }
-    }
-
-    // 3. Trainer / Mentor Form Logic
-    if (activeTab === 'trainer') {
-      const formTrn = container.querySelector('#formTrainerLogin');
-      const txtTrnUser = container.querySelector('#trnUsername');
-      const txtTrnPwd = container.querySelector('#trnPassword');
-      const btnToggleTrn = container.querySelector('#btnToggleTrnPwd');
-
-      if (btnToggleTrn && txtTrnPwd) {
-        btnToggleTrn.addEventListener('click', () => {
-          txtTrnPwd.type = txtTrnPwd.type === 'password' ? 'text' : 'password';
-          btnToggleTrn.textContent = txtTrnPwd.type === 'password' ? '👁️' : '🔒';
-        });
-      }
-
-      if (formTrn) {
-        formTrn.addEventListener('submit', (e) => {
-          e.preventDefault();
-          const username = txtTrnUser.value.trim();
-          const password = txtTrnPwd.value.trim();
-
-          const result = state.authenticateTrainer(username, password);
-          if (!result.success) {
-            toast.error(result.error);
-            txtTrnPwd.classList.add('input-error');
-            setTimeout(() => txtTrnPwd.classList.remove('input-error'), 1000);
-            return;
-          }
-
-          toast.success(`Welcome back, ${result.trainer.name}!`);
-          stopAllTimers();
-          onLoginSuccess('trainer', result.trainer);
-        });
-      }
-    }
-
-    // 4. Mentee Form Logic
     if (activeTab === 'mentee') {
-      const formMnt = container.querySelector('#formMenteeLogin');
-      const txtAdNo = container.querySelector('#menteeAdNo');
-      const selCat = container.querySelector('#menteeCategory');
-
-      if (formMnt) {
-        formMnt.addEventListener('submit', (e) => {
-          e.preventDefault();
-          const adNo = txtAdNo.value.trim();
-          const category = selCat.value.trim();
-
-          const result = state.authenticateMentee(adNo, category);
-          if (!result.success) {
-            toast.error(result.error);
-            txtAdNo.classList.add('input-error');
-            setTimeout(() => txtAdNo.classList.remove('input-error'), 1000);
-            return;
-          }
-
-          toast.success(`Welcome back, ${result.candidate.name}!`);
-          stopAllTimers();
-          onLoginSuccess('mentee', result.candidate);
-        });
-      }
+      startPhotoRotation();
     }
   }
 

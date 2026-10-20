@@ -9677,6 +9677,33 @@ body.auth-mode .main-view-container {
   pointer-events: none;
   overflow: hidden;
   z-index: 2;
+  transform-origin: center center;
+  /* Safe zone mask: Smoothly hides passing bubbles behind the login box, texts, and logo */
+  -webkit-mask-image: radial-gradient(
+    ellipse 340px 420px at 50% 50%,
+    rgba(0, 0, 0, 0) 0%,
+    rgba(0, 0, 0, 0) 68%,
+    rgba(0, 0, 0, 0.35) 85%,
+    rgba(0, 0, 0, 1) 100%
+  );
+  mask-image: radial-gradient(
+    ellipse 340px 420px at 50% 50%,
+    rgba(0, 0, 0, 0) 0%,
+    rgba(0, 0, 0, 0) 68%,
+    rgba(0, 0, 0, 0.35) 85%,
+    rgba(0, 0, 0, 1) 100%
+  );
+  transition: opacity 0.85s cubic-bezier(0.16, 1, 0.3, 1), transform 0.95s cubic-bezier(0.16, 1, 0.3, 1), filter 0.8s ease;
+  transform: scale(1);
+  opacity: 1;
+}
+
+/* When switching to Controller or Mentor, smoothly scatter and remove photos to the outside */
+.auth-floating-candidates-layer.layer-dispersed {
+  opacity: 0 !important;
+  transform: scale(1.45) !important;
+  filter: blur(14px) !important;
+  pointer-events: none !important;
 }
 
 .auth-candidate-bubble {
@@ -10352,10 +10379,32 @@ body.auth-mode .main-view-container {
     animation: afcPulseDot 2s infinite;
   }
 
+  .auth-floating-candidates-layer {
+    /* Mobile safe-zone mask: ensures passing photos smoothly dissolve behind phone login box and reappear outside */
+    -webkit-mask-image: radial-gradient(
+      ellipse min(230px, 52vw) min(360px, 48vh) at 50% 50%,
+      rgba(0, 0, 0, 0) 0%,
+      rgba(0, 0, 0, 0) 68%,
+      rgba(0, 0, 0, 0.35) 86%,
+      rgba(0, 0, 0, 1) 100%
+    );
+    mask-image: radial-gradient(
+      ellipse min(230px, 52vw) min(360px, 48vh) at 50% 50%,
+      rgba(0, 0, 0, 0) 0%,
+      rgba(0, 0, 0, 0) 68%,
+      rgba(0, 0, 0, 0.35) 86%,
+      rgba(0, 0, 0, 1) 100%
+    );
+  }
+
   .auth-candidate-bubble {
-    opacity: 0.28 !important;
+    opacity: 0.32 !important;
     pointer-events: none;
-    transform: scale(0.62) !important;
+    /* Do NOT set transform here, so animations are free to move smoothly on mobile! */
+  }
+
+  .auth-candidate-bubble .afb-inner {
+    transform: scale(0.68);
   }
 
   .auth-candidate-bubble .afb-pill-label {

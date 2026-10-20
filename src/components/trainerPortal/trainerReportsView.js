@@ -493,7 +493,7 @@ function renderMyReportTab(data) {
             ${myReport.readiness.hasData ? `${avgReadiness}%` : 'N/A'}
           </div>
           <div style="font-size: 12px; color: #64748b; margin-top: 4px;">
-            Cohort Status: <strong>${myReport.readiness.label}</strong>
+            Cohort Status: <strong>${(myReport.readiness && myReport.readiness.label) || (avgReadiness >= 80 ? 'Stage Ready' : (avgReadiness >= 60 ? 'Actively Preparing' : (avgReadiness > 0 ? 'Needs Follow-Up' : 'Pending Check-in')))}</strong>
           </div>
         </div>
 

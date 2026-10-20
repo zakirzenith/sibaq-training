@@ -1368,7 +1368,7 @@ class StateService {
   }
 
   getTrainerReadiness(trainerId) {
-    if (!trainerId) return { percentage: 0, evaluatedCount: 0, totalCount: 0, hasData: false };
+    if (!trainerId) return { percentage: 0, evaluatedCount: 0, totalCount: 0, hasData: false, label: 'Pending Check-in' };
     const cleanTid = String(trainerId).trim();
     const mentees = this.getTrainerMentees(cleanTid);
 
@@ -1376,10 +1376,11 @@ class StateService {
     if (!mentees || mentees.length === 0) {
       const directMeets = this.dailyMeets.filter(m => String(m.trainerId || '').trim() === cleanTid);
       if (directMeets.length === 0) {
-        return { percentage: 0, evaluatedCount: 0, totalCount: 0, hasData: false };
+        return { percentage: 0, evaluatedCount: 0, totalCount: 0, hasData: false, label: 'Pending Check-in' };
       }
       const avg = Math.round(directMeets.reduce((sum, m) => sum + (Number(m.percentage) || 0), 0) / directMeets.length);
-      return { percentage: avg, evaluatedCount: directMeets.length, totalCount: directMeets.length, hasData: true };
+      const label = avg >= 80 ? 'Stage Ready' : (avg >= 60 ? 'Actively Preparing' : 'Needs Follow-Up');
+      return { percentage: avg, evaluatedCount: directMeets.length, totalCount: directMeets.length, hasData: true, label };
     }
 
     // For each candidate in mentees, find their latest meet score
@@ -1398,15 +1399,17 @@ class StateService {
     });
 
     if (evaluatedCount === 0) {
-      return { percentage: 0, evaluatedCount: 0, totalCount: mentees.length, hasData: false };
+      return { percentage: 0, evaluatedCount: 0, totalCount: mentees.length, hasData: false, label: 'Pending Check-in' };
     }
 
     const percentage = Math.round(totalScore / evaluatedCount);
+    const label = percentage >= 80 ? 'Stage Ready' : (percentage >= 60 ? 'Actively Preparing' : 'Needs Follow-Up');
     return {
       percentage,
       evaluatedCount,
       totalCount: mentees.length,
-      hasData: true
+      hasData: true,
+      label
     };
   }
 

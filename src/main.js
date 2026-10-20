@@ -12,6 +12,7 @@ import { renderDailyProgressView } from './components/dailyProgressView.js';
 import { renderReportsView } from './components/reportsView.js';
 import { renderTrainerDashboardView } from './components/trainerPortal/trainerDashboardView.js';
 import { renderTrainerDailyProgressView } from './components/trainerPortal/trainerDailyProgressView.js';
+import { renderTrainerReportsView } from './components/trainerPortal/trainerReportsView.js';
 import { renderMenteeDashboardView } from './components/menteePortal/menteeDashboardView.js';
 import { renderMenteePracticeView } from './components/menteePortal/menteePracticeView.js';
 import { renderMenteeCompareView } from './components/menteePortal/menteeCompareView.js';

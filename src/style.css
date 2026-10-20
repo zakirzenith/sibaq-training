@@ -9657,28 +9657,28 @@ body.auth-mode .main-view-container {
   font-weight: 500;
 }
 
-/* Modern Triple Portal Role Switcher Tabs (High-End Segmented Control) */
+/* Modern Triple Portal Role Switcher Tabs (Streamlined Segmented Control) */
 .auth-role-tabs {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  gap: 5px;
-  background: #e9eef5;
-  padding: 5px;
-  border-radius: 14px;
-  border: 1px solid rgba(203, 213, 225, 0.85);
-  box-shadow: inset 0 2px 4px rgba(15, 23, 42, 0.05), 0 1px 2px rgba(0, 0, 0, 0.03);
+  gap: 4px;
+  background: #eaeff5;
+  padding: 4px;
+  border-radius: 12px;
+  border: 1px solid rgba(203, 213, 225, 0.8);
+  box-shadow: inset 0 1.5px 3px rgba(15, 23, 42, 0.05);
   position: relative;
   user-select: none;
-  backdrop-filter: blur(8px);
 }
 
 .auth-tab-btn {
   position: relative;
+  height: 38px;
   display: flex;
   align-items: center;
   justify-content: center;
-  gap: 7px;
-  padding: 10px 10px;
+  gap: 6px;
+  padding: 0 10px;
   border: 1px solid transparent;
   background: transparent;
   color: #64748b;
@@ -9686,16 +9686,16 @@ body.auth-mode .main-view-container {
   font-size: 13px;
   font-weight: 600;
   letter-spacing: -0.01em;
-  border-radius: 10px;
+  border-radius: 9px;
   cursor: pointer;
-  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
+  transition: all 0.18s cubic-bezier(0.16, 1, 0.3, 1);
   outline: none;
+  white-space: nowrap;
 }
 
 .auth-tab-btn:hover:not(.active) {
   color: #1e293b;
   background: rgba(255, 255, 255, 0.65);
-  transform: translateY(-0.5px);
 }
 
 .auth-tab-btn:active {
@@ -9707,7 +9707,8 @@ body.auth-mode .main-view-container {
   align-items: center;
   justify-content: center;
   color: currentColor;
-  transition: transform 0.2s cubic-bezier(0.16, 1, 0.3, 1), color 0.2s ease;
+  flex-shrink: 0;
+  transition: transform 0.18s ease, color 0.18s ease;
 }
 
 .auth-tab-icon svg {
@@ -9717,100 +9718,50 @@ body.auth-mode .main-view-container {
 .auth-tab-label {
   display: inline-block;
   white-space: nowrap;
+  line-height: 1;
 }
 
-.auth-tab-indicator {
-  position: absolute;
-  bottom: 2.5px;
-  width: 14px;
-  height: 2.5px;
-  border-radius: 99px;
-  background: transparent;
-  opacity: 0;
-  transform: scaleX(0.4);
-  transition: all 0.22s cubic-bezier(0.16, 1, 0.3, 1);
-}
-
-/* Base Active State */
+/* Base Active Pill */
 .auth-tab-btn.active {
   background: #ffffff;
   font-weight: 700;
   cursor: default;
 }
 
-.auth-tab-btn.active .auth-tab-indicator {
-  opacity: 1;
-  transform: scaleX(1);
-}
-
-/* Controller Role Active Styling */
+/* Controller Role Active */
 .auth-tab-btn[data-role="controller"].active {
   color: #1e1b4b;
   border-color: rgba(79, 70, 229, 0.16);
-  box-shadow: 0 4px 14px -2px rgba(79, 70, 229, 0.14), 0 2px 4px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 2px 8px -1px rgba(79, 70, 229, 0.14), 0 1px 2px rgba(0, 0, 0, 0.04);
 }
 
 .auth-tab-btn[data-role="controller"].active .auth-tab-icon {
   color: #4f46e5;
-  transform: scale(1.08);
+  transform: scale(1.05);
 }
 
-.auth-tab-btn[data-role="controller"].active .auth-tab-indicator {
-  background: #4f46e5;
-  box-shadow: 0 1px 4px rgba(79, 70, 229, 0.4);
-}
-
-/* Mentor Role Active Styling */
+/* Mentor Role Active */
 .auth-tab-btn[data-role="trainer"].active {
   color: #2e1065;
   border-color: rgba(124, 58, 237, 0.16);
-  box-shadow: 0 4px 14px -2px rgba(124, 58, 237, 0.14), 0 2px 4px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 2px 8px -1px rgba(124, 58, 237, 0.14), 0 1px 2px rgba(0, 0, 0, 0.04);
 }
 
 .auth-tab-btn[data-role="trainer"].active .auth-tab-icon {
   color: #7c3aed;
-  transform: scale(1.08);
+  transform: scale(1.05);
 }
 
-.auth-tab-btn[data-role="trainer"].active .auth-tab-indicator {
-  background: #7c3aed;
-  box-shadow: 0 1px 4px rgba(124, 58, 237, 0.4);
-}
-
-/* Mentee Role Active Styling */
+/* Mentee Role Active */
 .auth-tab-btn[data-role="mentee"].active {
   color: #064e3b;
   border-color: rgba(5, 150, 105, 0.18);
-  box-shadow: 0 4px 14px -2px rgba(5, 150, 105, 0.16), 0 2px 4px rgba(0, 0, 0, 0.04);
+  box-shadow: 0 2px 8px -1px rgba(5, 150, 105, 0.16), 0 1px 2px rgba(0, 0, 0, 0.04);
 }
 
 .auth-tab-btn[data-role="mentee"].active .auth-tab-icon {
   color: #059669;
-  transform: scale(1.08);
-}
-
-.auth-tab-btn[data-role="mentee"].active .auth-tab-indicator {
-  background: #059669;
-  box-shadow: 0 1px 4px rgba(5, 150, 105, 0.4);
-}
-
-/* Responsive adjustments for mobile */
-@media (max-width: 480px) {
-  .auth-role-tabs {
-    gap: 3px;
-    padding: 3.5px;
-    border-radius: 12px;
-  }
-  .auth-tab-btn {
-    padding: 8.5px 6px;
-    font-size: 12px;
-    gap: 5px;
-    border-radius: 8px;
-  }
-  .auth-tab-icon svg {
-    width: 14px;
-    height: 14px;
-  }
+  transform: scale(1.05);
 }
 
 /* Auth Form Card */
@@ -9825,12 +9776,150 @@ body.auth-mode .main-view-container {
 
 @keyframes authFormSlideIn {
   from {
-    opacity: 0.82;
+    opacity: 0.85;
     transform: translateY(3px);
   }
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+/* =========================================================
+   DEDICATED PROFESSIONAL PHONE / MOBILE RESPONSIVE STYLING
+   ========================================================= */
+@media (max-width: 640px) {
+  .auth-page-wrapper {
+    padding: 16px 14px;
+    align-items: center;
+    min-height: 100vh;
+    min-height: 100dvh;
+  }
+
+  .auth-card-container {
+    max-width: 100%;
+    gap: 12px;
+  }
+
+  .auth-logo-badge {
+    width: 48px;
+    height: 48px;
+    border-radius: 14px;
+    padding: 6px;
+    margin-bottom: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  }
+
+  .auth-main-title {
+    font-size: 20px;
+  }
+
+  .auth-main-subtitle {
+    font-size: 11.5px;
+    margin-top: 2px;
+  }
+
+  /* Ultra-compact, space-efficient phone tabs */
+  .auth-role-tabs {
+    gap: 3px;
+    padding: 3px;
+    border-radius: 10px;
+    background: #e7ecf2;
+    border: 1px solid #d4dbe4;
+    box-shadow: inset 0 1px 2px rgba(15, 23, 42, 0.04);
+  }
+
+  .auth-tab-btn {
+    height: 34px;
+    padding: 0 4px;
+    font-size: 11.5px;
+    font-weight: 600;
+    gap: 4px;
+    border-radius: 7px;
+  }
+
+  .auth-tab-icon svg {
+    width: 13.5px;
+    height: 13.5px;
+  }
+
+  .auth-tab-btn.active {
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.07);
+  }
+
+  .auth-form-card {
+    padding: 18px 16px;
+    border-radius: 16px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.04);
+  }
+
+  .auth-form-header {
+    margin-bottom: 12px;
+  }
+
+  .auth-badge-pill {
+    font-size: 10.5px;
+    padding: 2px 8px;
+    margin-bottom: 6px;
+  }
+
+  .auth-form-title {
+    font-size: 16.5px;
+  }
+
+  .auth-form-desc {
+    font-size: 11.5px;
+    margin-top: 2px;
+    line-height: 1.35;
+  }
+
+  .auth-form-body {
+    gap: 11px;
+  }
+
+  .form-label {
+    font-size: 11.5px;
+    margin-bottom: 3px;
+  }
+
+  .auth-input {
+    height: 38px !important;
+    font-size: 12.5px !important;
+    padding-left: 34px !important;
+    border-radius: 8px !important;
+  }
+
+  .auth-input-icon {
+    left: 10px;
+  }
+
+  .auth-input-icon svg {
+    width: 14px;
+    height: 14px;
+  }
+
+  .auth-submit-btn {
+    height: 40px !important;
+    font-size: 13px !important;
+    border-radius: 8px !important;
+    margin-top: 2px;
+  }
+
+  .auth-footer-bar {
+    font-size: 10.5px;
+    margin-top: 2px;
+  }
+}
+
+@media (max-width: 380px) {
+  .auth-tab-btn {
+    font-size: 11px;
+    gap: 3px;
+    padding: 0 2px;
+  }
+  .auth-tab-icon svg {
+    width: 12px;
+    height: 12px;
   }
 }
 

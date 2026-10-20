@@ -43,12 +43,11 @@ export function renderLoginView(container, onLoginSuccess, options = {}) {
               title="Official Controller Portal"
             >
               <span class="auth-tab-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                   <rect width="7" height="9" x="3" y="3" rx="1.5"/><rect width="7" height="5" x="14" y="3" rx="1.5"/><rect width="7" height="9" x="14" y="12" rx="1.5"/><rect width="7" height="5" x="3" y="16" rx="1.5"/>
                 </svg>
               </span>
               <span class="auth-tab-label">Controller</span>
-              <span class="auth-tab-indicator"></span>
             </button>
 
             <button 
@@ -61,13 +60,12 @@ export function renderLoginView(container, onLoginSuccess, options = {}) {
               title="Mentor Guidance Portal"
             >
               <span class="auth-tab-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M19 21v-2a4 4 0 0 0-4-4H9a4 4 0 0 0-4 4v2"/>
                   <circle cx="12" cy="7" r="4"/>
                 </svg>
               </span>
               <span class="auth-tab-label">Mentor</span>
-              <span class="auth-tab-indicator"></span>
             </button>
 
             <button 
@@ -80,13 +78,12 @@ export function renderLoginView(container, onLoginSuccess, options = {}) {
               title="Candidate Mentee Portal"
             >
               <span class="auth-tab-icon">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
                   <path d="M22 10v6M2 10l10-5 10 5-10 5z"/>
                   <path d="M6 12v5c3 3 9 3 12 0v-5"/>
                 </svg>
               </span>
               <span class="auth-tab-label">Mentee</span>
-              <span class="auth-tab-indicator"></span>
             </button>
           </div>
 

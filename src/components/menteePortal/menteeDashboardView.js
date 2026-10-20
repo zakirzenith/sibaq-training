@@ -132,12 +132,20 @@ export function renderMenteeDashboardView(container, navigate) {
 
                 <div class="dtsc-detail-item">
                   <span class="dtsc-label">Evaluating Mentor</span>
-                  <span class="dtsc-value">
-                    ${(() => {
-                      const trn = state.getTrainerById(todayStatus.latestMeet?.trainerId);
-                      return trn ? `${trn.name} (${trn.expertise || 'Mentor'})` : 'Assigned Mentor';
-                    })()}
-                  </span>
+                  ${(() => {
+                    const trn = state.getTrainerById(todayStatus.latestMeet?.trainerId);
+                    if (!trn) return `<span class="dtsc-value">Assigned Mentor</span>`;
+                    return `
+                      <div class="dtsc-mentor-evaluator-row">
+                        <div class="mcc-avatar" style="width: 26px; height: 26px; background: ${trn.color || '#4f46e5'};">
+                          ${trn.photo 
+                            ? `<img src="${trn.photo}" alt="${trn.name}" />` 
+                            : trn.name.split(' ').map(n => n[0]).slice(0, 2).join('')}
+                        </div>
+                        <span class="dtsc-value">${trn.name} <span class="dtsc-mentor-sub">(${trn.expertise || 'Mentor'})</span></span>
+                      </div>
+                    `;
+                  })()}
                 </div>
               </div>
 
@@ -192,7 +200,9 @@ export function renderMenteeDashboardView(container, navigate) {
                     return `
                       <div class="mentor-contact-chip">
                         <div class="mcc-avatar" style="background: ${trn?.color || '#4f46e5'};">
-                          ${trn ? trn.name.split(' ').map(n => n[0]).slice(0, 2).join('') : 'M'}
+                          ${trn && trn.photo 
+                            ? `<img src="${trn.photo}" alt="${trn.name}" />` 
+                            : (trn ? trn.name.split(' ').map(n => n[0]).slice(0, 2).join('') : 'M')}
                         </div>
                         <div class="mcc-info">
                           <div class="mcc-name">${trn ? trn.name : 'Mentor to be assigned'}</div>
@@ -331,7 +341,10 @@ export function renderMenteeDashboardView(container, navigate) {
                   ${isMet ? `
                     <div class="dlr-met-info">
                       <span class="dlr-program-tag">${prog ? `[${prog.code}] ${prog.name}` : 'Practice Session'}</span>
-                      <span class="dlr-mentor-tag">Mentor: <strong>${trn ? trn.name : 'Assigned Mentor'}</strong></span>
+                      <span class="dlr-mentor-tag">
+                        ${trn && trn.photo ? `<img src="${trn.photo}" alt="${trn.name}" class="dlr-mentor-photo-mini" />` : ''}
+                        <span>Mentor: <strong>${trn ? trn.name : 'Assigned Mentor'}</strong></span>
+                      </span>
                       <span class="dlr-score-tag">Score: <strong>${latestMeet?.percentage || 0}%</strong></span>
                     </div>
                     ${latestMeet?.remark ? `
@@ -389,7 +402,9 @@ export function renderMenteeDashboardView(container, navigate) {
                   <!-- Assigned Mentor Details -->
                   <div class="mpc-mentor-box">
                     <div class="mpc-mentor-avatar" style="background: ${trn?.color || '#6366f1'};">
-                      ${trn ? trn.name.split(' ').map(n => n[0]).slice(0, 2).join('') : 'M'}
+                      ${trn && trn.photo 
+                        ? `<img src="${trn.photo}" alt="${trn.name}" />` 
+                        : (trn ? trn.name.split(' ').map(n => n[0]).slice(0, 2).join('') : 'M')}
                     </div>
                     <div class="mpc-mentor-info">
                       <span class="mpc-mentor-label">Assigned Mentor</span>

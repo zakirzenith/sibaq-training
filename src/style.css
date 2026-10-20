@@ -11511,6 +11511,19 @@ select.auth-input option {
   box-shadow: 0 1px 3px rgba(0,0,0,0.03);
 }
 
+.dtsc-mentor-evaluator-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 2px;
+}
+
+.dtsc-mentor-sub {
+  font-weight: 500;
+  font-size: 12px;
+  color: #64748b;
+}
+
 .mcc-avatar {
   width: 32px;
   height: 32px;
@@ -11522,6 +11535,14 @@ select.auth-input option {
   font-weight: 800;
   font-size: 12px;
   flex-shrink: 0;
+  overflow: hidden;
+}
+
+.mcc-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
 .mcc-info {
@@ -11771,6 +11792,18 @@ select.auth-input option {
 
 .dlr-mentor-tag {
   color: #475569;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.dlr-mentor-photo-mini {
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  object-fit: cover;
+  display: inline-block;
+  flex-shrink: 0;
 }
 
 .dlr-score-tag {
@@ -11880,6 +11913,14 @@ select.auth-input option {
   font-weight: 800;
   font-size: 12px;
   flex-shrink: 0;
+  overflow: hidden;
+}
+
+.mpc-mentor-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
 }
 
 .mpc-mentor-info {

@@ -270,7 +270,7 @@ export function renderTrainerDashboardView(container, navigateTo) {
                         <td><span class="saas-adno-pill">${c.adNo}</span></td>
                         <td>
                           <div class="saas-student-cell btn-view-cand-profile" data-cid="${c.id}" style="cursor: pointer;">
-                            <div class="saas-avatar-soft">${initials}</div>
+                            <div class="saas-avatar-soft">${c.photo ? `<img src="${c.photo}" alt="${c.name}" class="saas-avatar-img" />` : initials}</div>
                             <div>
                               <strong style="color: #0f172a; font-size: 13.5px; display: block;">${c.name}</strong>
                               <span class="text-xs text-muted">${item.meets.length} meet${item.meets.length === 1 ? '' : 's'} logged</span>
@@ -333,7 +333,7 @@ export function renderTrainerDashboardView(container, navigateTo) {
                   <div class="mobile-candidate-card" style="background: #ffffff; border: 1px solid #cbd5e1; border-radius: 14px; padding: 14px; display: flex; flex-direction: column; gap: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.04);">
                     <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 10px;">
                       <div style="display: flex; align-items: center; gap: 10px;">
-                        <div class="saas-avatar-soft" style="width: 40px; height: 40px; font-size: 13.5px; flex-shrink: 0;">${initials}</div>
+                        <div class="saas-avatar-soft" style="width: 40px; height: 40px; font-size: 13.5px; flex-shrink: 0;">${c.photo ? `<img src="${c.photo}" alt="${c.name}" class="saas-avatar-img" />` : initials}</div>
                         <div>
                           <strong style="font-size: 15px; color: #0f172a; display: block;">${c.name}</strong>
                           <div style="display: flex; gap: 6px; align-items: center; margin-top: 2px;">

@@ -372,7 +372,7 @@ export function openAssignCandidatesModal({ programId, onSave = () => {} }) {
         <td><span class="saas-adno-pill">${c.adNo}</span></td>
         <td>
           <div class="saas-student-cell">
-            <div class="saas-avatar-soft" style="width: 28px; height: 28px; font-size: 11px;">${initials}</div>
+            <div class="saas-avatar-soft" style="width: 28px; height: 28px; font-size: 11px;">${c.photo ? `<img src="${c.photo}" alt="${c.name}" class="saas-avatar-img" />` : initials}</div>
             <strong class="candidate-row-name">${c.name}</strong>
           </div>
         </td>

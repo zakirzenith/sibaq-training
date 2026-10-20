@@ -1,6 +1,7 @@
 import { state } from '../../services/state.js';
 import { toast } from '../toast.js';
 import { getIcon } from '../icons.js';
+import { openImageCropperModal } from './imageCropperModal.js';
 
 export function openCandidateFormModal({
   candidate = null,
@@ -52,6 +53,34 @@ export function openCandidateFormModal({
       <!-- Modal Body (Scrollable) -->
       <form id="candidateForm" class="modal-body" style="overflow-y: auto; padding: 18px 20px; display: flex; flex-direction: column; gap: 14px; background: #f8fafc;">
         
+        <!-- Candidate Profile Photo Row -->
+        <div class="candidate-photo-upload-row" style="display: flex; align-items: center; gap: 14px; background: #ffffff; border: 1.5px solid #e2e8f0; border-radius: 12px; padding: 12px 14px;">
+          <div style="position: relative; width: 60px; height: 60px; flex-shrink: 0;">
+            <div id="candidatePhotoPreview" style="width: 100%; height: 100%; border-radius: 14px; background: #eef2ff; color: #4338ca; font-weight: 800; font-size: 20px; display: flex; align-items: center; justify-content: center; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.08); border: 2px solid #ffffff; cursor: pointer;" title="Click to upload or crop photo">
+              ${candidate && candidate.photo 
+                ? `<img src="${candidate.photo}" alt="Candidate Photo" style="width: 100%; height: 100%; object-fit: cover;" />`
+                : (candidate ? (candidate.name || 'C').split(' ').map(n => n[0]).slice(0, 2).join('') : 'C')}
+            </div>
+          </div>
+
+          <div style="flex: 1; min-width: 0;">
+            <div style="font-size: 13px; font-weight: 700; color: #0f172a; margin-bottom: 2px;">Profile Photo</div>
+            <div style="font-size: 11.5px; color: #64748b; margin-bottom: 6px;">Upload a headshot of the candidate (JPG, PNG, WebP).</div>
+            <div style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+              <input type="file" id="inpCandidatePhotoFile" accept="image/*" style="display: none;" />
+              <button type="button" id="btnUploadCandidatePhoto" class="btn btn-sm btn-outline" style="font-size: 11.5px; height: 30px; padding: 0 10px; gap: 5px; font-weight: 700; border-radius: 7px; border-color: #cbd5e1; background: #ffffff; cursor: pointer;">
+                ${getIcon('upload')} <span>${candidate && candidate.photo ? 'Change Photo' : 'Upload Photo'}</span>
+              </button>
+              <button type="button" id="btnCropCandidatePhoto" class="btn btn-sm btn-outline" style="font-size: 11.5px; height: 30px; padding: 0 10px; gap: 5px; font-weight: 700; border-radius: 7px; border-color: #cbd5e1; background: #ffffff; display: ${candidate && candidate.photo ? 'inline-flex' : 'none'}; cursor: pointer;" title="Adjust framing and crop photo">
+                ${getIcon('scissors') || '✂️'} <span>Crop</span>
+              </button>
+              <button type="button" id="btnRemoveCandidatePhoto" class="btn btn-sm text-danger" style="font-size: 11.5px; height: 30px; padding: 0 8px; gap: 4px; font-weight: 600; border: none; background: transparent; display: ${candidate && candidate.photo ? 'inline-flex' : 'none'}; cursor: pointer;">
+                ${getIcon('trash')} <span>Remove</span>
+              </button>
+            </div>
+          </div>
+        </div>
+
         <!-- Candidate Profile Details Card -->
         <div style="background: #ffffff; border: 1.5px solid #e2e8f0; border-radius: 12px; padding: 14px 16px; display: flex; flex-direction: column; gap: 12px;">
           <div style="font-size: 11px; font-weight: 800; text-transform: uppercase; color: #64748b; letter-spacing: 0.5px;">
@@ -211,6 +240,73 @@ export function openCandidateFormModal({
   const selCategory = overlay.querySelector('#selCategory');
   const txtClass = overlay.querySelector('#txtClass');
   const btnSubmit = overlay.querySelector('#btnSubmitCandidate');
+
+  // Candidate photo state & elements
+  let currentPhotoData = candidate && candidate.photo ? candidate.photo : null;
+  const photoPreview = overlay.querySelector('#candidatePhotoPreview');
+  const inpPhotoFile = overlay.querySelector('#inpCandidatePhotoFile');
+  const btnUploadPhoto = overlay.querySelector('#btnUploadCandidatePhoto');
+  const btnCropPhoto = overlay.querySelector('#btnCropCandidatePhoto');
+  const btnRemovePhoto = overlay.querySelector('#btnRemoveCandidatePhoto');
+
+  const updatePhotoPreview = () => {
+    if (currentPhotoData) {
+      photoPreview.innerHTML = `<img src="${currentPhotoData}" alt="Candidate Photo" style="width: 100%; height: 100%; object-fit: cover;" />`;
+      btnRemovePhoto.style.display = 'inline-flex';
+      btnCropPhoto.style.display = 'inline-flex';
+      btnUploadPhoto.querySelector('span').textContent = 'Change Photo';
+    } else {
+      const nameVal = txtName.value.trim();
+      const initials = nameVal 
+        ? nameVal.split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase() 
+        : (candidate ? candidate.name.split(' ').map(n => n[0]).slice(0, 2).join('') : 'C');
+      photoPreview.innerHTML = initials;
+      btnRemovePhoto.style.display = 'none';
+      btnCropPhoto.style.display = 'none';
+      btnUploadPhoto.querySelector('span').textContent = 'Upload Photo';
+    }
+  };
+
+  const openCropper = (src) => {
+    openImageCropperModal({
+      imageSrc: src,
+      title: 'Crop & Frame Candidate Photo',
+      onApply: (croppedDataUrl) => {
+        currentPhotoData = croppedDataUrl;
+        updatePhotoPreview();
+        toast.success('Photo framed and cropped!');
+      }
+    });
+  };
+
+  btnUploadPhoto.addEventListener('click', () => inpPhotoFile.click());
+  btnCropPhoto.addEventListener('click', () => { if (currentPhotoData) openCropper(currentPhotoData); });
+  photoPreview.addEventListener('click', () => { if (currentPhotoData) openCropper(currentPhotoData); else inpPhotoFile.click(); });
+  btnRemovePhoto.addEventListener('click', () => {
+    currentPhotoData = null;
+    inpPhotoFile.value = '';
+    updatePhotoPreview();
+    toast.info('Photo removed.');
+  });
+
+  inpPhotoFile.addEventListener('change', (e) => {
+    const file = e.target.files && e.target.files[0];
+    if (!file) return;
+    if (!file.type.startsWith('image/')) {
+      toast.error('Please select an image file (JPG, PNG, WebP).');
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      openCropper(event.target.result);
+      inpPhotoFile.value = '';
+    };
+    reader.readAsDataURL(file);
+  });
+
+  txtName.addEventListener('input', () => {
+    if (!currentPhotoData) updatePhotoPreview();
+  });
 
   const inpSearch = overlay.querySelector('#inpCandProgSearch');
   const selFilter = overlay.querySelector('#selCandProgCategoryFilter');
@@ -446,6 +542,7 @@ export function openCandidateFormModal({
         name,
         category,
         class: studentClass,
+        photo: currentPhotoData,
         programIds
       });
 
@@ -469,6 +566,7 @@ export function openCandidateFormModal({
         name,
         category,
         class: studentClass,
+        photo: currentPhotoData,
         programIds
       });
 

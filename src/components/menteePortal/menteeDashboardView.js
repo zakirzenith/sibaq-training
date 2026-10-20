@@ -59,8 +59,10 @@ export function renderMenteeDashboardView(container, navigate) {
       <!-- ================= HERO PROFILE BANNER ================= -->
       <div class="mentee-hero-card">
         <div class="mentee-hero-left">
-          <div class="mentee-avatar-wrap">
-            <span class="mentee-avatar-initials">${candidate.name.split(' ').map(n => n[0]).slice(0, 2).join('')}</span>
+          <div class="mentee-avatar-wrap" style="overflow: hidden;">
+            ${candidate.photo 
+              ? `<img src="${candidate.photo}" alt="${candidate.name}" style="width: 100%; height: 100%; object-fit: cover; border-radius: inherit;" />`
+              : `<span class="mentee-avatar-initials">${candidate.name.split(' ').map(n => n[0]).slice(0, 2).join('')}</span>`}
           </div>
           <div class="mentee-hero-info">
             <div class="mentee-pill-row">

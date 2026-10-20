@@ -693,7 +693,7 @@ export function renderDailyProgressView(container, navigateTo) {
           <!-- Col 1: Student Identity -->
           <div class="src-col src-student">
             <div class="saas-avatar-soft">
-              ${c.name.split(' ').map(n => n[0]).slice(0, 2).join('')}
+              ${c.photo ? `<img src="${c.photo}" alt="${c.name}" class="saas-avatar-img" />` : c.name.split(' ').map(n => n[0]).slice(0, 2).join('')}
             </div>
             <div class="src-student-info">
               <button type="button" class="saas-student-name btn-open-profile-dialog" data-cid="${c.id}" title="View profile">
@@ -1062,8 +1062,11 @@ export function renderDailyProgressView(container, navigateTo) {
 
                   return `
                     <div class="tmc-card ${mb.isMet ? 'is-met' : (selectedDate < todayStr ? 'is-missed' : 'is-pending')}">
-                      <div class="tmc-top-row">
-                        <div class="tmc-cand-info">
+                      <div class="tmc-top-row" style="display: flex; gap: 10px; align-items: center;">
+                        <div class="saas-avatar-soft" style="width: 32px; height: 32px; font-size: 11px; flex-shrink: 0; border-radius: 8px;">
+                          ${c.photo ? `<img src="${c.photo}" alt="${c.name}" class="saas-avatar-img" />` : c.name.split(' ').map(n => n[0]).slice(0, 2).join('')}
+                        </div>
+                        <div class="tmc-cand-info" style="flex: 1; min-width: 0;">
                           <span class="tmc-cand-name">${c.name}</span>
                           <span class="tmc-cand-meta">AD: ${c.adNo || c.chestNo || 'N/A'} &bull; ${c.category || 'General'}</span>
                         </div>

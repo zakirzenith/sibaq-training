@@ -198,7 +198,7 @@ export function renderTrainerDailyProgressView(container, navigateTo) {
                   <!-- Col 1: Student Identity -->
                   <div class="src-col src-student">
                     <div class="saas-avatar-soft" style="width: 42px; height: 42px; font-size: 14px; flex-shrink: 0;">
-                      ${c.name.split(' ').map(n => n[0]).slice(0, 2).join('')}
+                      ${c.photo ? `<img src="${c.photo}" alt="${c.name}" class="saas-avatar-img" />` : c.name.split(' ').map(n => n[0]).slice(0, 2).join('')}
                     </div>
                     <div class="src-student-info">
                       <strong class="saas-student-name btn-open-cand-profile" data-cid="${c.id}" style="cursor: pointer;">

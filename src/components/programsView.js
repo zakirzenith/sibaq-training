@@ -553,7 +553,7 @@ export function renderProgramsView(container, navigateTo) {
                     <tr class="saas-table-row">
                       <td>
                         <div class="saas-student-cell" data-cid="${cand.id}">
-                          <div class="saas-avatar-soft">${initials}</div>
+                          <div class="saas-avatar-soft">${cand.photo ? `<img src="${cand.photo}" alt="${cand.name}" class="saas-avatar-img" />` : initials}</div>
                           <button class="candidate-name-btn btn-open-cand-profile" data-cid="${cand.id}" title="Click to view candidate profile">
                             <strong>${cand.name}</strong>
                           </button>
@@ -595,7 +595,7 @@ export function renderProgramsView(container, navigateTo) {
                     return `
                 <div class="mobile-assigned-cand-item" data-cid="${cand.id}">
                   <div class="maci-left">
-                    <div class="saas-avatar-soft" style="width: 38px; height: 38px; font-size: 13px;">${initials}</div>
+                    <div class="saas-avatar-soft" style="width: 38px; height: 38px; font-size: 13px;">${cand.photo ? `<img src="${cand.photo}" alt="${cand.name}" class="saas-avatar-img" />` : initials}</div>
                     <div class="maci-info">
                       <button type="button" class="candidate-name-btn btn-open-cand-profile maci-name" data-cid="${cand.id}">
                         <strong>${cand.name}</strong>

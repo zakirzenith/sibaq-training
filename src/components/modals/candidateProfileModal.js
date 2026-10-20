@@ -4,6 +4,7 @@ import { toast } from '../toast.js';
 import { openRecordMeetModal } from './recordMeetModal.js';
 import { openTrainerProfileModal } from './trainerProfileModal.js';
 import { openCandidateFormModal } from './candidateFormModal.js';
+import { openImageCropperModal } from './imageCropperModal.js';
 
 /**
  * Candidate Profile Modal
@@ -38,24 +39,39 @@ export function openCandidateProfileModal({ candidateId, onUpdate = () => {} }) 
   overlay.innerHTML = `
     <div class="modal-dialog modal-lg candidate-profile-dialog">
       <!-- Modal Header -->
-      <div class="modal-header">
-        <div class="profile-header-meta">
-          <div class="modal-badge">${getIcon('candidates')} Candidate Profile</div>
-          <div class="profile-name-row">
-            <h2 class="modal-title">${candidate.name}</h2>
-            <code class="ad-badge">${candidate.adNo}</code>
+      <div class="modal-header" style="display: flex; align-items: center; justify-content: space-between; gap: 14px;">
+        <div style="display: flex; align-items: center; gap: 14px; min-width: 0;">
+          <input type="file" id="inpSingleCandPhoto" accept="image/*" style="display: none;" />
+          <div class="profile-avatar-wrap" id="candidateProfileAvatarBtn" style="position: relative; width: 60px; height: 60px; border-radius: 16px; overflow: hidden; background: linear-gradient(135deg, #eef2ff, #e0e7ff); color: #4338ca; display: flex; align-items: center; justify-content: center; font-size: 20px; font-weight: 800; flex-shrink: 0; box-shadow: 0 2px 8px rgba(0,0,0,0.08); border: 2.5px solid #ffffff; cursor: ${!isTrainer ? 'pointer' : 'default'};" title="${!isTrainer ? 'Click to change candidate photo' : candidate.name}">
+            ${candidate.photo 
+              ? `<img src="${candidate.photo}" alt="${candidate.name}" style="width: 100%; height: 100%; object-fit: cover;" />`
+              : (candidate.name || 'C').split(' ').map(n => n[0]).slice(0, 2).join('')}
+            ${!isTrainer ? `
+              <div class="avatar-hover-overlay" style="position: absolute; inset: 0; background: rgba(15, 23, 42, 0.45); display: flex; flex-direction: column; align-items: center; justify-content: center; color: #fff; font-size: 10px; font-weight: 700; opacity: 0; transition: opacity 0.2s ease;">
+                <span>${getIcon('camera') || '📷'}</span>
+                <span>Edit</span>
+              </div>
+            ` : ''}
           </div>
-          <div class="profile-badges-row">
-            <span class="badge ${
-              candidate.category === 'Senior'
-                ? 'badge-violet'
-                : candidate.category === 'Junior'
-                ? 'badge-cyan'
-                : candidate.category === 'Sub-Junior'
-                ? 'badge-pink'
-                : 'badge-neutral'
-            }">${candidate.category} Category</span>
-            <span class="badge badge-neutral">${candidate.class || 'No Class Specified'}</span>
+
+          <div class="profile-header-meta" style="min-width: 0;">
+            <div class="modal-badge">${getIcon('candidates')} Candidate Profile</div>
+            <div class="profile-name-row" style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+              <h2 class="modal-title" style="margin: 0; font-size: 19px;">${candidate.name}</h2>
+              <code class="ad-badge">${candidate.adNo}</code>
+            </div>
+            <div class="profile-badges-row" style="margin-top: 4px;">
+              <span class="badge ${
+                candidate.category === 'Senior'
+                  ? 'badge-violet'
+                  : candidate.category === 'Junior'
+                  ? 'badge-cyan'
+                  : candidate.category === 'Sub-Junior'
+                  ? 'badge-pink'
+                  : 'badge-neutral'
+              }">${candidate.category} Category</span>
+              <span class="badge badge-neutral">${candidate.class || 'No Class Specified'}</span>
+            </div>
           </div>
         </div>
         <button class="modal-close-btn" aria-label="Close">${getIcon('x')}</button>
@@ -385,5 +401,49 @@ export function openCandidateProfileModal({ candidateId, onUpdate = () => {} }) 
       });
     });
   });
+
+  // Single Candidate Photo Upload
+  if (!isTrainer) {
+    const avatarBtn = overlay.querySelector('#candidateProfileAvatarBtn');
+    const inpPhoto = overlay.querySelector('#inpSingleCandPhoto');
+
+    if (avatarBtn && inpPhoto) {
+      avatarBtn.addEventListener('click', () => {
+        inpPhoto.click();
+      });
+
+      inpPhoto.addEventListener('change', (e) => {
+        const file = e.target.files && e.target.files[0];
+        if (!file) return;
+
+        if (!file.type.startsWith('image/')) {
+          toast.error('Please select an image file (JPG, PNG, WebP).');
+          return;
+        }
+
+        const reader = new FileReader();
+        reader.onload = (event) => {
+          openImageCropperModal({
+            imageSrc: event.target.result,
+            title: `Crop Photo for ${candidate.name}`,
+            onApply: (croppedDataUrl) => {
+              state.updateCandidate(candidate.id, { photo: croppedDataUrl });
+              avatarBtn.innerHTML = `
+                <img src="${croppedDataUrl}" alt="${candidate.name}" style="width: 100%; height: 100%; object-fit: cover;" />
+                <div class="avatar-hover-overlay" style="position: absolute; inset: 0; background: rgba(15, 23, 42, 0.45); display: flex; flex-direction: column; align-items: center; justify-content: center; color: #fff; font-size: 10px; font-weight: 700; opacity: 0; transition: opacity 0.2s ease;">
+                  <span>${getIcon('camera') || '📷'}</span>
+                  <span>Edit</span>
+                </div>
+              `;
+              toast.success(`Profile photo updated for ${candidate.name}!`);
+              onUpdate();
+            }
+          });
+          inpPhoto.value = '';
+        };
+        reader.readAsDataURL(file);
+      });
+    }
+  }
 }
 

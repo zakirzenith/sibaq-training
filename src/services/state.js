@@ -374,6 +374,7 @@ class StateService {
       name: String(candidateData.name || '').trim(),
       category: normalizeCategory(candidateData.category || 'BIDĀYA'),
       class: String(candidateData.class || '').trim(),
+      photo: candidateData.photo !== undefined ? candidateData.photo : null,
       createdAt: candidateData.createdAt || new Date().toISOString()
     };
 
@@ -414,7 +415,8 @@ class StateService {
       chestNo: String(updateData.chestNo ?? updateData.adNo ?? this.candidates[index].chestNo ?? this.candidates[index].adNo ?? '').trim(),
       name: String(updateData.name ?? this.candidates[index].name).trim(),
       category: normalizeCategory(updateData.category ?? this.candidates[index].category ?? 'BIDĀYA'),
-      class: String(updateData.class ?? this.candidates[index].class).trim()
+      class: String(updateData.class ?? this.candidates[index].class).trim(),
+      photo: updateData.photo !== undefined ? updateData.photo : (this.candidates[index].photo || null)
     };
 
     this.saveState();
@@ -428,6 +430,47 @@ class StateService {
     }
 
     return this.candidates[index];
+  }
+
+  setCandidatePhoto(candidateId, photoDataUrl) {
+    const cleanId = String(candidateId).trim();
+    return this.updateCandidate(cleanId, { photo: photoDataUrl });
+  }
+
+  setCandidatePhotoByAdNo(adNo, photoDataUrl) {
+    const cand = this.getCandidateByAdNo(adNo);
+    if (!cand) return null;
+    return this.updateCandidate(cand.id, { photo: photoDataUrl });
+  }
+
+  bulkUpdateCandidatePhotos(photoMatches) {
+    if (!Array.isArray(photoMatches) || photoMatches.length === 0) return { updatedCount: 0 };
+    
+    let updatedCount = 0;
+    const updatedCandidates = [];
+
+    photoMatches.forEach(item => {
+      if (!item.candidateId || !item.photo) return;
+      const cleanId = String(item.candidateId).trim();
+      const index = this.candidates.findIndex(c => String(c.id).trim() === cleanId);
+      if (index !== -1) {
+        this.candidates[index] = {
+          ...this.candidates[index],
+          photo: item.photo
+        };
+        updatedCandidates.push(this.candidates[index]);
+        updatedCount++;
+      }
+    });
+
+    if (updatedCount > 0) {
+      this.saveState();
+      if (firebaseService.isInitialized) {
+        firebaseService.batchSync('candidates', updatedCandidates).catch(e => console.warn('[state.bulkUpdateCandidatePhotos]', e));
+      }
+    }
+
+    return { updatedCount };
   }
 
   deleteCandidate(id) {
@@ -482,7 +525,8 @@ class StateService {
             ...this.candidates[existingIndex],
             name: name,
             category: normalizeCategory(item.category || this.candidates[existingIndex].category || 'BIDĀYA'),
-            class: String(item.class || this.candidates[existingIndex].class || '').trim()
+            class: String(item.class || this.candidates[existingIndex].class || '').trim(),
+            photo: item.photo !== undefined ? item.photo : (this.candidates[existingIndex].photo || null)
           };
           newOrUpdated.push(this.candidates[existingIndex]);
           updatedCount++;
@@ -496,6 +540,7 @@ class StateService {
           name,
           category: normalizeCategory(item.category || 'BIDĀYA'),
           class: String(item.class || '').trim(),
+          photo: item.photo || null,
           createdAt: new Date().toISOString()
         };
         this.candidates.push(newObj);

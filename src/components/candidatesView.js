@@ -6,6 +6,7 @@ import { openExcelUploadModal } from './modals/excelUploadModal.js';
 import { openCandidateFormModal } from './modals/candidateFormModal.js';
 import { openAssignCandidatesModal } from './modals/assignCandidatesModal.js';
 import { openCandidateProfileModal } from './modals/candidateProfileModal.js';
+import { openBulkPhotoUploadModal } from './modals/bulkPhotoUploadModal.js';
 import { createFilterBar } from './filterEngine.js';
 
 export function renderCandidatesView(container, navigateTo) {
@@ -16,7 +17,7 @@ export function renderCandidatesView(container, navigateTo) {
     <div class="saas-view-header">
       <div class="svh-title-block">
         <h1 class="svh-title">Candidates & Mentees</h1>
-        <p class="svh-desc">Manage candidate master roster, bulk import Excel spreadsheets, and track category divisions.</p>
+        <p class="svh-desc">Manage candidate master roster, bulk import Excel spreadsheets, bulk upload student photos, and track category divisions.</p>
       </div>
 
       <div class="saas-header-actions">
@@ -28,9 +29,16 @@ export function renderCandidatesView(container, navigateTo) {
             ${getIcon('download')} Export
           </button>
           <button id="btnBulkUploadCandidates" class="saas-pill-btn" title="Bulk upload candidates from Excel">
-            ${getIcon('upload')} Bulk Upload
+            ${getIcon('upload')} Bulk Excel
+          </button>
+          <button id="btnBulkUploadPhotos" class="saas-pill-btn" title="Bulk upload candidate photos by Admission No" style="background: #eef2ff; color: #4338ca; border-color: #c7d2fe; font-weight: 700;">
+            ${getIcon('camera') || getIcon('image') || getIcon('upload')} Bulk Photos
           </button>
         </div>
+
+        <button id="btnMobileBulkPhotos" class="saas-pill-btn mobile-only-btn" title="Bulk upload photos" style="background: #eef2ff; color: #4338ca; border-color: #c7d2fe; font-weight: 700;">
+          ${getIcon('camera') || getIcon('image') || getIcon('upload')} Photos
+        </button>
 
         <button id="btnAddCandidate" class="btn-saas-primary">
           ${getIcon('plus')} Add Candidate
@@ -226,7 +234,7 @@ export function renderCandidatesView(container, navigateTo) {
         <td><span class="saas-adno-pill">${c.adNo}</span></td>
         <td>
           <div class="saas-student-cell" data-cid="${c.id}" style="cursor: pointer;">
-            <div class="saas-avatar-soft">${initials}</div>
+            <div class="saas-avatar-soft">${c.photo ? `<img src="${c.photo}" alt="${c.name}" class="saas-avatar-img" />` : initials}</div>
             <div class="saas-student-info">
               <button class="candidate-name-btn btn-view-profile" data-cid="${c.id}" title="Click to view candidate profile">
                 <strong>${c.name}</strong>
@@ -277,7 +285,7 @@ export function renderCandidatesView(container, navigateTo) {
       mobileCard.setAttribute('data-cid', c.id);
       mobileCard.innerHTML = `
         <div class="mcc-top">
-          <div class="saas-avatar-soft" style="width: 40px; height: 40px; font-size: 13.5px; flex-shrink: 0;">${initials}</div>
+          <div class="saas-avatar-soft" style="width: 40px; height: 40px; font-size: 13.5px; flex-shrink: 0;">${c.photo ? `<img src="${c.photo}" alt="${c.name}" class="saas-avatar-img" />` : initials}</div>
           <div class="mcc-meta">
             <button type="button" class="mcc-name-btn btn-view-profile" data-cid="${c.id}">
               <strong class="mcc-name">${c.name}</strong>
@@ -411,6 +419,22 @@ export function renderCandidatesView(container, navigateTo) {
         onComplete: () => renderTable()
       });
     });
+  }
+
+  const handleOpenBulkPhotos = () => {
+    openBulkPhotoUploadModal({
+      onComplete: () => renderTable()
+    });
+  };
+
+  const btnBulkPhotos = container.querySelector('#btnBulkUploadPhotos');
+  if (btnBulkPhotos) {
+    btnBulkPhotos.addEventListener('click', handleOpenBulkPhotos);
+  }
+
+  const btnMobileBulkPhotos = container.querySelector('#btnMobileBulkPhotos');
+  if (btnMobileBulkPhotos) {
+    btnMobileBulkPhotos.addEventListener('click', handleOpenBulkPhotos);
   }
 
   container.querySelector('#btnAddCandidate').addEventListener('click', () => {

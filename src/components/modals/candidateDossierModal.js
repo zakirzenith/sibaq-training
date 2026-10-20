@@ -97,13 +97,13 @@ export function openCandidateDossierModal(candidateId) {
         </div>
 
         <!-- 1. Executive Summary Cards -->
-        <div class="dossier-summary-grid" style="display: grid; grid-template-columns: repeat(auto-fit, minmax(195px, 1fr)); gap: 12px;">
+        <div class="dossier-summary-grid">
           
           <!-- Overall Readiness Card -->
-          <div class="dossier-kpi-card" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px 16px;">
-            <div style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 6px;">Overall Readiness</div>
+          <div class="dossier-kpi-card">
+            <div class="dossier-kpi-label">Overall Readiness</div>
             <div style="display: flex; align-items: baseline; gap: 8px;">
-              <span style="font-size: 26px; font-weight: 900; color: ${hasEvaluation ? overallStatus.color : '#64748b'}; line-height: 1;">
+              <span class="dossier-kpi-val" style="color: ${hasEvaluation ? overallStatus.color : '#64748b'};">
                 ${hasEvaluation ? `${overallReadiness}%` : 'N/A'}
               </span>
               <span class="badge ${overallStatus.badgeClass}" style="font-size: 10.5px; font-weight: 700;">
@@ -116,10 +116,10 @@ export function openCandidateDossierModal(candidateId) {
           </div>
 
           <!-- Meeting Compliance Card -->
-          <div class="dossier-kpi-card" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px 16px;">
-            <div style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 6px;">Meeting Compliance</div>
+          <div class="dossier-kpi-card">
+            <div class="dossier-kpi-label">Meeting Compliance</div>
             <div style="display: flex; align-items: baseline; gap: 8px;">
-              <span style="font-size: 26px; font-weight: 900; color: #0f172a; line-height: 1;">
+              <span class="dossier-kpi-val" style="color: #0f172a;">
                 ${meetingRatePct}%
               </span>
               <span class="badge ${meetingRatePct === 100 ? 'badge-stage' : (meetingRatePct > 0 ? 'badge-amber' : 'badge-danger')}" style="font-size: 10.5px; font-weight: 700;">
@@ -132,11 +132,11 @@ export function openCandidateDossierModal(candidateId) {
           </div>
 
           <!-- Momentum & Preparation Trajectory -->
-          <div class="dossier-kpi-card" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px 16px;">
-            <div style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 6px;">Preparation Trajectory</div>
+          <div class="dossier-kpi-card">
+            <div class="dossier-kpi-label">Preparation Trajectory</div>
             <div style="display: flex; align-items: center; gap: 6px; margin-bottom: 6px;">
               <span style="width: 8px; height: 8px; border-radius: 50%; background: ${momentumColor};"></span>
-              <strong style="font-size: 14px; color: #0f172a;">${momentumLabel}</strong>
+              <strong style="font-size: 13.5px; color: #0f172a;">${momentumLabel}</strong>
             </div>
             <div style="font-size: 11px; color: #64748b; line-height: 1.35;">
               ${momentumDesc}
@@ -144,8 +144,8 @@ export function openCandidateDossierModal(candidateId) {
           </div>
 
           <!-- Activity Recency -->
-          <div class="dossier-kpi-card" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 12px; padding: 14px 16px;">
-            <div style="font-size: 11px; font-weight: 700; color: #64748b; text-transform: uppercase; margin-bottom: 6px;">Last Active Session</div>
+          <div class="dossier-kpi-card">
+            <div class="dossier-kpi-label">Last Active Session</div>
             <div style="font-size: 14.5px; font-weight: 800; color: #0f172a; margin-bottom: 4px;">
               ${dossier.latestMeetEver ? `${dossier.latestMeetEver.date} • ${dossier.latestMeetEver.time || ''}` : 'No Sessions Yet'}
             </div>
@@ -156,8 +156,8 @@ export function openCandidateDossierModal(candidateId) {
         </div>
 
         <!-- 2. Program-by-Program Readiness & Evaluation Breakdown -->
-        <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 16px;">
-          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px;">
+        <div class="dossier-section-box">
+          <div class="dossier-section-header">
             <div style="display: flex; align-items: center; gap: 7px;">
               <span style="color: #4f46e5;">${getIcon('programs')}</span>
               <strong style="font-size: 14px; color: #0f172a;">Assigned Programs & Readiness Breakdown</strong>
@@ -177,11 +177,11 @@ export function openCandidateDossierModal(candidateId) {
                 const deltaColor = pr.scoreDelta > 0 ? '#10b981' : (pr.scoreDelta < 0 ? '#ef4444' : '#64748b');
 
                 return `
-                  <div class="dossier-program-row" style="border: 1px solid #e2e8f0; border-radius: 12px; padding: 12px 14px; background: #ffffff;">
-                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
+                  <div class="dossier-program-row">
+                    <div class="dpr-header-wrap">
                       
                       <!-- Left: Program info & Mentor -->
-                      <div style="display: flex; align-items: center; gap: 10px; flex: 1; min-width: 250px;">
+                      <div class="dpr-meta-group">
                         <span class="badge ${progTypeClass} prog-report-chip" data-action="view-program" data-pid="${pr.program.id}" style="font-size: 11.5px; font-weight: 800; padding: 4px 8px; border-radius: 6px; cursor: pointer; transition: all 0.15s ease;" title="Click to view [${pr.program.code}] ${pr.program.name} program details & roster">
                           ${pr.program.code}
                         </span>
@@ -192,7 +192,7 @@ export function openCandidateDossierModal(candidateId) {
                             <span>•</span>
                             ${pr.trainer ? `
                               <div style="display: inline-flex; align-items: center; gap: 4px;">
-                                <div class="trainer-avatar-mini" style="background: ${pr.trainer.color || '#6366f1'}; overflow: hidden; width: 20px; height: 20px; font-size: 9px;">
+                                <div class="trainer-avatar-mini" style="background: ${pr.trainer.color || '#6366f1'}; overflow: hidden; width: 20px; height: 20px; font-size: 9px; border-radius: 50%;">
                                   ${pr.trainer.photo ? `<img src="${pr.trainer.photo}" alt="${pr.trainer.name}" style="width: 100%; height: 100%; object-fit: cover;" />` : pr.trainer.name.split(' ').map(n => n[0]).slice(0, 2).join('')}
                                 </div>
                                 <span>Mentor: <strong>${pr.trainer.name}</strong></span>
@@ -203,10 +203,10 @@ export function openCandidateDossierModal(candidateId) {
                       </div>
 
                       <!-- Middle: Program Readiness -->
-                      <div style="display: flex; align-items: center; gap: 16px;">
-                        <div style="text-align: right;">
-                          <div style="font-size: 10.5px; color: #64748b; font-weight: 600;">Program Readiness</div>
-                          <div style="display: flex; align-items: center; justify-content: flex-end; gap: 6px;">
+                      <div class="dpr-score-group">
+                        <div class="dpr-score-col">
+                          <div style="font-size: 10px; color: #64748b; font-weight: 600; text-transform: uppercase;">Readiness</div>
+                          <div style="display: flex; align-items: center; gap: 6px;">
                             <span style="font-size: 16px; font-weight: 900; color: ${pr.isMet ? pr.status.color : '#64748b'};">
                               ${pr.isMet ? `${pr.latestScore}%` : 'N/A'}
                             </span>
@@ -217,7 +217,7 @@ export function openCandidateDossierModal(candidateId) {
                         </div>
 
                         <!-- Check-ins badge -->
-                        <div style="min-width: 110px; text-align: right;">
+                        <div class="dpr-count-col">
                           <span class="badge ${pr.isMet ? 'badge-stage' : 'badge-danger'}" style="font-size: 10.5px; font-weight: 700;">
                             ${pr.isMet ? `${pr.meetCount} Meets Logged` : '0 Meets • Not Met'}
                           </span>
@@ -259,8 +259,8 @@ export function openCandidateDossierModal(candidateId) {
         </div>
 
         <!-- 3. Comprehensive Trainer Remarks & Evaluation Log -->
-        <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 14px; padding: 16px;">
-          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 12px; border-bottom: 1px solid #f1f5f9; padding-bottom: 8px;">
+        <div class="dossier-section-box">
+          <div class="dossier-section-header">
             <div style="display: flex; align-items: center; gap: 7px;">
               <span style="color: #4f46e5;">${getIcon('quote')}</span>
               <strong style="font-size: 14px; color: #0f172a;">Trainers' Mentorship Feedback & Evaluation Log</strong>
@@ -275,10 +275,10 @@ export function openCandidateDossierModal(candidateId) {
           ` : `
             <div style="display: flex; flex-direction: column; gap: 8px;">
               ${allRemarks.map(rm => `
-                <div style="background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px 14px; display: flex; flex-direction: column; gap: 4px;">
-                  <div style="display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap;">
-                    <div style="display: flex; align-items: center; gap: 8px;">
-                      <div class="trainer-avatar-mini" style="width: 22px; height: 22px; font-size: 10px; background: #6366f1; overflow: hidden;">
+                <div class="dossier-feedback-item">
+                  <div class="dfi-header">
+                    <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                      <div class="trainer-avatar-mini" style="width: 22px; height: 22px; font-size: 10px; background: #6366f1; overflow: hidden; border-radius: 50%;">
                         ${rm.trainerPhoto ? `<img src="${rm.trainerPhoto}" alt="${rm.trainerName}" style="width: 100%; height: 100%; object-fit: cover;" />` : rm.trainerName.split(' ').map(n => n[0]).slice(0, 2).join('')}
                       </div>
                       <strong style="font-size: 12.5px; color: #0f172a;">${rm.trainerName}</strong>
@@ -287,7 +287,7 @@ export function openCandidateDossierModal(candidateId) {
                     </div>
                     <span style="font-size: 10.5px; color: #64748b;">${rm.date} • ${rm.time || ''}</span>
                   </div>
-                  <div style="font-size: 12px; color: #1e293b; line-height: 1.4; padding-left: 2px;">
+                  <div class="dfi-text">
                     "${rm.text}"
                   </div>
                 </div>

@@ -12095,6 +12095,588 @@ select.auth-input option {
 }
 
 /* ==========================================================================
+   MY PRACTICE & DAILY REHEARSAL SECTION
+   ========================================================================== */
+.mentee-practice-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 16px;
+  padding: 22px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.03);
+}
+
+.practice-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  flex-wrap: wrap;
+  border-bottom: 1px solid #f1f5f9;
+  padding-bottom: 14px;
+}
+
+.psh-title-wrap {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.practice-date-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  background: #f8fafc;
+  padding: 6px 10px;
+  border-radius: 12px;
+  border: 1px solid #e2e8f0;
+}
+
+.pdb-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #334155;
+  font-size: 13px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.pdb-btn:hover:not(:disabled) {
+  background: #4f46e5;
+  color: #ffffff;
+  border-color: #4f46e5;
+}
+
+.pdb-btn:disabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  border-color: #e2e8f0;
+  background: #f1f5f9;
+}
+
+.pdb-quick-pills {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pdb-pill {
+  padding: 5px 12px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 700;
+  border: 1px solid #cbd5e1;
+  background: #ffffff;
+  color: #475569;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.pdb-pill:hover {
+  border-color: #4f46e5;
+  color: #4f46e5;
+}
+
+.pdb-pill.active {
+  background: linear-gradient(135deg, #4f46e5 0%, #4338ca 100%);
+  color: #ffffff;
+  border-color: #4338ca;
+  box-shadow: 0 2px 8px rgba(79, 70, 229, 0.25);
+}
+
+.practice-date-input-wrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: #ffffff;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  padding: 3px 8px;
+}
+
+.practice-date-input-wrap input[type="date"] {
+  border: none;
+  outline: none;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  color: #0f172a;
+  background: transparent;
+  cursor: pointer;
+}
+
+/* Selected Date Banner */
+.practice-date-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 14px 18px;
+  border-radius: 12px;
+  border: 1px solid transparent;
+  transition: all 0.2s ease;
+}
+
+.practice-date-banner.banner-met {
+  background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%);
+  border-color: #a7f3d0;
+}
+
+.practice-date-banner.banner-pending {
+  background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%);
+  border-color: #fde68a;
+}
+
+.practice-date-banner.banner-missed {
+  background: linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%);
+  border-color: #fecaca;
+}
+
+.pdb-date-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.pdb-full-date {
+  font-size: 15px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+/* Overall Day Stats Grid (3 Tiles) */
+.practice-day-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.pds-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+.pds-label {
+  font-size: 11px;
+  font-weight: 700;
+  text-transform: uppercase;
+  color: #64748b;
+  letter-spacing: 0.03em;
+}
+
+.pds-val-row {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.pds-val {
+  font-size: 20px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.pds-sub {
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+/* Program-by-Program Rows in My Practice */
+.practice-programs-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.pps-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.pps-title {
+  font-size: 15px;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0;
+}
+
+.practice-programs-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.practice-prog-row {
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 14px 16px;
+  background: #ffffff;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.02);
+  transition: all 0.15s ease;
+}
+
+.practice-prog-row.row-met {
+  border-left: 4px solid #10b981;
+}
+
+.practice-prog-row.row-pending {
+  border-left: 4px solid #f59e0b;
+}
+
+.practice-prog-row.row-missed {
+  border-left: 4px solid #ef4444;
+}
+
+.ppr-top {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.ppr-info {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  flex: 1;
+  min-width: 200px;
+}
+
+.ppr-badges {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.ppr-title {
+  font-size: 15px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.ppr-score-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 3px;
+}
+
+.ppr-score-badge {
+  padding: 4px 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.ppr-clock-time {
+  font-size: 11px;
+  color: #64748b;
+}
+
+.ppr-mentor-strip {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: #f8fafc;
+  border: 1px solid #f1f5f9;
+  border-radius: 10px;
+  padding: 8px 12px;
+}
+
+.ppr-mentor-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  font-size: 12px;
+}
+
+.ppr-mentor-role {
+  color: #94a3b8;
+  font-weight: 600;
+}
+
+.ppr-mentor-name {
+  color: #0f172a;
+  font-weight: 700;
+}
+
+.ppr-mentor-exp {
+  color: #64748b;
+}
+
+.ppr-remark-box {
+  background: #fdfdfe;
+  border: 1px solid #eef2f6;
+  border-radius: 10px;
+  padding: 10px 14px;
+  font-size: 12.5px;
+}
+
+.ppr-remark-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #475569;
+  display: block;
+  margin-bottom: 2px;
+}
+
+.ppr-remark-text {
+  font-style: italic;
+  color: #1e293b;
+  margin: 0;
+  line-height: 1.45;
+}
+
+/* Remarks Feed */
+.practice-remarks-feed-section {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 16px;
+  border-top: 1px solid #f1f5f9;
+  padding-top: 16px;
+}
+
+.prfs-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.prfs-title {
+  font-size: 15px;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0;
+}
+
+.practice-remarks-feed-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.practice-remark-feed-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+.prfc-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.prfc-mentor {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.prfc-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: #0f172a;
+  display: block;
+}
+
+.prfc-prog {
+  font-size: 11px;
+  color: #64748b;
+  display: block;
+}
+
+.prfc-meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.prfc-time {
+  font-size: 11px;
+  color: #94a3b8;
+}
+
+.prfc-quote {
+  font-style: italic;
+  font-size: 12.5px;
+  color: #1e293b;
+  line-height: 1.45;
+  background: #f8fafc;
+  padding: 8px 12px;
+  border-radius: 8px;
+  border-left: 3px solid #6366f1;
+}
+
+.empty-feedback-box {
+  background: #f8fafc;
+  border: 1px dashed #cbd5e1;
+  border-radius: 10px;
+  padding: 14px 18px;
+  text-align: center;
+}
+
+.efb-text {
+  font-size: 12px;
+  color: #64748b;
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* Candidate Dossier Dialog Styles */
+.candidate-dossier-dialog {
+  max-width: 900px;
+  width: 95%;
+  max-height: 90vh;
+  border-radius: 18px;
+  background: #ffffff;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.dossier-summary-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(195px, 1fr));
+  gap: 12px;
+}
+
+.dossier-kpi-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 14px 16px;
+}
+
+.dossier-kpi-label {
+  font-size: 11px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  margin-bottom: 6px;
+  letter-spacing: 0.03em;
+}
+
+.dossier-kpi-val {
+  font-size: 26px;
+  font-weight: 900;
+  line-height: 1;
+}
+
+.dossier-section-box {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 16px;
+}
+
+.dossier-section-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  border-bottom: 1px solid #f1f5f9;
+  padding-bottom: 8px;
+}
+
+.dossier-program-row {
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 12px 14px;
+  background: #ffffff;
+}
+
+.dpr-header-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.dpr-meta-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 250px;
+}
+
+.dpr-score-group {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.dpr-score-col {
+  text-align: right;
+}
+
+.dpr-count-col {
+  min-width: 110px;
+  text-align: right;
+}
+
+.dossier-feedback-item {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.dfi-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.dfi-text {
+  font-size: 12px;
+  color: #1e293b;
+  line-height: 1.4;
+  padding-left: 2px;
+}
+
+/* ==========================================================================
    MENTEE PORTAL MOBILE RESPONSIVENESS & PHONE PERFECTION
    ========================================================================== */
 @media (max-width: 768px) {
@@ -12415,5 +12997,212 @@ select.auth-input option {
   .mbc-tier-desc {
     font-size: 9.5px !important;
     line-height: 1.3 !important;
+  }
+
+  /* Mobile Phone Perfection for My Practice */
+  .mentee-practice-section {
+    padding: 14px !important;
+    border-radius: 14px !important;
+    gap: 12px !important;
+  }
+
+  .practice-section-header {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 10px !important;
+    padding-bottom: 10px !important;
+  }
+
+  .practice-date-bar {
+    width: 100% !important;
+    justify-content: space-between !important;
+    padding: 6px 8px !important;
+    gap: 5px !important;
+  }
+
+  .pdb-quick-pills {
+    flex: 1 !important;
+    display: flex !important;
+    gap: 4px !important;
+  }
+
+  .pdb-pill {
+    flex: 1 !important;
+    text-align: center !important;
+    padding: 5px 6px !important;
+    font-size: 11.5px !important;
+  }
+
+  .practice-date-input-wrap {
+    padding: 2px 6px !important;
+  }
+
+  .practice-date-input-wrap input[type="date"] {
+    font-size: 11px !important;
+    width: 95px !important;
+  }
+
+  .pdb-btn {
+    width: 30px !important;
+    height: 30px !important;
+    font-size: 11px !important;
+  }
+
+  .practice-date-banner {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    padding: 10px 12px !important;
+    gap: 8px !important;
+  }
+
+  .practice-date-banner .pdb-right {
+    width: 100% !important;
+  }
+
+  .practice-date-banner .status-chip {
+    width: 100% !important;
+    justify-content: center !important;
+    font-size: 11.5px !important;
+  }
+
+  /* 3 Stat Tiles on Mobile */
+  .practice-day-stats-grid {
+    grid-template-columns: repeat(3, 1fr) !important;
+    gap: 6px !important;
+  }
+
+  .pds-card {
+    padding: 8px 8px !important;
+    border-radius: 10px !important;
+  }
+
+  .pds-label {
+    font-size: 9.5px !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  .pds-val {
+    font-size: 16px !important;
+  }
+
+  .pds-val-row .badge {
+    display: none !important;
+  }
+
+  .pds-sub {
+    font-size: 9.5px !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  /* Program Rows on Mobile */
+  .practice-prog-row {
+    padding: 12px 10px !important;
+    border-radius: 12px !important;
+    gap: 8px !important;
+  }
+
+  .ppr-top {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 6px !important;
+  }
+
+  .ppr-score-wrap {
+    align-items: flex-start !important;
+    width: 100% !important;
+    flex-direction: row !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+  }
+
+  .ppr-mentor-strip {
+    padding: 6px 10px !important;
+    gap: 8px !important;
+  }
+
+  .ppr-mentor-info {
+    font-size: 11.5px !important;
+    gap: 4px !important;
+  }
+
+  .ppr-remark-box {
+    padding: 8px 10px !important;
+    font-size: 11.5px !important;
+  }
+
+  /* Mobile Dossier Modal Dialog */
+  .candidate-dossier-dialog {
+    width: 100% !important;
+    height: 100% !important;
+    max-height: 100vh !important;
+    max-width: 100% !important;
+    border-radius: 0 !important;
+    margin: 0 !important;
+  }
+
+  .dossier-screen-header {
+    padding: 10px 14px !important;
+  }
+
+  .dossier-printable-content {
+    padding: 12px 10px !important;
+    gap: 12px !important;
+  }
+
+  .dossier-summary-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 8px !important;
+  }
+
+  .dossier-kpi-card {
+    padding: 10px 10px !important;
+    border-radius: 10px !important;
+  }
+
+  .dossier-kpi-val {
+    font-size: 20px !important;
+  }
+
+  .dpr-header-wrap {
+    flex-direction: column !important;
+    align-items: flex-start !important;
+    gap: 8px !important;
+  }
+
+  .dpr-meta-group {
+    min-width: 0 !important;
+    width: 100% !important;
+  }
+
+  .dpr-score-group {
+    width: 100% !important;
+    justify-content: space-between !important;
+    border-top: 1px dashed #f1f5f9 !important;
+    padding-top: 8px !important;
+  }
+
+  .dossier-screen-footer {
+    padding: 10px 14px !important;
+    flex-direction: column !important;
+    gap: 8px !important;
+  }
+
+  .dossier-screen-footer .text-muted {
+    display: none !important;
+  }
+
+  .dossier-screen-footer div {
+    width: 100% !important;
+    display: flex !important;
+    gap: 8px !important;
+  }
+
+  .dossier-screen-footer button {
+    flex: 1 !important;
+    justify-content: center !important;
   }
 }

@@ -135,7 +135,7 @@ export function renderLoginView(container, onLoginSuccess, options = {}) {
                   </div>
                 </div>
 
-                <button type="submit" id="btnSubmitCtrl" class="btn btn-primary auth-submit-btn">
+                <button type="submit" id="btnSubmitCtrl" class="btn btn-primary auth-submit-btn" style="background: linear-gradient(135deg, #4338ca, #4f46e5); border: none; box-shadow: 0 4px 14px rgba(79, 70, 229, 0.32);">
                   <span>Sign In to Controller Panel</span>
                   <span class="auth-btn-arrow">&rarr;</span>
                 </button>
@@ -186,7 +186,7 @@ export function renderLoginView(container, onLoginSuccess, options = {}) {
                   </div>
                 </div>
 
-                <button type="submit" id="btnSubmitTrn" class="btn btn-primary auth-submit-btn" style="background: #4f46e5; border-color: #4338ca;">
+                <button type="submit" id="btnSubmitTrn" class="btn btn-primary auth-submit-btn" style="background: linear-gradient(135deg, #6d28d9, #7c3aed); border: none; box-shadow: 0 4px 14px rgba(124, 58, 237, 0.32);">
                   <span>Sign In to Mentor Panel</span>
                   <span class="auth-btn-arrow">&rarr;</span>
                 </button>
@@ -230,7 +230,7 @@ export function renderLoginView(container, onLoginSuccess, options = {}) {
                   </div>
                 </div>
 
-                <button type="submit" id="btnSubmitMentee" class="btn btn-primary auth-submit-btn" style="background: #059669; border-color: #047857;">
+                <button type="submit" id="btnSubmitMentee" class="btn btn-primary auth-submit-btn" style="background: linear-gradient(135deg, #047857, #059669); border: none; box-shadow: 0 4px 14px rgba(5, 150, 105, 0.32);">
                   <span>Sign In to Mentee Portal</span>
                   <span class="auth-btn-arrow">&rarr;</span>
                 </button>

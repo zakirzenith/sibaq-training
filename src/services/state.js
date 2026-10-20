@@ -1502,7 +1502,8 @@ class StateService {
     const candidate = this.getCandidateById(candidateId);
     if (!candidate) return null;
 
-    const todayStr = new Date().toISOString().split('T')[0];
+    const now = new Date();
+    const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
     const targetDate = dateStr || todayStr;
 
     const programs = this.getCandidatePrograms(candidateId);
@@ -1537,11 +1538,18 @@ class StateService {
     let statusLabel = 'Pending';
     let statusClass = 'badge-warning';
 
+    const launchDateStr = '2026-10-19'; // System operations officially started yesterday
+    const isBeforeLaunch = targetDate < launchDateStr;
+
     if (totalPrograms === 0) {
       if (meets.length > 0) {
         overallStatus = 'MET';
         statusLabel = `Met (Meet #${meets.length})`;
         statusClass = 'badge-stage';
+      } else if (isBeforeLaunch) {
+        overallStatus = 'BEFORE_LAUNCH';
+        statusLabel = 'Before Launch';
+        statusClass = 'badge-neutral';
       } else if (targetDate < todayStr) {
         overallStatus = 'MISSED';
         statusLabel = 'Missed';
@@ -1560,7 +1568,11 @@ class StateService {
       statusLabel = `Partial (${metProgramsCount}/${totalPrograms} Met)`;
       statusClass = 'badge-amber';
     } else {
-      if (targetDate < todayStr) {
+      if (isBeforeLaunch) {
+        overallStatus = 'BEFORE_LAUNCH';
+        statusLabel = 'Before Launch';
+        statusClass = 'badge-neutral';
+      } else if (targetDate < todayStr) {
         overallStatus = 'MISSED';
         statusLabel = `Missed (${totalPrograms} Programs)`;
         statusClass = 'badge-danger';
@@ -1587,6 +1599,7 @@ class StateService {
       isPartiallyMet: overallStatus === 'PARTIAL',
       isPending: overallStatus === 'PENDING',
       isMissed: overallStatus === 'MISSED',
+      isBeforeLaunch,
       overallStatus,
       statusLabel,
       statusClass,
@@ -1603,12 +1616,20 @@ class StateService {
     const todayStatus = this.getCandidateDailyStatus(candidateId);
 
     const now = new Date();
-    // Build past 7 days tracking (0 = today, 1 = yesterday, ... 6 = 6 days ago)
+    const launchDateStr = '2026-10-19'; // Website operations started from yesterday
+
+    // Build tracking history starting from launch date up to today (up to max 7 days)
     const daysHistory = [];
     for (let i = 0; i < 7; i++) {
       const d = new Date(now);
       d.setDate(d.getDate() - i);
       const dStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+
+      // Only show dates from when the website officially started operations
+      if (dStr < launchDateStr) {
+        break;
+      }
+
       const statusObj = this.getCandidateDailyStatus(candidateId, dStr);
 
       let displayDate = d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
@@ -1624,13 +1645,14 @@ class StateService {
       });
     }
 
-    // Calculate active meeting streak
+    // Calculate active meeting streak (capped by launch date)
     let streak = 0;
     const startIdx = todayStatus && todayStatus.isMet ? 0 : 1;
     for (let i = startIdx; i < 60; i++) {
       const d = new Date(now);
       d.setDate(d.getDate() - i);
       const dStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      if (dStr < launchDateStr) break;
       const hasMeet = this.dailyMeets.some(m => m.candidateId === candidate.id && m.date === dStr);
       if (hasMeet) {
         streak++;
@@ -1639,8 +1661,9 @@ class StateService {
       }
     }
 
-    // Past 6 days stats (excluding today)
+    // Past operational days stats (excluding today)
     const pastDays = daysHistory.slice(1);
+    const totalPastDays = pastDays.length;
     const pastMetCount = pastDays.filter(d => d.statusObj && d.statusObj.isMet).length;
     const pastMissedCount = pastDays.filter(d => d.statusObj && d.statusObj.isMissed).length;
 
@@ -1650,8 +1673,10 @@ class StateService {
       todayStatus,
       daysHistory,
       streak,
+      totalPastDays,
       pastMetCount,
-      pastMissedCount
+      pastMissedCount,
+      launchDateStr
     };
   }
 

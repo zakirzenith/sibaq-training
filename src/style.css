@@ -11324,6 +11324,30 @@ select.auth-input option {
   flex-direction: column;
 }
 
+.daily-task-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 14px;
+  gap: 12px;
+}
+
+.daily-task-title-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.today-date-badge {
+  background: #f1f5f9;
+  color: #334155;
+  padding: 6px 12px;
+  border-radius: 9999px;
+  font-size: 12px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
 .daily-task-status-card {
   border-radius: 16px;
   padding: 20px 24px;
@@ -11468,6 +11492,12 @@ select.auth-input option {
   font-style: italic;
   color: #1e293b;
   line-height: 1.5;
+}
+
+.mentors-chips-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 10px;
 }
 
 .mentor-contact-chip {
@@ -11661,6 +11691,13 @@ select.auth-input option {
 .day-log-row.row-pending {
   background: #fffbeb;
   border-color: #fef08a;
+}
+
+.dlr-main-header {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-shrink: 0;
 }
 
 .dlr-date-col {
@@ -12016,32 +12053,326 @@ select.auth-input option {
   line-height: 1.4;
 }
 
-/* Mobile Responsiveness */
+/* ==========================================================================
+   MENTEE PORTAL MOBILE RESPONSIVENESS & PHONE PERFECTION
+   ========================================================================== */
 @media (max-width: 768px) {
+  .mentee-portal-wrapper {
+    gap: 16px;
+    padding-bottom: 36px;
+  }
+
   .mentee-hero-card {
     flex-direction: column;
     align-items: flex-start;
+    padding: 18px 16px;
+    gap: 16px;
+    border-radius: 16px;
+  }
+
+  .mentee-hero-left {
+    width: 100%;
+    align-items: flex-start;
+    gap: 14px;
+  }
+
+  .mentee-avatar-wrap {
+    width: 56px;
+    height: 56px;
+    font-size: 20px;
+  }
+
+  .mentee-name-title {
+    font-size: 20px;
+    margin-bottom: 4px;
+  }
+
+  .mentee-hero-desc {
+    font-size: 12px;
   }
 
   .mentee-hero-actions {
     width: 100%;
-    justify-content: flex-start;
+    display: flex;
+    gap: 8px;
   }
 
   .mentee-btn-dossier,
   .mentee-btn-logout {
     flex: 1;
     justify-content: center;
+    height: 40px;
+    font-size: 12px;
+    padding: 0 10px;
   }
 
-  .day-log-row {
+  .daily-task-header-row {
     flex-direction: column;
     align-items: flex-start;
     gap: 8px;
   }
 
-  .dlr-date-col,
-  .dlr-status-col {
+  .today-date-badge {
+    align-self: flex-start;
+  }
+
+  .daily-task-status-card {
+    padding: 16px 14px;
+    border-radius: 14px;
+  }
+
+  .dtsc-header {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .dtsc-badge-wrap {
     width: 100%;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  .dtsc-details-grid {
+    grid-template-columns: 1fr;
+    gap: 10px;
+  }
+
+  .mentee-programs-grid {
+    grid-template-columns: 1fr;
+    gap: 14px;
+  }
+}
+
+@media (max-width: 640px) {
+  .mentee-portal-wrapper {
+    gap: 14px;
+    padding: 0 2px 30px 2px;
+  }
+
+  .mentee-section-card {
+    padding: 14px;
+    border-radius: 14px;
+  }
+
+  .section-card-header {
+    margin-bottom: 12px;
+    padding-bottom: 10px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .section-card-header .badge {
+    align-self: flex-start;
+  }
+
+  .sch-title {
+    font-size: 15px;
+  }
+
+  .sch-desc {
+    font-size: 11.5px;
+  }
+
+  /* Compact 2x2 KPI Grid for Phones */
+  .mentee-kpi-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 8px !important;
+  }
+
+  .mentee-kpi-card {
+    padding: 10px 10px !important;
+    gap: 8px !important;
+    border-radius: 12px !important;
+    align-items: center !important;
+  }
+
+  .mkc-icon-wrap {
+    width: 32px !important;
+    height: 32px !important;
+    font-size: 15px !important;
+    border-radius: 8px !important;
+    flex-shrink: 0;
+  }
+
+  .mkc-label {
+    font-size: 10px !important;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    letter-spacing: 0;
+    margin-bottom: 1px !important;
+  }
+
+  .mkc-value-row {
+    margin-bottom: 2px !important;
+    flex-wrap: wrap;
+    gap: 4px !important;
+    align-items: baseline;
+  }
+
+  .mkc-value {
+    font-size: 16.5px !important;
+  }
+
+  .mkc-value-row .badge {
+    font-size: 9.5px !important;
+    padding: 1px 5px !important;
+  }
+
+  .mkc-subtext {
+    display: none !important; /* Conceal verbose subtext on phone for pixel-perfect tile alignment */
+  }
+
+  .mkc-progress-bar {
+    height: 4px !important;
+    margin-top: 3px !important;
+  }
+
+  /* Day Log Rows Phone Optimization */
+  .day-log-row {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 8px !important;
+    padding: 10px 12px !important;
+    border-radius: 12px !important;
+  }
+
+  .dlr-main-header {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    width: 100% !important;
+    gap: 8px !important;
+  }
+
+  .dlr-date-col {
+    width: auto !important;
+    flex-direction: row !important;
+    align-items: baseline !important;
+    gap: 6px !important;
+  }
+
+  .dlr-day-label {
+    font-size: 13px !important;
+  }
+
+  .dlr-date-sub {
+    font-size: 10.5px !important;
+  }
+
+  .dlr-status-col {
+    width: auto !important;
+    text-align: right !important;
+  }
+
+  .status-chip {
+    font-size: 11px !important;
+    padding: 3px 8px !important;
+  }
+
+  .dlr-details-col {
+    width: 100% !important;
+    border-top: 1px dashed rgba(0, 0, 0, 0.08) !important;
+    padding-top: 6px !important;
+    margin-top: 2px !important;
+  }
+
+  .dlr-met-info {
+    font-size: 11.5px !important;
+    gap: 6px !important;
+  }
+
+  .dlr-program-tag {
+    font-size: 11.5px !important;
+  }
+
+  .dlr-missed-desc,
+  .dlr-pending-desc {
+    font-size: 11.5px !important;
+    line-height: 1.4 !important;
+  }
+
+  .dlr-remark-snippet {
+    font-size: 11px !important;
+  }
+
+  /* Programs Card on Phone */
+  .mentee-program-card {
+    padding: 14px !important;
+    border-radius: 12px !important;
+    gap: 10px !important;
+  }
+
+  .mpc-title {
+    font-size: 14.5px !important;
+  }
+
+  .mpc-mentor-box {
+    padding: 8px 10px !important;
+    gap: 8px !important;
+  }
+
+  .mpc-mentor-avatar {
+    width: 30px !important;
+    height: 30px !important;
+    font-size: 11px !important;
+  }
+
+  .mpc-mentor-name {
+    font-size: 12.5px !important;
+  }
+
+  .mpc-mentor-exp {
+    font-size: 11px !important;
+  }
+
+  /* Benchmarks 2x2 Grid on Phone */
+  .mentee-benchmark-card {
+    padding: 14px !important;
+    border-radius: 14px !important;
+  }
+
+  .mbc-header {
+    gap: 10px !important;
+    margin-bottom: 12px !important;
+  }
+
+  .mbc-icon {
+    font-size: 22px !important;
+  }
+
+  .mbc-title {
+    font-size: 14px !important;
+  }
+
+  .mbc-desc {
+    font-size: 11.5px !important;
+  }
+
+  .mbc-tiers-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 8px !important;
+  }
+
+  .mbc-tier-item {
+    padding: 8px 10px !important;
+    border-radius: 10px !important;
+    gap: 2px !important;
+  }
+
+  .mbc-tier-pct {
+    font-size: 13px !important;
+  }
+
+  .mbc-tier-label {
+    font-size: 11px !important;
+  }
+
+  .mbc-tier-desc {
+    font-size: 9.5px !important;
+    line-height: 1.3 !important;
   }
 }

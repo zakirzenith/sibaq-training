@@ -30,7 +30,7 @@ export function renderMenteeDashboardView(container, navigate) {
     return;
   }
 
-  const { candidate, dossier, todayStatus, daysHistory, streak, pastMetCount, pastMissedCount } = data;
+  const { candidate, dossier, todayStatus, daysHistory, streak, totalPastDays = 0, pastMetCount = 0, pastMissedCount = 0 } = data;
   const programs = dossier?.programs || [];
   const programReports = dossier?.programReports || [];
   const allMeets = dossier?.allMeets || [];
@@ -84,8 +84,8 @@ export function renderMenteeDashboardView(container, navigate) {
 
       <!-- ================= 🎯 SECTION: DAILY MANDATORY TASK ================= -->
       <div class="mentee-daily-task-section">
-        <div class="section-title-wrap" style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px;">
-          <div style="display: flex; align-items: center; gap: 8px;">
+        <div class="daily-task-header-row">
+          <div class="daily-task-title-group">
             <div class="icon-circle-sm" style="background: #ecfdf5; color: #059669;">
               ${getIcon('calendar')}
             </div>
@@ -98,7 +98,7 @@ export function renderMenteeDashboardView(container, navigate) {
               </p>
             </div>
           </div>
-          <div class="today-date-badge" style="background: #f1f5f9; color: #334155; padding: 6px 12px; border-radius: 9999px; font-size: 12px; font-weight: 700;">
+          <div class="today-date-badge">
             📅 ${todayFormatted}
           </div>
         </div>
@@ -186,7 +186,7 @@ export function renderMenteeDashboardView(container, navigate) {
                 <span style="font-size: 12px; font-weight: 800; color: #78350f; text-transform: uppercase; margin-bottom: 6px; display: block;">
                   Your Assigned Mentors for Today:
                 </span>
-                <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px;">
+                <div class="mentors-chips-grid">
                   ${programs.length > 0 ? programs.map(p => {
                     const trn = p.trainerId ? state.getTrainerById(p.trainerId) : null;
                     return `
@@ -271,26 +271,26 @@ export function renderMenteeDashboardView(container, navigate) {
             ${getIcon('check')}
           </div>
           <div class="mkc-data">
-            <span class="mkc-label">7-Day Consistency</span>
+            <span class="mkc-label">Practice Consistency</span>
             <div class="mkc-value-row">
-              <span class="mkc-value">${pastMetCount}/6</span>
+              <span class="mkc-value">${totalPastDays > 0 ? `${pastMetCount}/${totalPastDays}` : (todayStatus?.isMet ? '1/1' : 'Pending')}</span>
               <span class="badge ${pastMissedCount === 0 ? 'badge-stage' : 'badge-amber'}" style="font-size: 11px;">
-                ${pastMissedCount === 0 ? '100% Perfect' : `${pastMissedCount} Missed`}
+                ${totalPastDays === 0 ? (todayStatus?.isMet ? 'Met Today' : 'Day 1 Today') : (pastMissedCount === 0 ? '100% Perfect' : `${pastMissedCount} Missed`)}
               </span>
             </div>
-            <span class="mkc-subtext">Recent practice compliance</span>
+            <span class="mkc-subtext">${totalPastDays > 0 ? `Compliance since launch (${totalPastDays} day${totalPastDays > 1 ? 's' : ''})` : 'First operational day'}</span>
           </div>
         </div>
       </div>
 
-      <!-- ================= 📅 SECTION: 7-DAY CONSISTENCY & MISSED DAYS LOG ================= -->
+      <!-- ================= 📅 SECTION: CONSISTENCY & CHECK-INS LOG ================= -->
       <div class="mentee-section-card">
         <div class="section-card-header">
           <div>
-            <h3 class="sch-title">Recent Consistency &amp; Missed Check-ins Log</h3>
-            <p class="sch-desc">Detailed tracking of practice sessions attended versus sessions missed over the last 7 days.</p>
+            <h3 class="sch-title">Recent Consistency &amp; Check-ins Log</h3>
+            <p class="sch-desc">Detailed tracking of practice sessions attended versus sessions missed since website launch.</p>
           </div>
-          <span class="badge badge-neutral-xs">Last 7 Days</span>
+          <span class="badge badge-neutral-xs">${daysHistory.length <= 1 ? 'Day 1 (Today)' : `Since Launch (${daysHistory.length} Days)`}</span>
         </div>
 
         <div class="days-history-list">
@@ -304,25 +304,27 @@ export function renderMenteeDashboardView(container, navigate) {
 
             return `
               <div class="day-log-row ${isToday ? 'is-today' : ''} ${isMet ? 'row-met' : isMissed ? 'row-missed' : 'row-pending'}">
-                <div class="dlr-date-col">
-                  <span class="dlr-day-label">${day.displayDate}</span>
-                  <span class="dlr-date-sub">${day.dateStr}</span>
-                </div>
+                <div class="dlr-main-header">
+                  <div class="dlr-date-col">
+                    <span class="dlr-day-label">${day.displayDate}</span>
+                    <span class="dlr-date-sub">${day.dateStr}</span>
+                  </div>
 
-                <div class="dlr-status-col">
-                  ${isMet ? `
-                    <span class="status-chip chip-met">
-                      🟢 Met (${latestMeet?.time || 'Recorded'})
-                    </span>
-                  ` : isMissed ? `
-                    <span class="status-chip chip-missed">
-                      🔴 MISSED
-                    </span>
-                  ` : `
-                    <span class="status-chip chip-pending">
-                      ⏳ Pending Today
-                    </span>
-                  `}
+                  <div class="dlr-status-col">
+                    ${isMet ? `
+                      <span class="status-chip chip-met">
+                        🟢 Met (${latestMeet?.time || 'Recorded'})
+                      </span>
+                    ` : isMissed ? `
+                      <span class="status-chip chip-missed">
+                        🔴 MISSED
+                      </span>
+                    ` : `
+                      <span class="status-chip chip-pending">
+                        ⏳ Pending Today
+                      </span>
+                    `}
+                  </div>
                 </div>
 
                 <div class="dlr-details-col">

@@ -1,8 +1,12 @@
 import './style.css';
+import { inject } from '@vercel/analytics';
 import { state } from './services/state.js';
 import { firebaseService } from './services/firebase.js';
 import { toast } from './components/toast.js';
 import { getIcon } from './components/icons.js';
+
+// Initialize Vercel Web Analytics
+inject();
 import { renderLoginView } from './components/loginView.js';
 import { renderDashboardView } from './components/dashboardView.js';
 import { renderCandidatesView } from './components/candidatesView.js';

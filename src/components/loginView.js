@@ -2,27 +2,37 @@ import { state } from '../services/state.js';
 import { toast } from './toast.js';
 import { getIcon } from './icons.js';
 
-// Canonical floating coordinates spread organically around the perimeter of the screen
+// Canonical floating bubble configs: large sweeping paths moving smoothly across and behind the login box
 const CANONICAL_BUBBLE_CONFIGS = [
-  { top: '6%', left: '4%', size: 64, dur: 14, delay: -2, anim: 'floatAmbient1' },
-  { top: '22%', left: '2%', size: 72, dur: 18, delay: -8, anim: 'floatAmbient2' },
-  { top: '42%', left: '5%', size: 54, dur: 15, delay: -4, anim: 'floatAmbient3' },
-  { top: '62%', left: '2.5%', size: 68, dur: 20, delay: -11, anim: 'floatAmbient1' },
-  { top: '80%', left: '4%', size: 56, dur: 16, delay: -7, anim: 'floatAmbient2' },
+  // Trajectory 1: Glides from Left across center behind login box to Right
+  { top: '15%', left: '-2%', size: 66, dur: 28, delay: -4, anim: 'passLeftToRight' },
+  { top: '55%', left: '2%', size: 60, dur: 34, delay: -16, anim: 'passLeftToRight' },
 
-  { top: '7%', right: '4%', size: 66, dur: 17, delay: -3, anim: 'floatAmbient3' },
-  { top: '24%', right: '2%', size: 54, dur: 13, delay: -9, anim: 'floatAmbient1' },
-  { top: '44%', right: '4.5%', size: 74, dur: 22, delay: -14, anim: 'floatAmbient2' },
-  { top: '64%', right: '2.5%', size: 52, dur: 16, delay: -6, anim: 'floatAmbient3' },
-  { top: '82%', right: '4.5%', size: 64, dur: 19, delay: -10, anim: 'floatAmbient1' },
+  // Trajectory 2: Glides from Right across center behind login box to Left
+  { top: '25%', right: '-2%', size: 70, dur: 32, delay: -9, anim: 'passRightToLeft' },
+  { top: '68%', right: '2%', size: 54, dur: 30, delay: -22, anim: 'passRightToLeft' },
 
-  { top: '3%', left: '22%', size: 48, dur: 16, delay: -2, anim: 'floatAmbient2' },
-  { top: '3.5%', right: '23%', size: 52, dur: 21, delay: -12, anim: 'floatAmbient3' },
+  // Trajectory 3: Glides from Bottom-Left diagonally up across behind login box to Top-Right
+  { bottom: '8%', left: '6%', size: 68, dur: 36, delay: -12, anim: 'passBottomLeftToTopRight' },
+  { bottom: '25%', left: '14%', size: 52, dur: 32, delay: -26, anim: 'passBottomLeftToTopRight' },
 
-  { bottom: '12%', left: '12%', size: 50, dur: 18, delay: -8, anim: 'floatAmbient1' },
-  { bottom: '9%', right: '14%', size: 52, dur: 14, delay: -13, anim: 'floatAmbient2' },
-  { bottom: '3%', left: '24%', size: 46, dur: 19, delay: -5, anim: 'floatAmbient3' },
-  { bottom: '3%', right: '26%', size: 48, dur: 17, delay: -11, anim: 'floatAmbient1' }
+  // Trajectory 4: Glides from Top-Right diagonally down across behind login box to Bottom-Left
+  { top: '8%', right: '8%', size: 64, dur: 35, delay: -7, anim: 'passTopRightToBottomLeft' },
+  { top: '35%', right: '12%', size: 56, dur: 31, delay: -19, anim: 'passTopRightToBottomLeft' },
+
+  // Trajectory 5: Glides from Bottom-Right diagonally up across behind login box to Top-Left
+  { bottom: '10%', right: '6%', size: 62, dur: 34, delay: -14, anim: 'passBottomRightToTopLeft' },
+  { bottom: '30%', right: '14%', size: 50, dur: 29, delay: -24, anim: 'passBottomRightToTopLeft' },
+
+  // Trajectory 6: Glides from Top-Left diagonally down across behind login box to Bottom-Right
+  { top: '6%', left: '10%', size: 68, dur: 33, delay: -5, anim: 'passTopLeftToBottomRight' },
+  { top: '32%', left: '16%', size: 54, dur: 28, delay: -18, anim: 'passTopLeftToBottomRight' },
+
+  // Trajectory 7 & 8: Cross diagonal roaming
+  { top: '45%', left: '5%', size: 58, dur: 36, delay: -11, anim: 'passCrossDiagonal1' },
+  { top: '48%', right: '5%', size: 62, dur: 38, delay: -25, anim: 'passCrossDiagonal2' },
+  { top: '82%', left: '22%', size: 52, dur: 30, delay: -8, anim: 'passLeftToRight' },
+  { top: '10%', right: '24%', size: 50, dur: 32, delay: -21, anim: 'passRightToLeft' }
 ];
 
 const FALLBACK_CANDIDATES = [
@@ -45,7 +55,7 @@ const FALLBACK_CANDIDATES = [
 ];
 
 /**
- * Generate circular candidate bubbles floating gracefully in the background
+ * Generate circular candidate bubbles floating gracefully across the screen
  */
 function getCandidateBubblesHTML(rawCandidates = []) {
   // Prioritize candidates with photos, then other real candidates
@@ -90,6 +100,7 @@ function getCandidateBubblesHTML(rawCandidates = []) {
       <div 
         class="auth-candidate-bubble ${cfg.anim}" 
         style="${styleAttr}"
+        data-bubble-index="${idx}"
         title="${cand.name || 'Candidate'} • ${category}"
       >
         <div class="afb-inner">
@@ -124,16 +135,25 @@ export function renderLoginView(container, onLoginSuccess, options = {}) {
   // Sibaq Grand Finale Deadline: 24 Nov 2026, 11:59:59 PM (Month 10 is November in JS)
   const FINALE_TARGET = new Date(2026, 10, 24, 23, 59, 59).getTime();
   let countdownTimer = null;
+  let photoRotationTimer = null;
+  let candidateIndexOffset = 0;
 
-  function stopCountdown() {
+  function stopAllTimers() {
     if (countdownTimer) {
       clearInterval(countdownTimer);
       countdownTimer = null;
     }
+    if (photoRotationTimer) {
+      clearInterval(photoRotationTimer);
+      photoRotationTimer = null;
+    }
   }
 
   function startCountdown() {
-    stopCountdown();
+    if (countdownTimer) {
+      clearInterval(countdownTimer);
+      countdownTimer = null;
+    }
     function tick() {
       const now = Date.now();
       const diff = Math.max(0, FINALE_TARGET - now);
@@ -144,6 +164,7 @@ export function renderLoginView(container, onLoginSuccess, options = {}) {
 
       const pad = (n) => String(n).padStart(2, '0');
 
+      // Desktop main countdown
       const dEls = container.querySelectorAll('.countdown-days');
       const hEls = container.querySelectorAll('.countdown-hours');
       const mEls = container.querySelectorAll('.countdown-minutes');
@@ -154,6 +175,7 @@ export function renderLoginView(container, onLoginSuccess, options = {}) {
       mEls.forEach(el => el.textContent = pad(minutes));
       sEls.forEach(el => el.textContent = pad(seconds));
 
+      // Desktop mini pill countdown
       const dMini = container.querySelectorAll('.countdown-days-mini');
       const hMini = container.querySelectorAll('.countdown-hours-mini');
       const mMini = container.querySelectorAll('.countdown-minutes-mini');
@@ -163,13 +185,105 @@ export function renderLoginView(container, onLoginSuccess, options = {}) {
       hMini.forEach(el => el.textContent = pad(hours));
       mMini.forEach(el => el.textContent = pad(minutes));
       sMini.forEach(el => el.textContent = pad(seconds));
+
+      // Mobile bottom small countdown
+      const dMobile = container.querySelectorAll('.countdown-days-mobile');
+      const hMobile = container.querySelectorAll('.countdown-hours-mobile');
+      const mMobile = container.querySelectorAll('.countdown-minutes-mobile');
+      const sMobile = container.querySelectorAll('.countdown-seconds-mobile');
+
+      dMobile.forEach(el => el.textContent = pad(days));
+      hMobile.forEach(el => el.textContent = pad(hours));
+      mMobile.forEach(el => el.textContent = pad(minutes));
+      sMobile.forEach(el => el.textContent = pad(seconds));
     }
     tick();
     countdownTimer = setInterval(tick, 1000);
   }
 
+  /**
+   * Smoothly changes candidate photos every 2 seconds with fade transition
+   */
+  function startPhotoRotation() {
+    if (photoRotationTimer) {
+      clearInterval(photoRotationTimer);
+      photoRotationTimer = null;
+    }
+    const rawCandidates = state.getCandidates();
+    const candidatesWithPhoto = rawCandidates.filter(c => c && c.photo);
+    const candidatesWithoutPhoto = rawCandidates.filter(c => c && !c.photo);
+    const combined = [...candidatesWithPhoto, ...candidatesWithoutPhoto];
+
+    let pool = [...combined];
+    let fbIndex = 0;
+    while (pool.length < CANONICAL_BUBBLE_CONFIGS.length && fbIndex < FALLBACK_CANDIDATES.length) {
+      pool.push(FALLBACK_CANDIDATES[fbIndex++]);
+    }
+    if (pool.length === 0) {
+      pool = [...FALLBACK_CANDIDATES];
+    }
+
+    // Every 2 seconds (2000ms), smoothly rotate candidate photos
+    photoRotationTimer = setInterval(() => {
+      candidateIndexOffset = (candidateIndexOffset + 1) % pool.length;
+      const bubbleEls = container.querySelectorAll('.auth-candidate-bubble');
+      if (!bubbleEls || bubbleEls.length === 0) return;
+
+      bubbleEls.forEach((bubble, bIdx) => {
+        const nextCand = pool[(candidateIndexOffset + bIdx) % pool.length];
+        const inner = bubble.querySelector('.afb-inner');
+        const pillName = bubble.querySelector('.afb-pill-name');
+        if (!inner) return;
+
+        // Progressive stagger across bubbles for continuous silky transition
+        const staggerDelay = (bIdx % 4) * 60;
+        setTimeout(() => {
+          if (!bubble.isConnected) return;
+          // Step 1: Smooth fade out
+          inner.classList.add('afb-fading');
+
+          // Step 2: Swap content mid-fade (350ms)
+          setTimeout(() => {
+            if (!bubble.isConnected) return;
+            const initials = (nextCand.name || 'C')
+              .split(' ')
+              .map(n => n[0])
+              .slice(0, 2)
+              .join('')
+              .toUpperCase();
+            const fallbackColor = nextCand.color || '#4f46e5';
+            const shortName = nextCand.name ? nextCand.name.split(' ')[0] : 'Candidate';
+            const category = nextCand.category || 'Sibaq';
+
+            if (nextCand.photo) {
+              inner.innerHTML = `
+                <img src="${nextCand.photo}" alt="${nextCand.name || 'Candidate'}" class="afb-img" loading="lazy" />
+                <div class="afb-ring"></div>
+              `;
+            } else {
+              inner.innerHTML = `
+                <div class="afb-initials-fallback" style="background: linear-gradient(135deg, ${fallbackColor}, #0f172a);">
+                  <span>${initials}</span>
+                </div>
+                <div class="afb-ring"></div>
+              `;
+            }
+
+            if (pillName) {
+              pillName.textContent = shortName;
+            }
+            bubble.setAttribute('title', `${nextCand.name || 'Candidate'} • ${category}`);
+
+            // Step 3: Smooth fade back in
+            inner.classList.remove('afb-fading');
+          }, 350);
+        }, staggerDelay);
+      });
+    }, 2000);
+  }
+
   function render() {
-    stopCountdown();
+    stopAllTimers();
     const candidates = state.getCandidates();
 
     container.innerHTML = `
@@ -445,6 +559,21 @@ export function renderLoginView(container, onLoginSuccess, options = {}) {
             `}
           </div>
 
+          <!-- Small Mobile Bottom Countdown (Exclusive to phone view at the bottom of login box) -->
+          <div class="auth-mobile-bottom-countdown" title="Sibaq Grand Finale Countdown">
+            <div class="ambc-inner">
+              <span class="ambc-trophy">🏆</span>
+              <span class="ambc-title">Sibaq Finale:</span>
+              <span class="ambc-time">
+                <strong class="countdown-days-mobile">00</strong>d <span class="ambc-bar">|</span>
+                <strong class="countdown-hours-mobile">00</strong>h <span class="ambc-bar">|</span>
+                <strong class="countdown-minutes-mobile">00</strong>m <span class="ambc-bar">|</span>
+                <strong class="countdown-seconds-mobile">00</strong>s
+              </span>
+              <span class="ambc-dot"></span>
+            </div>
+          </div>
+
           <!-- Bottom Footer Details -->
           <div class="auth-footer-bar">
             <span>DH BENGAL &bull; Sibaq 2026</span>
@@ -457,6 +586,7 @@ export function renderLoginView(container, onLoginSuccess, options = {}) {
 
     attachEvents();
     startCountdown();
+    startPhotoRotation();
   }
 
   function attachEvents() {
@@ -531,7 +661,7 @@ export function renderLoginView(container, onLoginSuccess, options = {}) {
           }
 
           toast.success('Controller authentication successful! Welcome to DH BENGAL.');
-          stopCountdown();
+          stopAllTimers();
           onLoginSuccess('controller', { user: 'sibaq' });
         });
       }
@@ -566,7 +696,7 @@ export function renderLoginView(container, onLoginSuccess, options = {}) {
           }
 
           toast.success(`Welcome back, ${result.trainer.name}!`);
-          stopCountdown();
+          stopAllTimers();
           onLoginSuccess('trainer', result.trainer);
         });
       }
@@ -593,7 +723,7 @@ export function renderLoginView(container, onLoginSuccess, options = {}) {
           }
 
           toast.success(`Welcome back, ${result.candidate.name}!`);
-          stopCountdown();
+          stopAllTimers();
           onLoginSuccess('mentee', result.candidate);
         });
       }

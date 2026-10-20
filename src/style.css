@@ -9682,20 +9682,14 @@ body.auth-mode .main-view-container {
 .auth-candidate-bubble {
   position: absolute;
   border-radius: 50%;
-  pointer-events: auto;
-  cursor: pointer;
+  pointer-events: none;
   display: flex;
   flex-direction: column;
   align-items: center;
   justify-content: center;
-  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), z-index 0.2s ease, filter 0.3s ease;
+  opacity: 0.42; /* reduced opacity for soft background presence */
+  transition: opacity 0.4s ease, filter 0.3s ease;
   will-change: transform;
-}
-
-.auth-candidate-bubble:hover {
-  transform: scale(1.18) !important;
-  z-index: 25 !important;
-  filter: drop-shadow(0 12px 24px rgba(79, 70, 229, 0.25));
 }
 
 .auth-candidate-bubble .afb-inner {
@@ -9705,12 +9699,19 @@ body.auth-mode .main-view-container {
   position: relative;
   overflow: hidden;
   background: #ffffff;
-  border: 2.5px solid rgba(255, 255, 255, 0.95);
-  box-shadow: 0 10px 25px -4px rgba(15, 23, 42, 0.12), 0 4px 10px rgba(99, 102, 241, 0.1);
+  border: 2px solid rgba(255, 255, 255, 0.9);
+  box-shadow: 0 8px 22px -3px rgba(15, 23, 42, 0.1), 0 3px 8px rgba(99, 102, 241, 0.08);
   display: flex;
   align-items: center;
   justify-content: center;
   box-sizing: border-box;
+  transition: opacity 0.38s cubic-bezier(0.4, 0, 0.2, 1), transform 0.38s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Smooth 2-second photo swap fade transition */
+.auth-candidate-bubble .afb-inner.afb-fading {
+  opacity: 0.12 !important;
+  transform: scale(0.85) rotate(-3deg);
 }
 
 .auth-candidate-bubble .afb-img {
@@ -9719,6 +9720,7 @@ body.auth-mode .main-view-container {
   object-fit: cover;
   border-radius: 50%;
   display: block;
+  transition: opacity 0.35s ease;
 }
 
 .auth-candidate-bubble .afb-initials-fallback {
@@ -9729,11 +9731,12 @@ body.auth-mode .main-view-container {
   justify-content: center;
   color: #ffffff;
   font-weight: 700;
-  font-size: 14px;
+  font-size: 13.5px;
   letter-spacing: -0.02em;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
   border-radius: 50%;
   user-select: none;
+  transition: opacity 0.35s ease;
 }
 
 .auth-candidate-bubble .afb-ring {
@@ -9746,88 +9749,145 @@ body.auth-mode .main-view-container {
 
 .auth-candidate-bubble .afb-pill-label {
   position: absolute;
-  bottom: -9px;
+  bottom: -8px;
   background: rgba(15, 23, 42, 0.82);
   backdrop-filter: blur(6px);
   -webkit-backdrop-filter: blur(6px);
   color: #ffffff;
-  font-size: 10px;
+  font-size: 9.5px;
   font-weight: 600;
-  padding: 1.5px 7px;
+  padding: 1px 6px;
   border-radius: 99px;
   white-space: nowrap;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.16);
   opacity: 0.88;
   pointer-events: none;
-  transition: opacity 0.2s ease, transform 0.2s ease, background 0.2s ease;
+  transition: opacity 0.3s ease, transform 0.3s ease;
 }
 
-.auth-candidate-bubble:hover .afb-pill-label {
-  opacity: 1;
-  transform: translateY(2px) scale(1.05);
-  background: #4f46e5;
-}
+/* =========================================================
+   LARGE SWEEPING PASSING ANIMATIONS (PASSING BEHIND LOGIN BOX)
+   ========================================================= */
 
-/* Organic Floating Animations */
-@keyframes floatAmbient1 {
+@keyframes passLeftToRight {
   0% {
-    transform: translate(0px, 0px) rotate(0deg);
+    transform: translate(0vw, 0vh);
   }
-  33% {
-    transform: translate(12px, -18px) rotate(2deg);
-  }
-  66% {
-    transform: translate(-10px, -10px) rotate(-1.5deg);
+  50% {
+    transform: translate(46vw, 12vh);
   }
   100% {
-    transform: translate(0px, 0px) rotate(0deg);
+    transform: translate(88vw, -8vh);
   }
 }
 
-@keyframes floatAmbient2 {
+@keyframes passRightToLeft {
   0% {
-    transform: translate(0px, 0px) rotate(0deg);
+    transform: translate(0vw, 0vh);
   }
-  33% {
-    transform: translate(-14px, -16px) rotate(-2deg);
-  }
-  66% {
-    transform: translate(10px, -22px) rotate(1.5deg);
+  50% {
+    transform: translate(-46vw, -12vh);
   }
   100% {
-    transform: translate(0px, 0px) rotate(0deg);
+    transform: translate(-88vw, 8vh);
   }
 }
 
-@keyframes floatAmbient3 {
+@keyframes passBottomLeftToTopRight {
   0% {
-    transform: translate(0px, 0px) rotate(0deg);
+    transform: translate(0vw, 0vh);
   }
-  33% {
-    transform: translate(14px, 14px) rotate(2deg);
-  }
-  66% {
-    transform: translate(-12px, -18px) rotate(-2deg);
+  50% {
+    transform: translate(42vw, -36vh);
   }
   100% {
-    transform: translate(0px, 0px) rotate(0deg);
+    transform: translate(84vw, -72vh);
   }
 }
 
-.auth-candidate-bubble.floatAmbient1 {
-  animation-name: floatAmbient1;
-  animation-iteration-count: infinite;
-  animation-timing-function: cubic-bezier(0.42, 0, 0.58, 1);
+@keyframes passTopRightToBottomLeft {
+  0% {
+    transform: translate(0vw, 0vh);
+  }
+  50% {
+    transform: translate(-42vw, 36vh);
+  }
+  100% {
+    transform: translate(-84vw, 72vh);
+  }
 }
-.auth-candidate-bubble.floatAmbient2 {
-  animation-name: floatAmbient2;
-  animation-iteration-count: infinite;
-  animation-timing-function: cubic-bezier(0.42, 0, 0.58, 1);
+
+@keyframes passBottomRightToTopLeft {
+  0% {
+    transform: translate(0vw, 0vh);
+  }
+  50% {
+    transform: translate(-44vw, -36vh);
+  }
+  100% {
+    transform: translate(-86vw, -70vh);
+  }
 }
-.auth-candidate-bubble.floatAmbient3 {
-  animation-name: floatAmbient3;
-  animation-iteration-count: infinite;
-  animation-timing-function: cubic-bezier(0.42, 0, 0.58, 1);
+
+@keyframes passTopLeftToBottomRight {
+  0% {
+    transform: translate(0vw, 0vh);
+  }
+  50% {
+    transform: translate(44vw, 36vh);
+  }
+  100% {
+    transform: translate(86vw, 70vh);
+  }
+}
+
+@keyframes passCrossDiagonal1 {
+  0% {
+    transform: translate(0vw, 0vh);
+  }
+  50% {
+    transform: translate(48vw, -20vh);
+  }
+  100% {
+    transform: translate(92vw, 12vh);
+  }
+}
+
+@keyframes passCrossDiagonal2 {
+  0% {
+    transform: translate(0vw, 0vh);
+  }
+  50% {
+    transform: translate(-48vw, 20vh);
+  }
+  100% {
+    transform: translate(-92vw, -12vh);
+  }
+}
+
+.auth-candidate-bubble.passLeftToRight {
+  animation: passLeftToRight infinite alternate ease-in-out;
+}
+.auth-candidate-bubble.passRightToLeft {
+  animation: passRightToLeft infinite alternate ease-in-out;
+}
+.auth-candidate-bubble.passBottomLeftToTopRight {
+  animation: passBottomLeftToTopRight infinite alternate ease-in-out;
+}
+.auth-candidate-bubble.passTopRightToBottomLeft {
+  animation: passTopRightToBottomLeft infinite alternate ease-in-out;
+}
+.auth-candidate-bubble.passBottomRightToTopLeft {
+  animation: passBottomRightToTopLeft infinite alternate ease-in-out;
+}
+.auth-candidate-bubble.passTopLeftToBottomRight {
+  animation: passTopLeftToBottomRight infinite alternate ease-in-out;
+}
+.auth-candidate-bubble.passCrossDiagonal1 {
+  animation: passCrossDiagonal1 infinite alternate ease-in-out;
+}
+.auth-candidate-bubble.passCrossDiagonal2 {
+  animation: passCrossDiagonal2 infinite alternate ease-in-out;
 }
 
 /* =========================================================
@@ -10202,6 +10262,12 @@ body.auth-mode .main-view-container {
   }
 }
 
+/* Mobile Bottom Countdown Widget (Hidden on desktop) */
+.auth-mobile-bottom-countdown {
+  display: none;
+  width: 100%;
+}
+
 /* =========================================================
    DEDICATED PROFESSIONAL PHONE / MOBILE RESPONSIVE STYLING
    ========================================================= */
@@ -10213,27 +10279,83 @@ body.auth-mode .main-view-container {
     min-height: 100dvh;
   }
 
+  /* Hide top floating countdowns on phone view */
   .auth-floating-countdown-main {
-    position: relative;
-    top: auto;
-    right: auto;
-    margin-bottom: 10px;
-    width: 100%;
-    max-width: 460px;
-    box-sizing: border-box;
-    animation: none;
-    padding: 9px 12px;
-    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
+    display: none !important;
   }
 
   .auth-floating-countdown-mini {
-    display: none;
+    display: none !important;
+  }
+
+  /* Small Countdown at the bottom of the login box */
+  .auth-mobile-bottom-countdown {
+    display: flex !important;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.94);
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    border: 1px solid rgba(203, 213, 225, 0.9);
+    border-radius: 12px;
+    padding: 7px 12px;
+    margin-top: 4px;
+    box-shadow: 0 2px 8px rgba(15, 23, 42, 0.04);
+    user-select: none;
+  }
+
+  .ambc-inner {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 11px;
+    color: #475569;
+    font-weight: 600;
+  }
+
+  .ambc-trophy {
+    font-size: 13px;
+    line-height: 1;
+  }
+
+  .ambc-title {
+    font-weight: 700;
+    color: #1e293b;
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .ambc-time {
+    display: flex;
+    align-items: center;
+    gap: 2.5px;
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+    font-weight: 800;
+    color: #0f172a;
+    font-size: 11.5px;
+  }
+
+  .ambc-bar {
+    color: #cbd5e1;
+    font-weight: 300;
+    margin: 0 1px;
+  }
+
+  .ambc-dot {
+    width: 6px;
+    height: 6px;
+    border-radius: 50%;
+    background: #10b981;
+    margin-left: 2px;
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+    animation: afcPulseDot 2s infinite;
   }
 
   .auth-candidate-bubble {
-    opacity: 0.55;
+    opacity: 0.28 !important;
     pointer-events: none;
-    transform: scale(0.65) !important;
+    transform: scale(0.62) !important;
   }
 
   .auth-candidate-bubble .afb-pill-label {

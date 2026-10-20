@@ -85,10 +85,15 @@ export function renderMenteeDashboardView(container, navigate) {
 
         <!-- Top Category Rank Highlight (Interesting & Engaging) -->
         ${myRank ? `
-          <div class="mentee-hero-rank-capsule" id="btnHeroRankClick" title="Click to view full Category Standings">
-            <div class="mhr-medal">${myRank === 1 ? '🥇' : myRank === 2 ? '🥈' : myRank === 3 ? '🥉' : '🏆'}</div>
+          <div class="mentee-hero-rank-capsule rank-tier-${myRank === 1 ? '1' : (myRank === 2 ? '2' : (myRank === 3 ? '3' : 'contender'))}" id="btnHeroRankClick" title="Click to view full Category Standings">
+            <div class="mhr-medal-wrap">
+              <span class="mhr-medal">${myRank === 1 ? '🥇' : myRank === 2 ? '🥈' : myRank === 3 ? '🥉' : '🏆'}</span>
+            </div>
             <div class="mhr-content">
-              <div class="mhr-rank-heading">Category Standing</div>
+              <div class="mhr-rank-heading">
+                <span class="mhr-sparkle">⚡</span>
+                <span>CATEGORY STANDING</span>
+              </div>
               <div class="mhr-rank-main">
                 <span class="mhr-rank-number">Rank #${myRank}</span>
                 <span class="mhr-rank-total">of ${totalInCat}</span>
@@ -96,6 +101,9 @@ export function renderMenteeDashboardView(container, navigate) {
               <div class="mhr-rank-pill">
                 ${myRank === 1 ? '🥇 Category Leader' : (percentile >= 75 ? '⭐ Top Contender' : '🏆 Ranked Competitor')} &bull; ${candidate.category}
               </div>
+            </div>
+            <div class="mhr-arrow-wrap" aria-hidden="true">
+              <span class="mhr-arrow-icon">&rarr;</span>
             </div>
           </div>
         ` : ''}

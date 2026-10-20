@@ -97,20 +97,6 @@ export function renderDailyProgressView(container, navigateTo) {
 
       <!-- Modern Table Container for Floating SaaS Rows -->
       <div class="saas-roster-container">
-        <div class="saas-table-head desktop-table-view">
-          ${viewMode === 'candidates' ? `
-            <div class="sth-col sth-candidate">Student &bull; Identity</div>
-            <div class="sth-col sth-program">Program &bull; Designated Mentor</div>
-            <div class="sth-col sth-status">Daily Evaluation &bull; Score</div>
-            <div class="sth-col sth-action">Action</div>
-          ` : `
-            <div class="sth-col sth-candidate">Mentor &bull; Domain &bull; Contact</div>
-            <div class="sth-col sth-program">Assigned Mentees &bull; Check-in Progress</div>
-            <div class="sth-col sth-status">Daily Status &bull; 11:59 PM Cutoff</div>
-            <div class="sth-col sth-action">Mentees Breakdown</div>
-          `}
-        </div>
-
         <div id="dailyCandidatesRoster" class="saas-roster-list">
           <!-- Rendered dynamically -->
         </div>
@@ -531,7 +517,11 @@ export function renderDailyProgressView(container, navigateTo) {
       const firstPendingPb = item.programBreakdown.find(pb => !pb.isMet);
       const targetProgForMeet = firstPendingPb ? firstPendingPb.program : (item.programs[0] || null);
       const targetTrainerForMeet = firstPendingPb && firstPendingPb.trainer ? firstPendingPb.trainer : (item.trainers[0] || null);
+      const primaryProgram = item.programs[0] || null;
+      const primaryTrainer = item.trainers[0] || null;
+      const nextMeetNum = meets.length + 1;
 
+      // Card wrapper with status-colored border
       const rowCard = document.createElement('div');
       rowCard.className = `saas-candidate-row ${
         item.isMissed 
@@ -541,6 +531,7 @@ export function renderDailyProgressView(container, navigateTo) {
               : (item.isPartiallyMet ? 'row-partial' : 'row-pending'))
       }`;
 
+      // Status pill HTML: "all meet, partial meet with bracket(2/5)"
       let statusCapsuleHtml = '';
       if (item.isMet) {
         const pStatus = latestMeet ? getProgressStatus(latestMeet.percentage) : { label: 'Met' };
@@ -572,48 +563,153 @@ export function renderDailyProgressView(container, navigateTo) {
         statusCapsuleHtml = `
           <div class="saas-status-capsule saas-status-pending">
             <span class="saas-status-icon text-amber">${getIcon('clock')}</span>
-            <span class="saas-score-label">Pending</span>
-            <span class="text-muted text-xs desktop-only-btn">${item.totalPrograms > 0 ? `(0/${item.totalPrograms})` : ''}</span>
+            <span class="saas-score-label">${item.totalPrograms > 1 ? `Pending (0/${item.totalPrograms})` : 'Pending'}</span>
+            <span class="text-muted text-xs desktop-only-btn">Due today</span>
           </div>
         `;
       }
 
-      const actionBtnText = item.isMet ? '+ Add Another Meet' : '+ Record Meet';
-      const programColHtml = item.programs.length > 0 ? `
-        <div class="src-prog-list">
-          ${item.programs.map(prg => {
-            const trn = item.trainers.find(t => String(t.id).trim() === String(prg.trainerId || '').trim());
-            return `
-              <div class="src-prog-item">
-                <span class="badge ${prg.type === 'Stage' ? 'badge-stage' : 'badge-neutral'} src-prog-code">${prg.code}</span>
-                <span class="src-prog-name" title="${prg.name}">${prg.name}</span>
-                ${trn ? `<span class="src-trn-tag">${trn.name.split(' ')[0]}</span>` : '<span class="src-trn-tag unassigned">Unassigned</span>'}
+      // Drawer program content generator
+      const defaultDrawerPid = item.programs.length > 0 ? item.programs[0].id : 'ALL';
+      let activeDrawerPid = defaultDrawerPid;
+
+      const renderDrawerProgramContent = (targetPid) => {
+        activeDrawerPid = targetPid;
+        const isAll = targetPid === 'ALL';
+        const prog = !isAll ? state.getProgramById(targetPid) : null;
+        const progMeets = (isAll 
+          ? meets 
+          : meets.filter(m => m.programId === targetPid)
+        ).sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+
+        const progTrainer = prog && prog.trainerId ? state.getTrainerById(prog.trainerId) : null;
+
+        if (progMeets.length === 0) {
+          return `
+            <div class="compact-empty-strip status-red-strip" style="background: #fff5f5; border: 1.5px solid #fecaca; border-radius: 10px; padding: 14px; display: flex; flex-direction: column; gap: 10px;">
+              <div style="display: flex; align-items: center; gap: 10px;">
+                <span class="prog-code-rect rect-red" style="pointer-events: none; cursor: default; padding: 3px 8px;">${prog ? prog.code : 'PRG'}</span>
+                <span class="ces-text" style="font-size: 12px; color: #991b1b; line-height: 1.4;">
+                  <strong>Pending Check-in:</strong> No check-ins recorded today (${selectedDate}) ${prog ? `for <strong>${prog.name}</strong>` : ''}.
+                  ${prog ? (progTrainer ? `<br><span class="text-xs text-muted" style="color: #64748b;">Mentor: <strong>${progTrainer.name}</strong></span>` : '<br><span class="text-xs text-danger">Mentor: <strong>Unassigned</strong></span>') : ''}
+                </span>
               </div>
-            `;
-          }).join('')}
+              <div class="drawer-bottom-action-wrap" style="display: flex; justify-content: flex-end; margin-top: 4px;">
+                <button type="button" class="btn-compact-add btn-drawer-record-meet btn-saas-primary" data-cid="${c.id}" data-pid="${prog ? prog.id : ''}" data-tid="${progTrainer ? progTrainer.id : ''}" style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; font-size: 12px; font-weight: 700; border-radius: 8px;">
+                  ${getIcon('plus')} Record Meet 1 for ${prog ? prog.code : 'Program'}
+                </button>
+              </div>
+            </div>
+          `;
+        }
+
+        return `
+          <div class="compact-sessions-scroll">
+            ${prog ? `
+              <div class="drawer-prog-completed-banner" style="display: flex; align-items: center; gap: 8px; margin-bottom: 10px; background: #f0fdf4; border: 1px solid #bbf7d0; border-radius: 10px; padding: 9px 12px;">
+                <span class="prog-code-rect rect-green" style="pointer-events: none; cursor: default; padding: 2px 7px;">${prog.code}</span>
+                <span style="font-size: 12px; font-weight: 700; color: #166534;">
+                  Completed Today • ${progMeets.length} session(s) recorded for ${prog.name}
+                </span>
+              </div>
+            ` : ''}
+
+            ${progMeets.map((m, idx) => {
+              const mStatus = getProgressStatus(m.percentage);
+              const mTrn = m.trainerId ? state.getTrainerById(m.trainerId) : null;
+              const mProg = m.programId ? state.getProgramById(m.programId) : null;
+              const progSessionIdx = idx + 1;
+
+              return `
+                <div class="compact-session-strip status-border-${mStatus.key}" style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 10px; padding: 10px 14px; margin-bottom: 8px; box-shadow: 0 1px 2px rgba(0,0,0,0.02);">
+                  <div class="css-head-row" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 6px; flex-wrap: wrap; gap: 6px;">
+                    <div class="css-head-left" style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
+                      <span class="css-meet-pill" style="font-weight: 700; font-size: 11px; background: #eef2ff; color: #4338ca; padding: 2px 7px; border-radius: 5px;">${!isAll && prog ? `Meet #${progSessionIdx}` : `Meet #${m.meetNumber}`}</span>
+                      <span class="css-time font-mono text-xs text-muted">${m.time || ''}</span>
+                      ${isAll && mProg ? `<span class="saas-prog-capsule p-stage font-bold" style="font-size: 10px; padding: 1px 6px;">${mProg.code}</span>` : ''}
+                      <span class="css-mentor text-xs text-muted">Mentor: <strong>${mTrn ? mTrn.name : 'Unassigned'}</strong></span>
+                    </div>
+
+                    <div class="css-head-right" style="display: flex; align-items: center; gap: 6px;">
+                      <span class="css-score-capsule ${mStatus.badgeClass}">
+                        <strong>${m.percentage}%</strong> ${m.status}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div class="css-remark-row" style="margin-top: 4px;">
+                    <span class="css-remark-text text-xs text-main" style="display: block; font-style: italic; color: #334155;">"${m.remark || 'No remark entered.'}"</span>
+                  </div>
+                </div>
+              `;
+            }).join('')}
+
+            <div class="drawer-bottom-action-wrap" style="display: flex; justify-content: flex-end; margin-top: 10px;">
+              <button type="button" class="btn-compact-add btn-drawer-record-meet btn-saas-primary" data-cid="${c.id}" data-pid="${prog ? prog.id : (item.programs[0]?.id || '')}" data-tid="${progTrainer ? progTrainer.id : (item.trainers[0]?.id || '')}" style="display: inline-flex; align-items: center; gap: 6px; padding: 8px 16px; font-size: 12px; font-weight: 700; border-radius: 8px;">
+                ${getIcon('plus')} ${prog ? `Add Another Session for ${prog.code}` : 'Record New Session'}
+              </button>
+            </div>
+          </div>
+        `;
+      };
+
+      // Col 2: Program & Designated Mentor (Previous Clean Layout)
+      const programColHtml = `
+        <div class="src-prog-top">
+          ${primaryProgram ? `
+            <span class="saas-prog-capsule ${primaryProgram.type === 'Stage' ? 'p-stage' : 'p-nonstage'}">
+              ${primaryProgram.code}
+            </span>
+            <span class="saas-prog-name truncate" title="${primaryProgram.name}">
+              ${primaryProgram.name}
+            </span>
+            ${item.programs.length > 1 ? `
+              <span class="saas-count-pill">+${item.programs.length - 1}</span>
+            ` : ''}
+          ` : `
+            <span class="text-muted text-xs">No program enrolled</span>
+          `}
         </div>
-      ` : '<span class="text-muted text-xs">No programs assigned</span>';
+
+        <div class="src-prog-bottom">
+          ${primaryTrainer ? `
+            <span class="saas-mentor-pill">
+              <span class="saas-dot" style="background: ${primaryTrainer.color || '#6366f1'};"></span>
+              <span class="saas-mentor-name">${primaryTrainer.name}</span>
+            </span>
+          ` : `
+            <span class="text-danger text-xs font-semibold">Unassigned Trainer</span>
+          `}
+        </div>
+      `;
+
+      // Action button text and target program
+      const actionBtnText = item.isMet 
+        ? `${getIcon('plus')} Meet #${nextMeetNum}` 
+        : `${getIcon('plus')} Record Meet`;
 
       rowCard.innerHTML = `
         <div class="saas-row-master">
           <!-- Col 1: Student Identity -->
           <div class="src-col src-student">
-            <div class="saas-avatar-soft" style="background: ${c.color || '#4f46e5'};">
+            <div class="saas-avatar-soft">
               ${c.name.split(' ').map(n => n[0]).slice(0, 2).join('')}
             </div>
-            <div class="src-meta-wrap">
-              <div class="src-name-row">
-                <span class="saas-cand-name btn-open-profile-dialog" data-cid="${c.id}" title="Click to view full dossier">${c.name}</span>
-                ${c.category ? `<span class="badge badge-category-subtle">${c.category}</span>` : ''}
-              </div>
-              <div class="src-sub-row">
-                <span>AD: ${c.adNo || c.chestNo || 'N/A'}</span>
-                ${c.class ? `<span class="src-dot">&bull;</span><span>Class ${c.class}</span>` : ''}
+            <div class="src-student-info">
+              <button type="button" class="saas-student-name btn-open-profile-dialog" data-cid="${c.id}" title="View profile">
+                ${c.name}
+              </button>
+              <div class="saas-meta-strip">
+                <span class="saas-code-badge">${c.adNo}</span>
+                <span class="saas-bullet">•</span>
+                <span class="saas-meta-txt">${c.class || 'No Class'}</span>
+                <span class="saas-bullet desktop-only-btn">•</span>
+                <span class="saas-meta-txt desktop-only-btn">${c.category}</span>
               </div>
             </div>
           </div>
 
-          <!-- Col 2: Program & Mentor -->
+          <!-- Col 2: Program & Mentor (Clean Previous Layout) -->
           <div class="src-col src-program">
             ${programColHtml}
           </div>
@@ -639,36 +735,47 @@ export function renderDailyProgressView(container, navigateTo) {
         <!-- Expandable Drawer for Meeting Sessions -->
         <div class="saas-row-drawer" style="display: ${isExpanded ? 'block' : 'none'};">
           <div class="drawer-compact-tray">
-            <div style="padding: 12px; background: #f8fafc; border-radius: 10px;">
-              <div style="font-weight: 800; font-size: 12.5px; color: #1e293b; margin-bottom: 8px;">
-                Check-in Sessions for ${selectedDate}:
+            <div class="drawer-compact-nav" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; flex-wrap: wrap; gap: 8px;">
+              <div class="dcn-rects-group" style="display: flex; gap: 8px; align-items: center; flex-wrap: wrap;">
+                <span class="dcn-label text-xs text-muted" style="font-weight: 700; text-transform: uppercase; letter-spacing: 0.03em;">Programs:</span>
+                ${item.programBreakdown.map(pb => {
+                  const p = pb.program;
+                  const isSelected = p.id === activeDrawerPid;
+                  const isComplete = pb.isMet;
+                  return `
+                    <button 
+                      type="button" 
+                      class="prog-code-rect ${isComplete ? 'rect-green' : 'rect-red'} ${isSelected ? 'active-rect' : ''}" 
+                      data-pid="${p.id}" 
+                      title="${p.name} • ${isComplete ? `Complete (${pb.meetCount} meet today)` : 'Pending / Not met today'}"
+                    >
+                      <span class="pcr-code">${p.code}</span>
+                      <span class="pcr-icon">${isComplete ? getIcon('checkCircle') : getIcon('clock')}</span>
+                      <span class="pcr-status">${isComplete ? 'Complete' : 'Pending'}</span>
+                    </button>
+                  `;
+                }).join('')}
+
+                ${item.programs.length > 1 ? `
+                  <button type="button" class="prog-code-rect rect-all ${activeDrawerPid === 'ALL' ? 'active-rect' : ''}" data-pid="ALL" title="All programs combined">
+                    <span class="pcr-code">ALL</span>
+                    <span class="pcr-status">${meets.length} Meets</span>
+                  </button>
+                ` : ''}
               </div>
-              ${meets.length > 0 ? meets.map(m => {
-                const trn = m.trainerId ? state.getTrainerById(m.trainerId) : null;
-                const prg = m.programId ? state.getProgramById(m.programId) : null;
-                return `
-                  <div style="background: #ffffff; border: 1px solid #e2e8f0; border-radius: 8px; padding: 10px 12px; margin-bottom: 6px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px;">
-                    <div>
-                      <div style="font-weight: 700; font-size: 13px; color: #0f172a;">
-                        ${prg ? `[${prg.code}] ${prg.name}` : 'General Rehearsal'}
-                      </div>
-                      <div style="font-size: 11.5px; color: #64748b;">
-                        Mentor: <strong>${trn ? trn.name : 'Unknown'}</strong> ${m.time ? `&bull; ${m.time}` : ''}
-                      </div>
-                      ${m.remark ? `<div style="font-size: 11.5px; color: #334155; font-style: italic; margin-top: 3px;">"${m.remark}"</div>` : ''}
-                    </div>
-                    <div style="text-align: right;">
-                      <span class="badge badge-stage" style="font-size: 12px; font-weight: 800;">Score: ${m.percentage}%</span>
-                    </div>
-                  </div>
-                `;
-              }).join('') : `
-                <div style="color: #64748b; font-size: 12px;">No sessions logged yet on this date.</div>
-              `}
+            </div>
+
+            <!-- Compact Sessions Content Container -->
+            <div class="drawer-compact-content">
+              ${renderDrawerProgramContent(activeDrawerPid)}
             </div>
           </div>
         </div>
       `;
+
+      if (isExpanded) {
+        rowCard.classList.add('row-expanded');
+      }
 
       // Drawer toggle handler
       const toggleBtn = rowCard.querySelector('.btn-toggle-drawer');
@@ -694,6 +801,41 @@ export function renderDailyProgressView(container, navigateTo) {
           if (srtText) srtText.textContent = 'Hide';
         }
       };
+
+      // Wire program tab buttons inside drawer
+      const tabBtns = drawer.querySelectorAll('.prog-code-rect');
+      const drawerContent = drawer.querySelector('.drawer-compact-content');
+
+      const wireRecordButtons = () => {
+        drawer.querySelectorAll('.btn-drawer-record-meet').forEach(btn => {
+          btn.onclick = (ev) => {
+            ev.stopPropagation();
+            const cid = btn.getAttribute('data-cid');
+            const pId = btn.getAttribute('data-pid');
+            const tId = btn.getAttribute('data-tid');
+            openRecordMeetModal({
+              candidateId: cid,
+              programId: pId || null,
+              trainerId: tId || null,
+              dateStr: selectedDate,
+              onSave: renderView
+            });
+          };
+        });
+      };
+
+      wireRecordButtons();
+
+      tabBtns.forEach(btn => {
+        btn.onclick = (e) => {
+          e.stopPropagation();
+          tabBtns.forEach(b => b.classList.remove('active-rect'));
+          btn.classList.add('active-rect');
+          const pid = btn.getAttribute('data-pid');
+          drawerContent.innerHTML = renderDrawerProgramContent(pid);
+          wireRecordButtons();
+        };
+      });
 
       // Record meet button
       rowCard.querySelector('.btn-record-meet').onclick = (e) => {

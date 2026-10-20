@@ -1,3 +1,4 @@
+import './style.css';
 import { state } from './services/state.js';
 import { firebaseService } from './services/firebase.js';
 import { toast } from './components/toast.js';

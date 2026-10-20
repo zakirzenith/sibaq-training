@@ -1721,6 +1721,149 @@ class StateService {
     };
   }
 
+  getTrainersDailyReport(dateStr = null) {
+    const todayStr = new Date().toISOString().split('T')[0];
+    const targetDate = dateStr || todayStr;
+    const allTrainers = this.getTrainers();
+    const allMeetsForDate = this.getDailyMeets(targetDate);
+
+    const trainerReports = allTrainers.map(trainer => {
+      const cleanTid = String(trainer.id).trim();
+      const assignedPrograms = this.getTrainerPrograms(cleanTid);
+
+      // Build unique mentee list assigned to this trainer
+      const menteeMap = new Map();
+      assignedPrograms.forEach(prg => {
+        (prg.candidateIds || []).forEach(cid => {
+          const cleanCid = String(cid).trim();
+          const cand = this.getCandidateById(cleanCid);
+          if (cand) {
+            if (!menteeMap.has(cleanCid)) {
+              menteeMap.set(cleanCid, { candidate: cand, programs: [] });
+            }
+            menteeMap.get(cleanCid).programs.push(prg);
+          }
+        });
+      });
+
+      // Meets logged by this trainer on targetDate
+      const trainerMeetsOnDate = allMeetsForDate.filter(m => 
+        String(m.trainerId || '').trim() === cleanTid
+      );
+
+      // Mentee-by-mentee status breakdown
+      const menteeBreakdown = Array.from(menteeMap.values()).map(item => {
+        const c = item.candidate;
+        const meetsWithTrainer = trainerMeetsOnDate.filter(m => String(m.candidateId).trim() === String(c.id).trim());
+        const isMet = meetsWithTrainer.length > 0;
+        const latestMeet = isMet ? meetsWithTrainer[meetsWithTrainer.length - 1] : null;
+
+        return {
+          candidate: c,
+          programs: item.programs,
+          isMet,
+          meets: meetsWithTrainer,
+          meetCount: meetsWithTrainer.length,
+          latestMeet
+        };
+      });
+
+      const totalMentees = menteeBreakdown.length;
+      const metMenteesCount = menteeBreakdown.filter(m => m.isMet).length;
+      const pendingMenteesCount = totalMentees - metMenteesCount;
+      const totalMeetsLogged = trainerMeetsOnDate.length;
+      const avgScore = totalMeetsLogged > 0
+        ? Math.round(trainerMeetsOnDate.reduce((sum, m) => sum + (Number(m.percentage) || 0), 0) / totalMeetsLogged)
+        : 0;
+
+      // Status determination:
+      // Fully Met if all mentees met.
+      // Partially Met if some met, some remaining.
+      // If 0 met: Missed if after 11:59 pm (targetDate < todayStr), else Pending.
+      let status = 'PENDING';
+      let statusLabel = 'Pending Check-in';
+      let badgeClass = 'badge-warning';
+
+      if (totalMentees === 0) {
+        if (totalMeetsLogged > 0) {
+          status = 'MET';
+          statusLabel = `Active (${totalMeetsLogged} Meets)`;
+          badgeClass = 'badge-stage';
+        } else {
+          status = 'NO_MENTEES';
+          statusLabel = 'No Mentees Assigned';
+          badgeClass = 'badge-neutral';
+        }
+      } else if (metMenteesCount === totalMentees) {
+        status = 'MET';
+        statusLabel = totalMentees === 1 ? 'Fully Met (1/1)' : `Fully Met (${metMenteesCount}/${totalMentees})`;
+        badgeClass = 'badge-stage';
+      } else if (metMenteesCount > 0 && metMenteesCount < totalMentees) {
+        status = 'PARTIAL';
+        statusLabel = `Partially Met (${metMenteesCount}/${totalMentees})`;
+        badgeClass = 'badge-amber';
+      } else {
+        if (targetDate < todayStr) {
+          status = 'MISSED';
+          statusLabel = `Missed (0/${totalMentees} Met)`;
+          badgeClass = 'badge-danger';
+        } else {
+          status = 'PENDING';
+          statusLabel = `Pending (0/${totalMentees} Met)`;
+          badgeClass = 'badge-warning';
+        }
+      }
+
+      return {
+        trainer,
+        programs: assignedPrograms,
+        totalPrograms: assignedPrograms.length,
+        menteeBreakdown,
+        totalMentees,
+        metMenteesCount,
+        pendingMenteesCount,
+        trainerMeetsOnDate,
+        totalMeetsLogged,
+        avgScore,
+        status,
+        statusLabel,
+        badgeClass,
+        isMet: status === 'MET',
+        isPartial: status === 'PARTIAL',
+        isPending: status === 'PENDING',
+        isMissed: status === 'MISSED',
+        hasNoMentees: status === 'NO_MENTEES',
+        targetDate
+      };
+    });
+
+    const trainersWithMentees = trainerReports.filter(tr => tr.totalMentees > 0);
+    const fullyMetCount = trainerReports.filter(tr => tr.isMet).length;
+    const partiallyMetCount = trainerReports.filter(tr => tr.isPartial).length;
+    const pendingCount = trainerReports.filter(tr => tr.isPending).length;
+    const missedCount = trainerReports.filter(tr => tr.isMissed).length;
+    const noMenteesCount = trainerReports.filter(tr => tr.hasNoMentees).length;
+    const totalMeetsLogged = allMeetsForDate.length;
+
+    const compliancePct = trainersWithMentees.length > 0
+      ? Math.round(((fullyMetCount + partiallyMetCount * 0.5) / trainersWithMentees.length) * 100)
+      : 0;
+
+    return {
+      targetDate,
+      totalTrainers: allTrainers.length,
+      trainersWithMenteesCount: trainersWithMentees.length,
+      fullyMetCount,
+      partiallyMetCount,
+      pendingCount,
+      missedCount,
+      noMenteesCount,
+      totalMeetsLogged,
+      compliancePct,
+      trainerReports
+    };
+  }
+
   // --- BACKUP & RESTORE ---
   loadSampleDemoData() {
     this.candidates = [...SAMPLE_DEMO_CANDIDATES];

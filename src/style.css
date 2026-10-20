@@ -4487,6 +4487,25 @@ code,
   color: #991b1b;
 }
 
+.saas-meet-pill {
+  font-size: 11px;
+  font-weight: 700;
+  padding: 1.5px 7px;
+  border-radius: 9999px;
+  background: rgba(255, 255, 255, 0.9);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  white-space: nowrap;
+}
+
+.saas-score-num {
+  font-size: 11.5px;
+  font-weight: 800;
+  color: #047857;
+  background: #d1fae5;
+  padding: 1.5px 6px;
+  border-radius: 9999px;
+}
+
 /* Color and icon utility classes */
 .text-emerald { color: #10b981 !important; }
 .text-amber { color: #f59e0b !important; }
@@ -8572,6 +8591,11 @@ code,
     padding: 1px 4px !important;
   }
 
+  .desktop-table-view,
+  .saas-table-head {
+    display: none !important;
+  }
+
   /* Student Check-in Candidate Row Stack on Mobile */
   .saas-candidate-row {
     padding: 14px !important;
@@ -9453,7 +9477,7 @@ code,
 }
 
 .saas-table-head.desktop-table-view {
-  display: flex !important;
+  display: flex;
 }
 
 .mobile-cards-view {
@@ -9479,7 +9503,9 @@ code,
 }
 
 @media (max-width: 768px) {
-  .desktop-table-view {
+  .desktop-table-view,
+  .saas-table-head,
+  .saas-table-head.desktop-table-view {
     display: none !important;
   }
 
@@ -13708,6 +13734,250 @@ select.auth-input option {
 }
 
 /* ==========================================================================
+   DAILY PROGRESS - VIEW MODE SWITCHER & TRAINER DAILY REPORT
+   ========================================================================== */
+.daily-mode-capsule {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #f1f5f9;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 3px;
+}
+
+.dmc-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 6px 14px;
+  border: none;
+  background: transparent;
+  color: #64748b;
+  font-size: 12.5px;
+  font-weight: 700;
+  border-radius: 9px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  white-space: nowrap;
+}
+
+.dmc-btn svg {
+  width: 15px;
+  height: 15px;
+  flex-shrink: 0;
+}
+
+.dmc-btn:hover {
+  color: #0f172a;
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.dmc-btn.active {
+  background: #059669;
+  color: #ffffff;
+  box-shadow: 0 2px 6px rgba(5, 150, 105, 0.25);
+}
+
+.dmc-badge {
+  font-size: 11px;
+  font-weight: 800;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.08);
+  color: inherit;
+}
+
+.dmc-btn.active .dmc-badge {
+  background: rgba(255, 255, 255, 0.25);
+  color: #ffffff;
+}
+
+/* Trainer Daily Row Card */
+.trainer-daily-card {
+  transition: all 0.2s ease;
+}
+
+.trainer-master-row {
+  display: flex;
+  align-items: center;
+  padding: 12px 18px;
+  min-height: 64px;
+  gap: 16px;
+}
+
+.src-trainer {
+  flex: 1.2;
+  min-width: 220px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.trainer-phone-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #059669;
+  text-decoration: none;
+  font-size: 11px;
+  font-weight: 700;
+  background: #ecfdf5;
+  border: 1px solid #a7f3d0;
+  padding: 2px 7px;
+  border-radius: 6px;
+  margin-top: 3px;
+  transition: all 0.15s ease;
+}
+
+.trainer-phone-chip:hover {
+  background: #d1fae5;
+  color: #047857;
+}
+
+.src-trainer-mentees {
+  flex: 1.2;
+  min-width: 180px;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.src-trainer-status {
+  flex: 1;
+  min-width: 150px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+
+.src-trainer-action {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+/* Trainer Mentee Checklist Accordion */
+.trainer-mentee-drawer-content {
+  padding: 14px 16px;
+  background: #f8fafc;
+  border-top: 1px dashed #e2e8f0;
+}
+
+.tmd-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.tmd-title {
+  font-size: 13px;
+  font-weight: 800;
+  color: #1e293b;
+  margin: 0;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.trainer-mentee-checklist-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 10px;
+}
+
+.tmc-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 12px 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+}
+
+.tmc-card.is-met {
+  border-left: 4px solid #10b981;
+  background: linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%);
+}
+
+.tmc-card.is-pending {
+  border-left: 4px solid #f59e0b;
+}
+
+.tmc-card.is-missed {
+  border-left: 4px solid #ef4444;
+  background: #fffcfc;
+}
+
+.tmc-top-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.tmc-cand-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.tmc-cand-name {
+  font-size: 13.5px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.tmc-cand-meta {
+  font-size: 11px;
+  color: #64748b;
+}
+
+.tmc-status-pill {
+  font-size: 10.5px;
+  font-weight: 800;
+  padding: 2px 8px;
+  border-radius: 6px;
+  white-space: nowrap;
+}
+
+.tmc-prog-badge {
+  font-size: 10.5px;
+  color: #475569;
+  background: #f1f5f9;
+  padding: 2px 6px;
+  border-radius: 4px;
+  display: inline-block;
+  align-self: flex-start;
+}
+
+.tmc-remark-box {
+  font-size: 11.5px;
+  color: #334155;
+  font-style: italic;
+  background: rgba(0, 0, 0, 0.02);
+  padding: 6px 8px;
+  border-radius: 6px;
+  border-left: 2px solid #cbd5e1;
+}
+
+.tmc-action-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-top: 4px;
+  padding-top: 6px;
+  border-top: 1px dashed #f1f5f9;
+}
+
+/* ==========================================================================
    MENTEE PORTAL MOBILE RESPONSIVENESS & PHONE PERFECTION
    ========================================================================== */
 @media (max-width: 768px) {
@@ -14479,5 +14749,55 @@ select.auth-input option {
 
   .cac-point-item {
     padding: 12px 14px !important;
+  }
+
+  /* Trainer Daily Card Mobile Perfection */
+  .daily-mode-capsule {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    width: 100% !important;
+    gap: 4px !important;
+    padding: 3px !important;
+  }
+
+  .dmc-btn {
+    justify-content: center !important;
+    padding: 8px 6px !important;
+    font-size: 12px !important;
+    min-height: 40px !important;
+  }
+
+  .trainer-master-row {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    padding: 14px 12px !important;
+    gap: 12px !important;
+  }
+
+  .src-trainer {
+    width: 100% !important;
+  }
+
+  .src-trainer-mentees {
+    width: 100% !important;
+  }
+
+  .src-trainer-status {
+    width: 100% !important;
+    align-items: flex-start !important;
+  }
+
+  .src-trainer-action {
+    width: 100% !important;
+  }
+
+  .src-trainer-action button {
+    width: 100% !important;
+    justify-content: center !important;
+    height: 38px !important;
+  }
+
+  .trainer-mentee-checklist-grid {
+    grid-template-columns: 1fr !important;
   }
 }

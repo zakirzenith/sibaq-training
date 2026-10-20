@@ -95,9 +95,6 @@ export function renderMenteeCompareView(container, navigate, initialTab = 'overv
               <span class="badge badge-portal-active">🏆 Category Competitor Arena</span>
             </div>
             <h1 class="mph-title">Peer Performance &amp; Category Standings</h1>
-            <p class="mph-desc">
-              Benchmark your readiness score, rehearsal attendance, and competition program performance against fellow competitors in ${myCategory}.
-            </p>
           </div>
         </div>
 
@@ -523,8 +520,10 @@ export function renderMenteeCompareView(container, navigate, initialTab = 'overv
 
                       <td class="cr-cand">
                         <div class="cr-cand-wrap">
-                          <div class="cr-avatar" style="background: ${isMe ? '#10b981' : '#6366f1'};">
-                            ${p.candidate.name.split(' ').map(n => n[0]).slice(0, 2).join('')}
+                          <div class="cr-avatar" style="background: ${isMe ? '#10b981' : '#6366f1'}; overflow: hidden;">
+                            ${p.candidate.photo 
+                              ? `<img src="${p.candidate.photo}" alt="${p.candidate.name}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" />`
+                              : p.candidate.name.split(' ').map(n => n[0]).slice(0, 2).join('')}
                           </div>
                           <div class="cr-info">
                             <div class="cr-name-row">
@@ -580,8 +579,10 @@ export function renderMenteeCompareView(container, navigate, initialTab = 'overv
                         : `<span class="cmr-rank-num">#${p.rank}</span>`}
                     </div>
 
-                    <div class="cmr-avatar" style="background: ${isMe ? '#10b981' : '#6366f1'};">
-                      ${p.candidate.name.split(' ').map(n => n[0]).slice(0, 2).join('')}
+                    <div class="cmr-avatar" style="background: ${isMe ? '#10b981' : '#6366f1'}; overflow: hidden;">
+                      ${p.candidate.photo 
+                        ? `<img src="${p.candidate.photo}" alt="${p.candidate.name}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" />`
+                        : p.candidate.name.split(' ').map(n => n[0]).slice(0, 2).join('')}
                     </div>
 
                     <div class="cmr-info-col">

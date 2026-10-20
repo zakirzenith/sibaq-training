@@ -60,25 +60,7 @@ export function renderMenteePracticeView(container, navigate) {
               <span class="badge badge-portal-active">🟢 My Practice Tracker</span>
             </div>
             <h1 class="mph-title">Daily Practice Drills &amp; Mentor Remarks</h1>
-            <p class="mph-desc">
-              Track day-by-day rehearsal sessions, evaluate your readiness progression, and read personalized feedback from your assigned mentors.
-            </p>
           </div>
-        </div>
-
-        <div class="mph-actions">
-          <button type="button" class="btn btn-outline mph-btn" id="btnBackToDashboard" title="Return to Mentee Overview Dashboard">
-            ${getIcon('dashboard')}
-            <span>Dashboard</span>
-          </button>
-          <button type="button" class="btn btn-outline mph-btn" id="btnGoToCompare" title="Compare your performance with category peers">
-            ${getIcon('chart')}
-            <span>Compare</span>
-          </button>
-          <button type="button" class="btn btn-primary mph-btn" id="btnOpenPracticeDossier" title="View official performance dossier">
-            ${getIcon('award')}
-            <span>Dossier</span>
-          </button>
         </div>
       </div>
 
@@ -90,10 +72,10 @@ export function renderMenteePracticeView(container, navigate) {
               ${getIcon('calendar')}
             </div>
             <div>
-              <h3 class="sch-title" style="margin: 0; font-size: 17px; font-weight: 800; color: #0f172a;">
+              <h3 class="sch-title" style="margin: 0; font-size: 16px; font-weight: 800; color: #0f172a;">
                 Select Practice Date
               </h3>
-              <p class="sch-desc" style="margin: 2px 0 0 0; font-size: 12.5px; color: #64748b;">
+              <p class="sch-desc" style="margin: 2px 0 0 0; font-size: 12px; color: #64748b;">
                 Switch between days to review specific rehearsal scores and critiques.
               </p>
             </div>
@@ -101,16 +83,18 @@ export function renderMenteePracticeView(container, navigate) {
 
           <!-- Interactive Date Switcher Controls -->
           <div class="practice-date-bar">
-            <button type="button" class="pdb-btn" id="btnPracticePrevDay" title="Previous operational day">&larr;</button>
             <div class="pdb-quick-pills">
               <button type="button" class="pdb-pill active" id="btnPracticeToday" data-day="today">Today</button>
               <button type="button" class="pdb-pill" id="btnPracticeYesterday" data-day="yesterday">Yesterday</button>
             </div>
             <div class="practice-date-input-wrap">
-              <span style="font-size: 11px; color: #64748b;">📅</span>
+              <span style="font-size: 12px; color: #64748b;">📅</span>
               <input type="date" id="practiceDatePicker" min="${launchDateStr}" max="${todayStr}" value="${todayStr}" title="Select specific date" />
             </div>
-            <button type="button" class="pdb-btn" id="btnPracticeNextDay" title="Next day">&rarr;</button>
+            <div class="pdb-nav-arrows">
+              <button type="button" class="pdb-btn" id="btnPracticePrevDay" title="Previous operational day">&larr;</button>
+              <button type="button" class="pdb-btn" id="btnPracticeNextDay" title="Next day">&rarr;</button>
+            </div>
           </div>
         </div>
 

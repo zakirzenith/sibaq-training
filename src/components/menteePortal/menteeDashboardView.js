@@ -31,6 +31,11 @@ export function renderMenteeDashboardView(container, navigate) {
   }
 
   const { candidate, dossier, todayStatus, daysHistory, streak, totalPastDays = 0, pastMetCount = 0, pastMissedCount = 0, launchDateStr = '2026-10-19' } = data;
+  const compData = state.getCandidateComparisonData(candidate.id);
+  const myRank = compData ? compData.myRank : null;
+  const totalInCat = compData ? compData.totalInCat : 0;
+  const percentile = compData ? compData.percentile : 0;
+
   const programs = dossier?.programs || [];
   const programReports = dossier?.programReports || [];
   const allMeets = dossier?.allMeets || [];
@@ -78,22 +83,27 @@ export function renderMenteeDashboardView(container, navigate) {
           </div>
         </div>
 
+        <!-- Top Category Rank Highlight (Interesting & Engaging) -->
+        ${myRank ? `
+          <div class="mentee-hero-rank-capsule" id="btnHeroRankClick" title="Click to view full Category Standings">
+            <div class="mhr-medal">${myRank === 1 ? '🥇' : myRank === 2 ? '🥈' : myRank === 3 ? '🥉' : '🏆'}</div>
+            <div class="mhr-content">
+              <div class="mhr-rank-heading">Category Standing</div>
+              <div class="mhr-rank-main">
+                <span class="mhr-rank-number">Rank #${myRank}</span>
+                <span class="mhr-rank-total">of ${totalInCat}</span>
+              </div>
+              <div class="mhr-rank-pill">
+                ${myRank === 1 ? '🥇 Category Leader' : (percentile >= 75 ? '⭐ Top Contender' : '🏆 Ranked Competitor')} &bull; ${candidate.category}
+              </div>
+            </div>
+          </div>
+        ` : ''}
+
         <div class="mentee-hero-actions">
-          <button type="button" class="btn btn-outline mentee-btn-nav" id="btnHeroGoPractice" title="Open My Practice drills and date switcher">
-            ${getIcon('calendar')}
-            <span>My Practice</span>
-          </button>
-          <button type="button" class="btn btn-outline mentee-btn-nav" id="btnHeroGoCompare" title="Compare your performance with peers">
+          <button type="button" class="btn btn-primary mentee-btn-compare-hero" id="btnHeroGoCompare" title="Compare your performance with category peers">
             ${getIcon('chart')}
             <span>Compare</span>
-          </button>
-          <button type="button" class="btn btn-primary mentee-btn-dossier" id="btnOpenMyDossier">
-            ${getIcon('award')}
-            <span>Official Dossier</span>
-          </button>
-          <button type="button" class="btn btn-outline mentee-btn-logout" data-action="logout" title="Sign out of candidate portal">
-            ${getIcon('logout')}
-            <span>Sign Out</span>
           </button>
         </div>
       </div>
@@ -560,6 +570,13 @@ export function renderMenteeDashboardView(container, navigate) {
   }
 
   // ================= 🎯 ATTACH MENTEE PORTAL ACTIONS =================
+  const btnHeroRank = container.querySelector('#btnHeroRankClick');
+  if (btnHeroRank) {
+    btnHeroRank.onclick = () => {
+      if (typeof navigate === 'function') navigate('mentee-compare');
+    };
+  }
+
   const btnHeroPractice = container.querySelector('#btnHeroGoPractice');
   const btnHubPractice = container.querySelector('#btnHubGoPractice');
   if (btnHeroPractice) {

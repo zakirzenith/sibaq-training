@@ -53,8 +53,10 @@ export function openCandidateDossierModal(candidateId) {
       <!-- Modal Header (Screen Only) -->
       <div class="modal-header dossier-screen-header" style="border-bottom: 1px solid #e2e8f0; padding: 14px 18px; flex-shrink: 0; background: #ffffff;">
         <div style="display: flex; align-items: center; gap: 12px; min-width: 0;">
-          <div style="width: 46px; height: 46px; border-radius: 50%; background: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%); color: #ffffff; font-weight: 800; font-size: 17px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 2px 8px rgba(79, 70, 229, 0.25);">
-            ${initials}
+          <div style="width: 48px; height: 48px; border-radius: 50%; background: linear-gradient(135deg, #4f46e5 0%, #3730a3 100%); color: #ffffff; font-weight: 800; font-size: 17px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; box-shadow: 0 2px 8px rgba(79, 70, 229, 0.25); overflow: hidden; border: 2px solid #ffffff;">
+            ${candidate.photo 
+              ? `<img src="${candidate.photo}" alt="${candidate.name}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" />`
+              : initials}
           </div>
           <div style="min-width: 0;">
             <div class="modal-badge" style="display: inline-flex; align-items: center; gap: 5px; font-size: 11px;">
@@ -83,11 +85,14 @@ export function openCandidateDossierModal(candidateId) {
         
         <!-- Official Printable Banner (Displayed on printout) -->
         <div class="dossier-print-banner" style="display: none; border-bottom: 2px solid #0f172a; padding-bottom: 12px; margin-bottom: 14px;">
-          <div style="display: flex; justify-content: space-between; align-items: flex-start;">
-            <div>
-              <h1 style="font-size: 20px; font-weight: 900; margin: 0; color: #0f172a; text-transform: uppercase; letter-spacing: 0.5px;">DH BENGAL • SIBAQ TRAINING ACADEMY</h1>
-              <div style="font-size: 13px; font-weight: 700; color: #4338ca; margin-top: 2px;">Official Candidate Performance Dossier</div>
-              <div style="font-size: 12px; margin-top: 4px;">Candidate: <strong>${candidate.name}</strong> (${cleanChest}) • Category: <strong>${candidate.category}</strong></div>
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div style="display: flex; align-items: center; gap: 14px;">
+              ${candidate.photo ? `<img src="${candidate.photo}" alt="${candidate.name}" style="width: 52px; height: 52px; border-radius: 50%; object-fit: cover; border: 2px solid #0f172a; flex-shrink: 0;" />` : ''}
+              <div>
+                <h1 style="font-size: 20px; font-weight: 900; margin: 0; color: #0f172a; text-transform: uppercase; letter-spacing: 0.5px;">DH BENGAL • SIBAQ TRAINING ACADEMY</h1>
+                <div style="font-size: 13px; font-weight: 700; color: #4338ca; margin-top: 2px;">Official Candidate Performance Dossier</div>
+                <div style="font-size: 12px; margin-top: 4px;">Candidate: <strong>${candidate.name}</strong> (${cleanChest}) • Category: <strong>${candidate.category}</strong></div>
+              </div>
             </div>
             <div style="text-align: right; font-size: 11px; color: #64748b;">
               <div>Date: <strong>${new Date().toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' })}</strong></div>

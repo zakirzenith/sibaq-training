@@ -11344,6 +11344,100 @@ select.auth-input option {
   flex-shrink: 0;
 }
 
+/* Mentee Hero Rank Spotlight Capsule */
+.mentee-hero-rank-capsule {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  background: linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%);
+  border: 1.5px solid #86efac;
+  border-radius: 14px;
+  padding: 10px 16px;
+  box-shadow: 0 3px 12px rgba(16, 185, 129, 0.15);
+  cursor: pointer;
+  transition: all 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+  flex-shrink: 0;
+}
+
+.mentee-hero-rank-capsule:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 18px rgba(16, 185, 129, 0.25);
+  border-color: #22c55e;
+}
+
+.mhr-medal {
+  font-size: 28px;
+  line-height: 1;
+  filter: drop-shadow(0 2px 4px rgba(0, 0, 0, 0.12));
+}
+
+.mhr-content {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.mhr-rank-heading {
+  font-size: 10.5px;
+  font-weight: 800;
+  color: #15803d;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.mhr-rank-main {
+  display: flex;
+  align-items: baseline;
+  gap: 4px;
+}
+
+.mhr-rank-number {
+  font-size: 20px;
+  font-weight: 900;
+  color: #0f172a;
+  letter-spacing: -0.02em;
+}
+
+.mhr-rank-total {
+  font-size: 12px;
+  font-weight: 700;
+  color: #64748b;
+}
+
+.mhr-rank-pill {
+  font-size: 10.5px;
+  font-weight: 800;
+  color: #047857;
+  background: rgba(255, 255, 255, 0.85);
+  border: 1px solid rgba(134, 239, 172, 0.9);
+  padding: 1.5px 7px;
+  border-radius: 999px;
+  display: inline-block;
+}
+
+.mentee-btn-compare-hero {
+  background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
+  border-color: #047857 !important;
+  color: #ffffff !important;
+  height: 42px;
+  font-weight: 700;
+  font-size: 13.5px;
+  gap: 8px;
+  padding: 0 20px;
+  border-radius: 10px;
+  box-shadow: 0 2px 8px rgba(5, 150, 105, 0.25);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  white-space: nowrap;
+}
+
+.mentee-btn-compare-hero:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 4px 14px rgba(5, 150, 105, 0.35);
+}
+
 .mentee-btn-dossier {
   background: linear-gradient(135deg, #059669 0%, #047857 100%) !important;
   border-color: #047857 !important;
@@ -13415,7 +13509,7 @@ select.auth-input option {
 .cr-avatar {
   width: 34px;
   height: 34px;
-  border-radius: 50%;
+  border-radius: 50% !important;
   color: #ffffff;
   display: flex;
   align-items: center;
@@ -13423,6 +13517,14 @@ select.auth-input option {
   font-weight: 800;
   font-size: 12px;
   flex-shrink: 0;
+  overflow: hidden !important;
+}
+
+.cr-avatar img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  border-radius: 50% !important;
 }
 
 .cr-info {
@@ -13651,7 +13753,7 @@ select.auth-input option {
 .cmr-avatar {
   width: 38px;
   height: 38px;
-  border-radius: 50%;
+  border-radius: 50% !important;
   color: #ffffff;
   display: flex;
   align-items: center;
@@ -13659,6 +13761,14 @@ select.auth-input option {
   font-weight: 800;
   font-size: 13px;
   flex-shrink: 0;
+  overflow: hidden !important;
+}
+
+.cmr-avatar img {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover !important;
+  border-radius: 50% !important;
 }
 
 .cmr-info-col {
@@ -14071,19 +14181,27 @@ select.auth-input option {
     font-size: 12px;
   }
 
-  .mentee-hero-actions {
-    width: 100%;
-    display: flex;
-    gap: 8px;
+  .mentee-hero-card {
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 14px !important;
   }
 
-  .mentee-btn-dossier,
-  .mentee-btn-logout {
-    flex: 1;
-    justify-content: center;
-    height: 40px;
-    font-size: 12px;
-    padding: 0 10px;
+  .mentee-hero-rank-capsule {
+    width: 100% !important;
+    box-sizing: border-box !important;
+    justify-content: flex-start !important;
+  }
+
+  .mentee-hero-actions {
+    width: 100% !important;
+    display: flex !important;
+    gap: 8px !important;
+  }
+
+  .mentee-btn-compare-hero {
+    width: 100% !important;
+    justify-content: center !important;
   }
 
   .daily-task-header-row {
@@ -14422,26 +14540,44 @@ select.auth-input option {
     font-size: 11.5px !important;
   }
 
+  .pdb-nav-arrows {
+    display: flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+  }
+
   /* 3 Stat Tiles on Mobile */
   .practice-day-stats-grid {
-    grid-template-columns: repeat(3, 1fr) !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
     gap: 6px !important;
+    width: 100% !important;
+    box-sizing: border-box !important;
   }
 
   .pds-card {
-    padding: 8px 8px !important;
+    padding: 8px 6px !important;
     border-radius: 10px !important;
+    min-width: 0 !important;
+    overflow: hidden !important;
+    box-sizing: border-box !important;
   }
 
   .pds-label {
-    font-size: 9.5px !important;
+    font-size: 9px !important;
     white-space: nowrap !important;
     overflow: hidden !important;
     text-overflow: ellipsis !important;
   }
 
   .pds-val {
-    font-size: 16px !important;
+    font-size: 15px !important;
+  }
+
+  .pds-sub {
+    font-size: 9px !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
   }
 
   .pds-val-row .badge {

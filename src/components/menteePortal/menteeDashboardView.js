@@ -65,16 +65,16 @@ export function renderMenteeDashboardView(container, navigate) {
       <div class="mentee-hero-card">
         <div class="mentee-hero-left">
           <div class="mentee-avatar-wrap" style="overflow: hidden;">
-            ${candidate.photo 
-              ? `<img src="${candidate.photo}" alt="${candidate.name}" style="width: 100%; height: 100%; object-fit: cover; border-radius: inherit;" />`
-              : `<span class="mentee-avatar-initials">${candidate.name.split(' ').map(n => n[0]).slice(0, 2).join('')}</span>`}
+            ${candidate.photo
+      ? `<img src="${candidate.photo}" alt="${candidate.name}" style="width: 100%; height: 100%; object-fit: cover; border-radius: inherit;" />`
+      : `<span class="mentee-avatar-initials">${candidate.name.split(' ').map(n => n[0]).slice(0, 2).join('')}</span>`}
           </div>
           <div class="mentee-hero-info">
             <div class="mentee-pill-row">
               <span class="badge badge-category-pill">${candidate.category}</span>
               <span class="badge badge-adno-pill">AD: ${candidate.adNo || candidate.chestNo || 'N/A'}</span>
               ${candidate.class ? `<span class="badge badge-class-pill">${candidate.class}</span>` : ''}
-              <span class="badge badge-portal-active">🟢 Active Mentee</span>
+              <span class="badge badge-portal-active">Active Mentee</span>
             </div>
             <h1 class="mentee-name-title">${candidate.name}</h1>
             <p class="mentee-hero-desc">
@@ -91,7 +91,7 @@ export function renderMenteeDashboardView(container, navigate) {
             </div>
             <div class="mhr-content">
               <div class="mhr-rank-heading">
-                <span class="mhr-sparkle">⚡</span>
+                <!--<span class="mhr-sparkle">⚡</span>-->
                 <span>CATEGORY STANDING</span>
               </div>
               <div class="mhr-rank-main">
@@ -158,28 +158,28 @@ export function renderMenteeDashboardView(container, navigate) {
                   <span class="dtsc-label">Program Practiced</span>
                   <span class="dtsc-value">
                     ${(() => {
-                      const prog = programs.find(p => p.id === todayStatus.latestMeet?.programId);
-                      return prog ? `[${prog.code}] ${prog.name}` : (programs[0] ? `[${programs[0].code}] ${programs[0].name}` : 'Assigned Program');
-                    })()}
+        const prog = programs.find(p => p.id === todayStatus.latestMeet?.programId);
+        return prog ? `[${prog.code}] ${prog.name}` : (programs[0] ? `[${programs[0].code}] ${programs[0].name}` : 'Assigned Program');
+      })()}
                   </span>
                 </div>
 
                 <div class="dtsc-detail-item">
                   <span class="dtsc-label">Evaluating Mentor</span>
                   ${(() => {
-                    const trn = state.getTrainerById(todayStatus.latestMeet?.trainerId);
-                    if (!trn) return `<span class="dtsc-value">Assigned Mentor</span>`;
-                    return `
+        const trn = state.getTrainerById(todayStatus.latestMeet?.trainerId);
+        if (!trn) return `<span class="dtsc-value">Assigned Mentor</span>`;
+        return `
                       <div class="dtsc-mentor-evaluator-row">
                         <div class="mcc-avatar" style="width: 26px; height: 26px; background: ${trn.color || '#4f46e5'};">
-                          ${trn.photo 
-                            ? `<img src="${trn.photo}" alt="${trn.name}" />` 
-                            : trn.name.split(' ').map(n => n[0]).slice(0, 2).join('')}
+                          ${trn.photo
+            ? `<img src="${trn.photo}" alt="${trn.name}" />`
+            : trn.name.split(' ').map(n => n[0]).slice(0, 2).join('')}
                         </div>
                         <span class="dtsc-value">${trn.name} <span class="dtsc-mentor-sub">(${trn.expertise || 'Mentor'})</span></span>
                       </div>
                     `;
-                  })()}
+      })()}
                 </div>
               </div>
 
@@ -190,8 +190,8 @@ export function renderMenteeDashboardView(container, navigate) {
                 </div>
                 <div class="dtsc-review-text">
                   ${todayStatus.latestMeet?.remark && todayStatus.latestMeet.remark.trim()
-                    ? `&ldquo;${todayStatus.latestMeet.remark.trim()}&rdquo;`
-                    : `&ldquo;Daily practice completed successfully. Continue drilling execution and timing.&rdquo;`}
+        ? `&ldquo;${todayStatus.latestMeet.remark.trim()}&rdquo;`
+        : `&ldquo;Daily practice completed successfully. Continue drilling execution and timing.&rdquo;`}
                 </div>
               </div>
 
@@ -230,13 +230,13 @@ export function renderMenteeDashboardView(container, navigate) {
                 </span>
                 <div class="mentors-chips-grid">
                   ${programs.length > 0 ? programs.map(p => {
-                    const trn = p.trainerId ? state.getTrainerById(p.trainerId) : null;
-                    return `
+          const trn = p.trainerId ? state.getTrainerById(p.trainerId) : null;
+          return `
                       <div class="mentor-contact-chip">
                         <div class="mcc-avatar" style="background: ${trn?.color || '#4f46e5'};">
-                          ${trn && trn.photo 
-                            ? `<img src="${trn.photo}" alt="${trn.name}" />` 
-                            : (trn ? trn.name.split(' ').map(n => n[0]).slice(0, 2).join('') : 'M')}
+                          ${trn && trn.photo
+              ? `<img src="${trn.photo}" alt="${trn.name}" />`
+              : (trn ? trn.name.split(' ').map(n => n[0]).slice(0, 2).join('') : 'M')}
                         </div>
                         <div class="mcc-info">
                           <div class="mcc-name">${trn ? trn.name : 'Mentor to be assigned'}</div>
@@ -244,7 +244,7 @@ export function renderMenteeDashboardView(container, navigate) {
                         </div>
                       </div>
                     `;
-                  }).join('') : `
+        }).join('') : `
                     <div style="font-size: 12.5px; color: #92400e;">No programs enrolled yet. Please contact the Controller to register your programs.</div>
                   `}
                 </div>
@@ -382,14 +382,14 @@ export function renderMenteeDashboardView(container, navigate) {
 
         <div class="days-history-list">
           ${daysHistory.map(day => {
-            const isMet = day.statusObj?.isMet;
-            const isMissed = day.statusObj?.isMissed;
-            const isToday = day.isToday;
-            const latestMeet = day.statusObj?.latestMeet;
-            const prog = latestMeet ? programs.find(p => p.id === latestMeet.programId) : null;
-            const trn = latestMeet ? state.getTrainerById(latestMeet.trainerId) : null;
+          const isMet = day.statusObj?.isMet;
+          const isMissed = day.statusObj?.isMissed;
+          const isToday = day.isToday;
+          const latestMeet = day.statusObj?.latestMeet;
+          const prog = latestMeet ? programs.find(p => p.id === latestMeet.programId) : null;
+          const trn = latestMeet ? state.getTrainerById(latestMeet.trainerId) : null;
 
-            return `
+          return `
               <div class="day-log-row ${isToday ? 'is-today' : ''} ${isMet ? 'row-met' : isMissed ? 'row-missed' : 'row-pending'}" data-date="${day.dateStr}" style="cursor: pointer;" title="Click to view detailed activity for ${day.displayDate} in My Practice">
                 <div class="dlr-main-header">
                   <div class="dlr-date-col">
@@ -441,7 +441,7 @@ export function renderMenteeDashboardView(container, navigate) {
                 </div>
               </div>
             `;
-          }).join('')}
+        }).join('')}
         </div>
       </div>
 
@@ -458,12 +458,12 @@ export function renderMenteeDashboardView(container, navigate) {
         ${programReports.length > 0 ? `
           <div class="mentee-programs-grid">
             ${programReports.map(pr => {
-              const prog = pr.program;
-              const trn = pr.trainer;
-              const status = pr.status;
-              const isStage = prog.type === 'Stage';
+          const prog = pr.program;
+          const trn = pr.trainer;
+          const status = pr.status;
+          const isStage = prog.type === 'Stage';
 
-              return `
+          return `
                 <div class="mentee-program-card ${isStage ? 'card-stage' : 'card-nonstage'}">
                   <div class="mpc-top">
                     <div class="mpc-badge-row">
@@ -479,9 +479,9 @@ export function renderMenteeDashboardView(container, navigate) {
                   <!-- Assigned Mentor Details -->
                   <div class="mpc-mentor-box">
                     <div class="mpc-mentor-avatar" style="background: ${trn?.color || '#6366f1'};">
-                      ${trn && trn.photo 
-                        ? `<img src="${trn.photo}" alt="${trn.name}" />` 
-                        : (trn ? trn.name.split(' ').map(n => n[0]).slice(0, 2).join('') : 'M')}
+                      ${trn && trn.photo
+              ? `<img src="${trn.photo}" alt="${trn.name}" />`
+              : (trn ? trn.name.split(' ').map(n => n[0]).slice(0, 2).join('') : 'M')}
                     </div>
                     <div class="mpc-mentor-info">
                       <span class="mpc-mentor-label">Assigned Mentor</span>
@@ -520,7 +520,7 @@ export function renderMenteeDashboardView(container, navigate) {
                   ` : ''}
                 </div>
               `;
-            }).join('')}
+        }).join('')}
           </div>
         ` : `
           <div class="empty-state-card" style="padding: 24px; text-align: center;">

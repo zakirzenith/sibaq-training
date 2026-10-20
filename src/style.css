@@ -9624,12 +9624,14 @@ body.auth-mode .main-view-container {
   min-height: 100vh;
   width: 100%;
   display: flex;
+  flex-direction: column;
   align-items: center;
   justify-content: center;
   padding: 32px 16px;
   position: relative;
   background: radial-gradient(ellipse at 50% 0%, #ffffff 0%, #f1f5f9 65%, #e2e8f0 100%);
   box-sizing: border-box;
+  overflow: hidden;
 }
 
 .auth-glow {
@@ -9664,11 +9666,344 @@ body.auth-mode .main-view-container {
 .auth-glow-1.glow-mentee { background: #a7f3d0; }
 .auth-glow-2.glow-mentee { background: #bae6fd; }
 
+/* =========================================================
+   FLOATING CANDIDATE CIRCLES (BACKGROUND AMBIENCE)
+   ========================================================= */
+.auth-floating-candidates-layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 2;
+}
+
+.auth-candidate-bubble {
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: auto;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  transition: transform 0.35s cubic-bezier(0.16, 1, 0.3, 1), z-index 0.2s ease, filter 0.3s ease;
+  will-change: transform;
+}
+
+.auth-candidate-bubble:hover {
+  transform: scale(1.18) !important;
+  z-index: 25 !important;
+  filter: drop-shadow(0 12px 24px rgba(79, 70, 229, 0.25));
+}
+
+.auth-candidate-bubble .afb-inner {
+  width: 100%;
+  height: 100%;
+  border-radius: 50%;
+  position: relative;
+  overflow: hidden;
+  background: #ffffff;
+  border: 2.5px solid rgba(255, 255, 255, 0.95);
+  box-shadow: 0 10px 25px -4px rgba(15, 23, 42, 0.12), 0 4px 10px rgba(99, 102, 241, 0.1);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-sizing: border-box;
+}
+
+.auth-candidate-bubble .afb-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  display: block;
+}
+
+.auth-candidate-bubble .afb-initials-fallback {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 14px;
+  letter-spacing: -0.02em;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+  border-radius: 50%;
+  user-select: none;
+}
+
+.auth-candidate-bubble .afb-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 1.5px solid rgba(255, 255, 255, 0.45);
+  pointer-events: none;
+}
+
+.auth-candidate-bubble .afb-pill-label {
+  position: absolute;
+  bottom: -9px;
+  background: rgba(15, 23, 42, 0.82);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  color: #ffffff;
+  font-size: 10px;
+  font-weight: 600;
+  padding: 1.5px 7px;
+  border-radius: 99px;
+  white-space: nowrap;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.18);
+  opacity: 0.88;
+  pointer-events: none;
+  transition: opacity 0.2s ease, transform 0.2s ease, background 0.2s ease;
+}
+
+.auth-candidate-bubble:hover .afb-pill-label {
+  opacity: 1;
+  transform: translateY(2px) scale(1.05);
+  background: #4f46e5;
+}
+
+/* Organic Floating Animations */
+@keyframes floatAmbient1 {
+  0% {
+    transform: translate(0px, 0px) rotate(0deg);
+  }
+  33% {
+    transform: translate(12px, -18px) rotate(2deg);
+  }
+  66% {
+    transform: translate(-10px, -10px) rotate(-1.5deg);
+  }
+  100% {
+    transform: translate(0px, 0px) rotate(0deg);
+  }
+}
+
+@keyframes floatAmbient2 {
+  0% {
+    transform: translate(0px, 0px) rotate(0deg);
+  }
+  33% {
+    transform: translate(-14px, -16px) rotate(-2deg);
+  }
+  66% {
+    transform: translate(10px, -22px) rotate(1.5deg);
+  }
+  100% {
+    transform: translate(0px, 0px) rotate(0deg);
+  }
+}
+
+@keyframes floatAmbient3 {
+  0% {
+    transform: translate(0px, 0px) rotate(0deg);
+  }
+  33% {
+    transform: translate(14px, 14px) rotate(2deg);
+  }
+  66% {
+    transform: translate(-12px, -18px) rotate(-2deg);
+  }
+  100% {
+    transform: translate(0px, 0px) rotate(0deg);
+  }
+}
+
+.auth-candidate-bubble.floatAmbient1 {
+  animation-name: floatAmbient1;
+  animation-iteration-count: infinite;
+  animation-timing-function: cubic-bezier(0.42, 0, 0.58, 1);
+}
+.auth-candidate-bubble.floatAmbient2 {
+  animation-name: floatAmbient2;
+  animation-iteration-count: infinite;
+  animation-timing-function: cubic-bezier(0.42, 0, 0.58, 1);
+}
+.auth-candidate-bubble.floatAmbient3 {
+  animation-name: floatAmbient3;
+  animation-iteration-count: infinite;
+  animation-timing-function: cubic-bezier(0.42, 0, 0.58, 1);
+}
+
+/* =========================================================
+   FLOATING SIBAQ GRAND FINALE COUNTDOWN WIDGETS
+   ========================================================= */
+.auth-floating-countdown-main {
+  position: absolute;
+  top: 24px;
+  right: 28px;
+  z-index: 15;
+  background: rgba(255, 255, 255, 0.88);
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border: 1.5px solid rgba(255, 255, 255, 0.95);
+  border-radius: 16px;
+  padding: 11px 18px;
+  box-shadow: 0 12px 32px -4px rgba(15, 23, 42, 0.12), 0 4px 12px rgba(79, 70, 229, 0.08);
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  animation: floatAmbient1 16s ease-in-out infinite alternate;
+  user-select: none;
+  transition: transform 0.25s ease, box-shadow 0.25s ease;
+}
+
+.auth-floating-countdown-main:hover {
+  transform: scale(1.03) translateY(-2px);
+  box-shadow: 0 16px 38px -4px rgba(15, 23, 42, 0.16), 0 6px 16px rgba(79, 70, 229, 0.14);
+}
+
+.afc-header {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.afc-trophy {
+  font-size: 15px;
+  filter: drop-shadow(0 2px 4px rgba(245, 158, 11, 0.35));
+}
+
+.afc-title {
+  font-size: 11.5px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  background: linear-gradient(135deg, #1e293b, #4338ca);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+.afc-live-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #10b981;
+  margin-left: auto;
+  box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+  animation: afcPulseDot 2s infinite;
+}
+
+@keyframes afcPulseDot {
+  0% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.7);
+  }
+  70% {
+    transform: scale(1);
+    box-shadow: 0 0 0 6px rgba(16, 185, 129, 0);
+  }
+  100% {
+    transform: scale(0.95);
+    box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+  }
+}
+
+.afc-timer-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.afc-unit {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 36px;
+}
+
+.afc-value {
+  font-size: 18px;
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1.1;
+  font-variant-numeric: tabular-nums;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+}
+
+.afc-label {
+  font-size: 9.5px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #64748b;
+  margin-top: 1px;
+}
+
+.afc-divider {
+  font-size: 15px;
+  font-weight: 300;
+  color: #cbd5e1;
+  margin-bottom: 8px;
+}
+
+.afc-footer {
+  border-top: 1px solid rgba(226, 232, 240, 0.8);
+  padding-top: 4px;
+  margin-top: 1px;
+}
+
+.afc-target-date {
+  font-size: 10px;
+  font-weight: 600;
+  color: #64748b;
+}
+
+/* Secondary Floating Mini Countdown Pill */
+.auth-floating-countdown-mini {
+  position: absolute;
+  bottom: 18px;
+  left: 24px;
+  z-index: 15;
+  background: rgba(255, 255, 255, 0.92);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1.5px solid rgba(255, 255, 255, 0.95);
+  border-radius: 99px;
+  padding: 7px 15px;
+  box-shadow: 0 8px 24px -2px rgba(15, 23, 42, 0.08), 0 2px 6px rgba(99, 102, 241, 0.06);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  animation: floatAmbient2 20s ease-in-out infinite alternate;
+  user-select: none;
+  font-size: 11.5px;
+}
+
+.afcm-icon {
+  font-size: 14px;
+}
+
+.afcm-title {
+  font-weight: 700;
+  color: #334155;
+  font-size: 11.5px;
+}
+
+.afcm-numbers {
+  font-weight: 800;
+  color: #0f172a;
+  font-variant-numeric: tabular-nums;
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 12px;
+}
+
+.afcm-pipe {
+  color: #cbd5e1;
+  margin: 0 3px;
+  font-weight: 300;
+}
+
 .auth-card-container {
   width: 100%;
   max-width: 460px;
   position: relative;
-  z-index: 2;
+  z-index: 10;
   display: flex;
   flex-direction: column;
   gap: 16px;
@@ -9876,6 +10211,33 @@ body.auth-mode .main-view-container {
     align-items: center;
     min-height: 100vh;
     min-height: 100dvh;
+  }
+
+  .auth-floating-countdown-main {
+    position: relative;
+    top: auto;
+    right: auto;
+    margin-bottom: 10px;
+    width: 100%;
+    max-width: 460px;
+    box-sizing: border-box;
+    animation: none;
+    padding: 9px 12px;
+    box-shadow: 0 4px 14px rgba(15, 23, 42, 0.06);
+  }
+
+  .auth-floating-countdown-mini {
+    display: none;
+  }
+
+  .auth-candidate-bubble {
+    opacity: 0.55;
+    pointer-events: none;
+    transform: scale(0.65) !important;
+  }
+
+  .auth-candidate-bubble .afb-pill-label {
+    display: none;
   }
 
   .auth-card-container {

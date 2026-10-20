@@ -106,7 +106,7 @@ export function openProgramQuickViewModal(programId, contextCandidateId = null) 
             </div>
             ${trainer ? `
               <div style="display: flex; align-items: center; gap: 10px;">
-                <div class="trainer-avatar-mini" style="background: ${trainer.color || '#6366f1'}; overflow: hidden; width: 40px; height: 40px; border-radius: 10px; font-size: 13px; flex-shrink: 0;">
+                <div class="trainer-avatar-mini" style="background: ${trainer.color || '#6366f1'}; overflow: hidden; width: 40px; height: 40px; border-radius: 50%; font-size: 13px; flex-shrink: 0;">
                   ${trainer.photo ? `<img src="${trainer.photo}" alt="${trainer.name}" style="width: 100%; height: 100%; object-fit: cover;" />` : trainer.name.split(' ').map(n => n[0]).slice(0, 2).join('')}
                 </div>
                 <div style="min-width: 0;">

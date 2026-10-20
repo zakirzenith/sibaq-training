@@ -1145,7 +1145,7 @@ export function renderReportsView(container, navigateTo) {
                     <!-- Trainer Avatar & Name -->
                     <td style="padding: 11px 14px; vertical-align: middle;">
                       <div style="display: flex; align-items: center; gap: 10px;">
-                        <div class="trainer-avatar-mini" style="background: ${trn.color || '#6366f1'}; overflow: hidden; width: 38px; height: 38px; border-radius: 10px;">
+                        <div class="trainer-avatar-mini" style="background: ${trn.color || '#6366f1'}; overflow: hidden; width: 38px; height: 38px; border-radius: 50%;">
                           ${trn.photo ? `<img src="${trn.photo}" alt="${trn.name}" style="width: 100%; height: 100%; object-fit: cover;" />` : trn.name.split(' ').map(n => n[0]).slice(0, 2).join('')}
                         </div>
                         <div>
@@ -1257,7 +1257,7 @@ export function renderReportsView(container, navigateTo) {
               <div class="mobile-report-card">
                 <div class="mrc-top">
                   <div class="mrc-cand-info">
-                    <div class="trainer-avatar-mini" style="background: ${trn.color || '#6366f1'}; overflow: hidden; width: 40px; height: 40px; border-radius: 10px; font-size: 13px;">
+                    <div class="trainer-avatar-mini" style="background: ${trn.color || '#6366f1'}; overflow: hidden; width: 40px; height: 40px; border-radius: 50%; font-size: 13px;">
                       ${trn.photo ? `<img src="${trn.photo}" alt="${trn.name}" style="width: 100%; height: 100%; object-fit: cover;" />` : trn.name.split(' ').map(n => n[0]).slice(0, 2).join('')}
                     </div>
                     <div class="mrc-name-col">

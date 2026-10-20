@@ -35,24 +35,9 @@ export function renderDailyProgressView(container, navigateTo) {
 
     container.innerHTML = `
       <!-- Top Hero / Header Area -->
-      <div class="saas-view-header daily-progress-header">
+      <div class="saas-view-header daily-progress-header" style="margin-bottom: 12px;">
         <div class="svh-title-block">
-          <div class="svh-badge-row" style="display: flex; align-items: center; gap: 8px; margin-bottom: 6px; flex-wrap: wrap;">
-            <span class="badge ${viewMode === 'trainers' ? 'badge-primary' : 'badge-stage'}">
-              ${viewMode === 'trainers' ? '🧑‍🏫 Mentor Accountability' : '👥 Candidate Tracker'}
-            </span>
-            <span class="badge badge-portal-active">Auto Cutoff: 11:59 PM Daily</span>
-            <span class="badge badge-category-pill">${selectedDate}</span>
-          </div>
-
-          <h1 class="svh-title">
-            ${viewMode === 'trainers' ? 'Daily Trainer Mentorship Reports' : 'Daily Mentorship & Progress'}
-          </h1>
-          <p class="svh-desc">
-            ${viewMode === 'trainers' 
-              ? `Daily trainer accountability report for ${selectedDate}. Monitors trainer check-ins with mentees. If a trainer hasn't met with their mentee and 11:59 PM passes, they are marked as Missed; partially met trainers are marked as Partially Met.`
-              : `Daily trainer check-ins, dynamic skill ratings, and multi-session tracking for ${selectedDate}. Every candidate must complete at least 1 meet daily.`}
-          </p>
+          <h1 class="svh-title" style="margin: 0; font-size: 22px;">Daily Mentorship &amp; Progress</h1>
         </div>
 
         <div class="saas-header-actions" style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
@@ -987,9 +972,9 @@ export function renderDailyProgressView(container, navigateTo) {
         <div class="saas-row-master trainer-master-row">
           <!-- Col 1: Mentor Identity -->
           <div class="src-trainer">
-            <div class="saas-avatar-soft tdc-avatar" style="background: ${trainer.color || '#059669'};">
+            <div class="saas-avatar-soft tdc-avatar" style="background: ${trainer.color || '#059669'}; border-radius: 50%; width: 44px; height: 44px; min-width: 44px; overflow: hidden; border: 2px solid #ffffff; box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);">
               ${trainer.photo 
-                ? `<img src="${trainer.photo}" alt="${trainer.name}" style="width: 100%; height: 100%; object-fit: cover;" />`
+                ? `<img src="${trainer.photo}" alt="${trainer.name}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%;" />`
                 : trainer.name.split(' ').map(n => n[0]).slice(0, 2).join('')}
             </div>
             <div class="src-meta-wrap">

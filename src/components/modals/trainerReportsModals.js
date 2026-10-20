@@ -43,7 +43,7 @@ export function openTrainerAllProgramsModal({ trainer, assignedPrograms }) {
         <!-- Header -->
         <div class="modal-header" style="border-bottom: 1px solid #e2e8f0; padding: 16px 20px; background: #ffffff;">
           <div style="display: flex; align-items: center; gap: 12px; min-width: 0;">
-            <div class="trainer-avatar-mini" style="background: ${trainer.color || '#6366f1'}; overflow: hidden; width: 44px; height: 44px; border-radius: 12px; font-size: 14px; flex-shrink: 0;">
+            <div class="trainer-avatar-mini" style="background: ${trainer.color || '#6366f1'}; overflow: hidden; width: 44px; height: 44px; border-radius: 50%; font-size: 14px; flex-shrink: 0;">
               ${trainer.photo ? `<img src="${trainer.photo}" alt="${trainer.name}" style="width: 100%; height: 100%; object-fit: cover;" />` : trainer.name.split(' ').map(n => n[0]).slice(0, 2).join('')}
             </div>
             <div style="min-width: 0;">

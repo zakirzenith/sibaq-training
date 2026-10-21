@@ -13,6 +13,8 @@ import { renderReportsView } from './components/reportsView.js';
 import { renderTrainerDashboardView } from './components/trainerPortal/trainerDashboardView.js';
 import { renderTrainerDailyProgressView } from './components/trainerPortal/trainerDailyProgressView.js';
 import { renderTrainerReportsView } from './components/trainerPortal/trainerReportsView.js';
+import { renderTrainerAppealsView } from './components/trainerPortal/trainerAppealsView.js';
+import { renderAppealsView } from './components/appealsView.js';
 import { renderMenteeDashboardView } from './components/menteePortal/menteeDashboardView.js';
 import { renderMenteePracticeView } from './components/menteePortal/menteePracticeView.js';
 import { renderMenteeCompareView } from './components/menteePortal/menteeCompareView.js';
@@ -492,6 +494,11 @@ class App {
             <span class="nav-item-icon">${getIcon('award')}</span>
             <span>Reports & Dossiers</span>
           </a>
+          <a class="nav-item ${this.currentView === 'trainer-appeals' ? 'active' : ''}" data-view="trainer-appeals" id="navTrainerAppeals">
+            <span class="nav-item-icon">${getIcon('appeal')}</span>
+            <span>Mentee Appeals</span>
+            <span id="sidebarTrainerAppealBadge" class="nav-item-badge" style="background:#fee2e2; color:#b91c1c; font-weight: 800;">0</span>
+          </a>
 
           ${!isRealTrainerSession ? `
             <div class="nav-section-title" style="margin-top: 18px;">Navigation</div>
@@ -542,6 +549,10 @@ class App {
           <button class="mobile-nav-btn ${this.currentView === 'trainer-reports' ? 'active' : ''}" data-view="trainer-reports">
             ${getIcon('award')}
             <span>Reports</span>
+          </button>
+          <button class="mobile-nav-btn ${this.currentView === 'trainer-appeals' ? 'active' : ''}" data-view="trainer-appeals">
+            ${getIcon('appeal')}
+            <span>Appeals</span>
           </button>
           <button class="mobile-nav-btn" data-action="open-profile">
             <span style="display:inline-flex; align-items:center; justify-content:center; width:22px; height:22px; border-radius:50%; background:${activeTrainer.color || '#6366f1'}; color:#fff; font-weight:700; font-size:11px; overflow:hidden;">
@@ -754,7 +765,7 @@ class App {
 
     const session = state.getAuthSession();
     if (session && session.role === 'trainer') {
-      const allowedTrainerViews = ['trainer-dashboard', 'trainer-daily-progress', 'trainer-reports'];
+      const allowedTrainerViews = ['trainer-dashboard', 'trainer-daily-progress', 'trainer-reports', 'trainer-appeals'];
       if (!allowedTrainerViews.includes(viewName)) {
         toast.error('Access Restricted: Trainer accounts cannot access Controller views.');
         this.currentView = 'trainer-dashboard';
@@ -792,9 +803,11 @@ class App {
       'trainers': 'Trainers & Mentors',
       'daily-progress': 'Daily Progress & Scoring',
       'reports': 'Performance Reports & Dossiers',
+      'appeals': 'Trainer Appeals & Escalation Desk',
       'trainer-dashboard': 'Trainer Dashboard',
       'trainer-daily-progress': 'Trainer Daily Progress',
       'trainer-reports': 'Performance & Mentorship Reports',
+      'trainer-appeals': 'Mentee Appeals & Issue Reports',
       'mentee-dashboard': 'Candidate Practice & Daily Tasks'
     };
     const breadcrumbEl = document.getElementById('topbarCurrentViewName');
@@ -813,6 +826,8 @@ class App {
     const progBadge = document.getElementById('sidebarProgBadge');
     const trnBadge = document.getElementById('sidebarTrnBadge');
     const meetBadge = document.getElementById('sidebarMeetBadge');
+    const appealBadge = document.getElementById('sidebarAppealBadge');
+    const trnAppealBadge = document.getElementById('sidebarTrainerAppealBadge');
 
     if (candBadge) candBadge.textContent = state.getCandidates().length;
     if (progBadge) progBadge.textContent = state.getPrograms().length;
@@ -820,6 +835,17 @@ class App {
     if (meetBadge) {
       const todayStr = new Date().toISOString().split('T')[0];
       meetBadge.textContent = state.getDailyMeets(todayStr).length;
+    }
+    if (appealBadge) {
+      const pendingCount = state.getPendingAppealsCount();
+      appealBadge.textContent = pendingCount;
+      appealBadge.style.display = pendingCount > 0 ? 'inline-block' : 'none';
+    }
+    if (trnAppealBadge) {
+      const activeTrn = state.getActiveTrainer();
+      const count = activeTrn ? state.getTrainerAppeals(activeTrn.id).length : 0;
+      trnAppealBadge.textContent = count;
+      trnAppealBadge.style.display = count > 0 ? 'inline-block' : 'none';
     }
   }
 
@@ -1049,6 +1075,9 @@ class App {
       case 'reports':
         renderReportsView(this.mainContent, navigate);
         break;
+      case 'appeals':
+        renderAppealsView(this.mainContent, navigate);
+        break;
       case 'trainer-dashboard':
         renderTrainerDashboardView(this.mainContent, navigate);
         break;
@@ -1057,6 +1086,9 @@ class App {
         break;
       case 'trainer-reports':
         renderTrainerReportsView(this.mainContent, navigate);
+        break;
+      case 'trainer-appeals':
+        renderTrainerAppealsView(this.mainContent, navigate);
         break;
       case 'mentee-dashboard':
         renderMenteeDashboardView(this.mainContent, navigate);

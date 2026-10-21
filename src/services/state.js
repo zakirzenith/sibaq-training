@@ -163,6 +163,7 @@ class StateService {
         }));
         this.trainers = Array.isArray(parsed.trainers) ? parsed.trainers : [];
         this.dailyMeets = Array.isArray(parsed.dailyMeets) ? parsed.dailyMeets : [];
+        this.appeals = Array.isArray(parsed.appeals) ? parsed.appeals : [];
 
         // Ensure accurate Stage vs Non-Stage classification on startup
         if (this.programs.length > 0) {
@@ -179,6 +180,7 @@ class StateService {
     this.programs = [];
     this.trainers = [];
     this.dailyMeets = [];
+    this.appeals = [];
     this.saveState();
   }
 
@@ -191,6 +193,7 @@ class StateService {
           programs: this.programs,
           trainers: this.trainers,
           dailyMeets: this.dailyMeets,
+          appeals: this.appeals,
           lastUpdated: new Date().toISOString()
         })
       );
@@ -276,7 +279,15 @@ class StateService {
       this.saveState();
     });
 
-    this.cloudUnsubscribers.push(unsubCandidates, unsubPrograms, unsubTrainers, unsubMeets);
+    const unsubAppeals = firebaseService.subscribe('appeals', (items) => {
+      this.appeals = items.map(a => ({
+        ...a,
+        id: String(a.id || '').trim()
+      }));
+      this.saveState();
+    });
+
+    this.cloudUnsubscribers.push(unsubCandidates, unsubPrograms, unsubTrainers, unsubMeets, unsubAppeals);
   }
 
   async syncAllLocalToCloud() {
@@ -295,6 +306,9 @@ class StateService {
     }
     if (this.dailyMeets.length > 0) {
       await firebaseService.batchSync('dailyMeets', this.dailyMeets);
+    }
+    if (this.appeals && this.appeals.length > 0) {
+      await firebaseService.batchSync('appeals', this.appeals);
     }
     return true;
   }
@@ -1926,6 +1940,7 @@ class StateService {
     this.programs = [];
     this.trainers = [];
     this.dailyMeets = [];
+    this.appeals = [];
     this.saveState();
   }
 
@@ -1934,6 +1949,7 @@ class StateService {
     this.programs = [];
     this.trainers = [];
     this.dailyMeets = [];
+    this.appeals = [];
     this.saveState();
   }
 
@@ -1944,6 +1960,7 @@ class StateService {
         programs: this.programs,
         trainers: this.trainers,
         dailyMeets: this.dailyMeets,
+        appeals: this.appeals || [],
         exportDate: new Date().toISOString(),
         version: '2.0'
       },
@@ -1962,6 +1979,7 @@ class StateService {
       this.programs = data.programs;
       this.trainers = data.trainers;
       this.dailyMeets = Array.isArray(data.dailyMeets) ? data.dailyMeets : [];
+      this.appeals = Array.isArray(data.appeals) ? data.appeals : [];
       this.saveState();
 
       if (firebaseService.isInitialized) {
@@ -2427,6 +2445,127 @@ class StateService {
         }
       };
     });
+  }
+
+  // --- TRAINER MENTEE APPEALS SERVICE ---
+
+  getAppeals() {
+    return (this.appeals || []).slice().sort((a, b) => new Date(b.createdAt || 0).getTime() - new Date(a.createdAt || 0).getTime());
+  }
+
+  getTrainerAppeals(trainerId) {
+    if (!trainerId) return [];
+    const tid = String(trainerId).trim();
+    return this.getAppeals().filter(a => String(a.trainerId || '').trim() === tid);
+  }
+
+  getCandidateAppeals(candidateId) {
+    if (!candidateId) return [];
+    const cid = String(candidateId).trim();
+    return this.getAppeals().filter(a => String(a.candidateId || '').trim() === cid);
+  }
+
+  getPendingAppealsCount() {
+    return (this.appeals || []).filter(a => a.status === 'pending' || a.status === 'in-review').length;
+  }
+
+  async createAppeal(appealData) {
+    const id = appealData.id || `appl_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+    const now = new Date().toISOString();
+
+    const newAppeal = {
+      id,
+      candidateId: String(appealData.candidateId || '').trim(),
+      candidateName: String(appealData.candidateName || '').trim(),
+      candidateChestNo: String(appealData.candidateChestNo || '').trim(),
+      candidateCategory: String(appealData.candidateCategory || '').trim(),
+      trainerId: String(appealData.trainerId || '').trim(),
+      trainerName: String(appealData.trainerName || '').trim(),
+      trainerSpecialization: String(appealData.trainerSpecialization || '').trim(),
+      reasonCategory: String(appealData.reasonCategory || 'Other').trim(),
+      description: String(appealData.description || '').trim(),
+      urgency: appealData.urgency || 'normal', // 'normal' | 'high' | 'critical'
+      status: 'pending', // 'pending' | 'in-review' | 'resolved' | 'dismissed'
+      createdAt: now,
+      updatedAt: now,
+      controllerNotes: '',
+      resolvedAt: null,
+      resolvedBy: null
+    };
+
+    if (!Array.isArray(this.appeals)) {
+      this.appeals = [];
+    }
+    this.appeals.unshift(newAppeal);
+    this.saveState();
+
+    if (firebaseService.isInitialized) {
+      try {
+        await firebaseService.setDoc('appeals', id, newAppeal);
+      } catch (e) {
+        console.warn('Failed to sync new appeal to cloud:', e);
+      }
+    }
+
+    return newAppeal;
+  }
+
+  async updateAppeal(appealId, updates) {
+    if (!appealId) return null;
+    const cleanId = String(appealId).trim();
+    const index = (this.appeals || []).findIndex(a => String(a.id || '').trim() === cleanId);
+    if (index === -1) return null;
+
+    const existing = this.appeals[index];
+    const now = new Date().toISOString();
+
+    const updated = {
+      ...existing,
+      ...updates,
+      id: existing.id,
+      updatedAt: now
+    };
+
+    if (updates.status === 'resolved' && !updated.resolvedAt) {
+      updated.resolvedAt = now;
+      updated.resolvedBy = updates.resolvedBy || 'Controller';
+    } else if (updates.status !== 'resolved' && existing.status === 'resolved') {
+      updated.resolvedAt = null;
+      updated.resolvedBy = null;
+    }
+
+    this.appeals[index] = updated;
+    this.saveState();
+
+    if (firebaseService.isInitialized) {
+      try {
+        await firebaseService.setDoc('appeals', cleanId, updated);
+      } catch (e) {
+        console.warn('Failed to sync updated appeal to cloud:', e);
+      }
+    }
+
+    return updated;
+  }
+
+  async deleteAppeal(appealId) {
+    if (!appealId) return false;
+    const cleanId = String(appealId).trim();
+    const index = (this.appeals || []).findIndex(a => String(a.id || '').trim() === cleanId);
+    if (index === -1) return false;
+
+    this.appeals.splice(index, 1);
+    this.saveState();
+
+    if (firebaseService.isInitialized) {
+      try {
+        await firebaseService.deleteDoc('appeals', cleanId);
+      } catch (e) {
+        console.warn('Failed to delete appeal from cloud:', e);
+      }
+    }
+
+    return true;
   }
 }
 

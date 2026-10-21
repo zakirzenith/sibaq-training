@@ -15626,3 +15626,47 @@ select.auth-input option {
     grid-template-columns: 1fr !important;
   }
 }
+
+/* ==========================================================================
+   MENTEE APPEALS & ESCALATION DESK STYLING
+   ========================================================================== */
+
+.appeal-card:hover,
+.controller-appeal-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.07) !important;
+}
+
+.btn-reason-pill:hover {
+  border-color: #cbd5e1 !important;
+  background: #f8fafc !important;
+}
+
+@keyframes appealPulse {
+  0% { transform: scale(0.95); opacity: 0.8; }
+  50% { transform: scale(1.15); opacity: 1; }
+  100% { transform: scale(0.95); opacity: 0.8; }
+}
+
+.pulse-critical {
+  animation: appealPulse 1.8s infinite ease-in-out;
+}
+
+@media (max-width: 640px) {
+  .appeals-page-container,
+  .trainer-portal-container {
+    padding-left: 4px;
+    padding-right: 4px;
+  }
+
+  .controller-appeal-card,
+  .appeal-card {
+    padding: 14px 14px !important;
+    border-radius: 14px !important;
+  }
+
+  .controller-appeal-card .btn,
+  .appeal-card .btn {
+    font-size: 11.5px !important;
+  }
+}

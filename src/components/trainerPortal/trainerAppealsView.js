@@ -16,12 +16,6 @@ const PREPARED_REASONS = [
     defaultText: 'Mentee is not completing or submitting the mandatory daily practice assignments and performance tasks on time.'
   },
   {
-    id: 'unresponsive',
-    title: 'Unreachable / Not Responding to Contact',
-    icon: 'phone',
-    defaultText: 'Unable to reach candidate or guardian via phone call or WhatsApp messages despite repeated attempts.'
-  },
-  {
     id: 'preparation',
     title: 'Lack of Serious Preparation for Grand Finale',
     icon: 'alertTriangle',
@@ -72,11 +66,13 @@ export function renderTrainerAppealsView(container, navigateTo) {
   const assignedMentees = state.getTrainerMentees(currentTrainer.id);
 
   // Local state
-  let selectedCandidateId = assignedMentees.length > 0 ? assignedMentees[0].id : '';
+  let selectedCandidateId = ''; // Do NOT auto-assign first; let trainer select with search panel
+  let candidateSearchQuery = '';
+  let isCandidatePickerOpen = true;
   let selectedReason = PREPARED_REASONS[0];
   let customDescription = PREPARED_REASONS[0].defaultText;
-  let selectedUrgency = 'normal'; // 'normal' | 'high' | 'critical'
-  let filterStatus = 'ALL'; // 'ALL' | 'pending' | 'in-review' | 'resolved'
+  let appealsSearchQuery = '';
+  let filterStatus = 'ALL'; // 'ALL' | 'pending' | 'resolved'
   let isFormOpen = false;
 
   function formatRelativeTime(dateStr) {
@@ -100,40 +96,24 @@ export function renderTrainerAppealsView(container, navigateTo) {
     }
   }
 
-  function getUrgencyBadge(urgency) {
-    if (urgency === 'critical') {
-      return `<span style="display:inline-flex; align-items:center; gap:4px; padding:3px 9px; border-radius:999px; background:#fee2e2; color:#b91c1c; font-size:11px; font-weight:800; border:1px solid #fca5a5;">
-        <span style="width:6px; height:6px; border-radius:50%; background:#ef4444; animation:pulse 1.5s infinite;"></span> Critical / Urgent
-      </span>`;
-    }
-    if (urgency === 'high') {
-      return `<span style="display:inline-flex; align-items:center; gap:4px; padding:3px 9px; border-radius:999px; background:#ffedd5; color:#c2410c; font-size:11px; font-weight:700; border:1px solid #fdba74;">
-        <span style="width:6px; height:6px; border-radius:50%; background:#f97316;"></span> High Priority
-      </span>`;
-    }
-    return `<span style="display:inline-flex; align-items:center; gap:4px; padding:3px 9px; border-radius:999px; background:#f1f5f9; color:#475569; font-size:11px; font-weight:600; border:1px solid #e2e8f0;">
-      <span style="width:6px; height:6px; border-radius:50%; background:#94a3b8;"></span> Normal Notice
-    </span>`;
-  }
-
   function getStatusBadge(status) {
     if (status === 'resolved') {
-      return `<span style="display:inline-flex; align-items:center; gap:4px; padding:4px 10px; border-radius:999px; background:#ecfdf5; color:#047857; font-size:11.5px; font-weight:800; border:1px solid #a7f3d0;">
-        ${getIcon('check')} Action Taken / Resolved
+      return `<span class="badge-status-resolved" style="display:inline-flex; align-items:center; gap:4px; padding:3px 9px; border-radius:999px; background:#ecfdf5; color:#047857; font-size:11.5px; font-weight:800; border:1px solid #a7f3d0; white-space:nowrap;">
+        ${getIcon('check')} Action Taken
       </span>`;
     }
     if (status === 'in-review') {
-      return `<span style="display:inline-flex; align-items:center; gap:4px; padding:4px 10px; border-radius:999px; background:#eff6ff; color:#1d4ed8; font-size:11.5px; font-weight:800; border:1px solid #bfdbfe;">
-        ${getIcon('clock')} Under Controller Review
+      return `<span class="badge-status-review" style="display:inline-flex; align-items:center; gap:4px; padding:3px 9px; border-radius:999px; background:#eff6ff; color:#1d4ed8; font-size:11.5px; font-weight:800; border:1px solid #bfdbfe; white-space:nowrap;">
+        ${getIcon('clock')} In Review
       </span>`;
     }
     if (status === 'dismissed') {
-      return `<span style="display:inline-flex; align-items:center; gap:4px; padding:4px 10px; border-radius:999px; background:#f8fafc; color:#64748b; font-size:11.5px; font-weight:700; border:1px solid #e2e8f0;">
-        Closed / Dismissed
+      return `<span class="badge-status-dismissed" style="display:inline-flex; align-items:center; gap:4px; padding:3px 9px; border-radius:999px; background:#f8fafc; color:#64748b; font-size:11.5px; font-weight:700; border:1px solid #e2e8f0; white-space:nowrap;">
+        Dismissed
       </span>`;
     }
-    return `<span style="display:inline-flex; align-items:center; gap:4px; padding:4px 10px; border-radius:999px; background:#fef3c7; color:#92400e; font-size:11.5px; font-weight:800; border:1px solid #fde68a;">
-      <span style="width:6px; height:6px; border-radius:50%; background:#f59e0b;"></span> Pending Controller Action
+    return `<span class="badge-status-pending" style="display:inline-flex; align-items:center; gap:4px; padding:3px 9px; border-radius:999px; background:#fef3c7; color:#92400e; font-size:11.5px; font-weight:800; border:1px solid #fde68a; white-space:nowrap;">
+      <span style="width:6px; height:6px; border-radius:50%; background:#f59e0b;"></span> Pending Action
     </span>`;
   }
 
@@ -143,82 +123,107 @@ export function renderTrainerAppealsView(container, navigateTo) {
     const pendingCount = trainerAppeals.filter(a => a.status === 'pending' || a.status === 'in-review').length;
     const resolvedCount = trainerAppeals.filter(a => a.status === 'resolved').length;
 
+    // Filter appeals by status and search query
     const filteredAppeals = trainerAppeals.filter(a => {
-      if (filterStatus === 'ALL') return true;
-      if (filterStatus === 'pending') return a.status === 'pending';
-      if (filterStatus === 'in-review') return a.status === 'in-review';
-      if (filterStatus === 'resolved') return a.status === 'resolved';
+      if (filterStatus === 'pending' && !(a.status === 'pending' || a.status === 'in-review')) return false;
+      if (filterStatus === 'resolved' && a.status !== 'resolved') return false;
+
+      if (appealsSearchQuery) {
+        const q = appealsSearchQuery.toLowerCase().trim();
+        const candName = (a.candidateName || '').toLowerCase();
+        const candChest = (a.candidateChestNo || '').toLowerCase();
+        const candCat = (a.candidateCategory || '').toLowerCase();
+        const reason = (a.reasonCategory || '').toLowerCase();
+        const desc = (a.description || '').toLowerCase();
+        const notes = (a.controllerNotes || '').toLowerCase();
+
+        return candName.includes(q) ||
+          candChest.includes(q) ||
+          candCat.includes(q) ||
+          reason.includes(q) ||
+          desc.includes(q) ||
+          notes.includes(q);
+      }
       return true;
     });
 
-    const activeCandidate = assignedMentees.find(m => m.id === selectedCandidateId) || assignedMentees[0];
+    const activeCandidate = assignedMentees.find(m => m.id === selectedCandidateId);
+
+    // Filter candidate list for the selection panel
+    const filteredMentees = assignedMentees.filter(m => {
+      if (!candidateSearchQuery) return true;
+      const q = candidateSearchQuery.toLowerCase().trim();
+      const name = (m.name || '').toLowerCase();
+      const chest = (m.chestNo || m.adNo || '').toLowerCase();
+      const cat = (m.category || '').toLowerCase();
+      return name.includes(q) || chest.includes(q) || cat.includes(q);
+    });
 
     container.innerHTML = `
-      <div class="trainer-portal-container" style="max-width: 1040px; margin: 0 auto; padding-bottom: 40px;">
+      <div class="trainer-portal-container appeals-view-root" style="max-width: 1040px; margin: 0 auto; padding-bottom: 40px;">
         
         <!-- 1. HERO HEADER BANNER -->
-        <div style="background: linear-gradient(135deg, #1e1b4b 0%, #312e81 60%, #4338ca 100%); border-radius: 20px; padding: 22px 24px; box-shadow: 0 10px 25px rgba(30, 27, 75, 0.25); margin-bottom: 20px; color: #ffffff; position: relative; overflow: hidden;">
-          <div style="position: absolute; right: -25px; top: -25px; width: 160px; height: 160px; border-radius: 50%; background: radial-gradient(circle, rgba(239, 68, 68, 0.3) 0%, transparent 70%); pointer-events: none;"></div>
-          <div style="position: absolute; left: 35%; bottom: -40px; width: 180px; height: 180px; border-radius: 50%; background: radial-gradient(circle, rgba(99, 102, 241, 0.25) 0%, transparent 70%); pointer-events: none;"></div>
+        <div class="appeals-hero-card" style="background: linear-gradient(135deg, #1e1b4b 0%, #312e81 60%, #4338ca 100%); border-radius: 18px; padding: 18px 20px; box-shadow: 0 8px 24px rgba(30, 27, 75, 0.22); margin-bottom: 16px; color: #ffffff; position: relative; overflow: hidden;">
+          <div style="position: absolute; right: -25px; top: -25px; width: 140px; height: 140px; border-radius: 50%; background: radial-gradient(circle, rgba(239, 68, 68, 0.3) 0%, transparent 70%); pointer-events: none;"></div>
 
-          <div style="position: relative; z-index: 1; display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap;">
+          <div style="position: relative; z-index: 1; display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap;">
             <div>
-              <div style="display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; background: rgba(255, 255, 255, 0.15); border: 1px solid rgba(255, 255, 255, 0.25); font-size: 11px; font-weight: 700; color: #fecaca; margin-bottom: 8px;">
-                ${getIcon('appeal')} <span>OFFICIAL ESCALATION DESK</span>
+              <div style="display: inline-flex; align-items: center; gap: 6px; padding: 3px 8px; border-radius: 999px; background: rgba(255, 255, 255, 0.15); border: 1px solid rgba(255, 255, 255, 0.25); font-size: 10.5px; font-weight: 700; color: #fecaca; margin-bottom: 6px;">
+                ${getIcon('appeal')} <span>ESCALATION DESK</span>
               </div>
-              <h1 style="font-size: 22px; font-weight: 900; margin: 0 0 6px 0; letter-spacing: -0.01em; color: #ffffff;">
+              <h1 class="appeals-hero-title" style="font-size: 20px; font-weight: 900; margin: 0 0 4px 0; letter-spacing: -0.01em; color: #ffffff;">
                 Mentee Appeals & Issue Reports
               </h1>
-              <p style="margin: 0; font-size: 13px; color: #e0e7ff; max-width: 600px; line-height: 1.45;">
-                Escalate attendance gaps, missing daily assignments, or unreachable mentees directly to the Central Controller panel for urgent intervention.
+              <p class="appeals-hero-desc" style="margin: 0; font-size: 12.5px; color: #e0e7ff; max-width: 580px; line-height: 1.4;">
+                Escalate attendance gaps or missing tasks directly to the Controller for prompt intervention.
               </p>
             </div>
 
-            <div style="display: flex; align-items: center; gap: 10px; flex-wrap: wrap;">
-              <button type="button" id="btnToggleAppealForm" class="btn" style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: #ffffff; font-weight: 800; font-size: 13px; border-radius: 12px; padding: 10px 18px; border: none; box-shadow: 0 4px 14px rgba(239, 68, 68, 0.35); display: flex; align-items: center; gap: 8px; cursor: pointer; transition: all 0.15s ease;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <button type="button" id="btnToggleAppealForm" class="btn btn-appeal-action" style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); color: #ffffff; font-weight: 800; font-size: 12.5px; border-radius: 10px; padding: 8px 14px; border: none; box-shadow: 0 3px 10px rgba(239, 68, 68, 0.35); display: flex; align-items: center; gap: 6px; cursor: pointer; white-space: nowrap;">
                 ${getIcon(isFormOpen ? 'x' : 'plus')}
-                <span>${isFormOpen ? 'Close Form' : 'File New Appeal'}</span>
+                <span class="btn-appeal-label">${isFormOpen ? 'Close Form' : '+ File Appeal'}</span>
               </button>
             </div>
           </div>
 
           <!-- Quick Stats Pill Row -->
-          <div style="position: relative; z-index: 1; display: flex; align-items: center; gap: 12px; margin-top: 18px; flex-wrap: wrap;">
-            <div style="display: flex; align-items: center; gap: 8px; background: rgba(0, 0, 0, 0.25); backdrop-filter: blur(8px); padding: 7px 14px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.15); font-size: 12px;">
-              <span style="color: #cbd5e1;">Assigned Mentees:</span>
+          <div class="appeals-stats-row" style="position: relative; z-index: 1; display: flex; align-items: center; gap: 8px; margin-top: 14px; flex-wrap: wrap;">
+            <div class="stat-pill" style="display: flex; align-items: center; gap: 6px; background: rgba(0, 0, 0, 0.25); backdrop-filter: blur(8px); padding: 5px 10px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.15); font-size: 11.5px;">
+              <span style="color: #cbd5e1;">Mentees:</span>
               <strong style="color: #ffffff; font-weight: 800;">${assignedMentees.length}</strong>
             </div>
-            <div style="display: flex; align-items: center; gap: 8px; background: rgba(0, 0, 0, 0.25); backdrop-filter: blur(8px); padding: 7px 14px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.15); font-size: 12px;">
-              <span style="color: #cbd5e1;">Appeals Filed:</span>
+            <div class="stat-pill" style="display: flex; align-items: center; gap: 6px; background: rgba(0, 0, 0, 0.25); backdrop-filter: blur(8px); padding: 5px 10px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.15); font-size: 11.5px;">
+              <span style="color: #cbd5e1;">Appeals:</span>
               <strong style="color: #ffffff; font-weight: 800;">${trainerAppeals.length}</strong>
             </div>
-            <div style="display: flex; align-items: center; gap: 8px; background: rgba(0, 0, 0, 0.25); backdrop-filter: blur(8px); padding: 7px 14px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.15); font-size: 12px;">
-              <span style="color: #fef08a;">Pending Review:</span>
+            <div class="stat-pill" style="display: flex; align-items: center; gap: 6px; background: rgba(0, 0, 0, 0.25); backdrop-filter: blur(8px); padding: 5px 10px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.15); font-size: 11.5px;">
+              <span style="color: #fef08a;">Pending:</span>
               <strong style="color: #fef08a; font-weight: 800;">${pendingCount}</strong>
             </div>
-            <div style="display: flex; align-items: center; gap: 8px; background: rgba(0, 0, 0, 0.25); backdrop-filter: blur(8px); padding: 7px 14px; border-radius: 12px; border: 1px solid rgba(255, 255, 255, 0.15); font-size: 12px;">
+            <div class="stat-pill" style="display: flex; align-items: center; gap: 6px; background: rgba(0, 0, 0, 0.25); backdrop-filter: blur(8px); padding: 5px 10px; border-radius: 8px; border: 1px solid rgba(255, 255, 255, 0.15); font-size: 11.5px;">
               <span style="color: #a7f3d0;">Resolved:</span>
               <strong style="color: #a7f3d0; font-weight: 800;">${resolvedCount}</strong>
             </div>
           </div>
         </div>
 
-        <!-- 2. FILE NEW APPEAL FORM (Card with smooth expand/collapse) -->
-        <div id="appealFormContainer" style="display: ${isFormOpen ? 'block' : 'none'}; margin-bottom: 24px;">
-          <div style="background: #ffffff; border: 2px solid #e2e8f0; border-radius: 18px; padding: 22px; box-shadow: 0 10px 30px rgba(0, 0, 0, 0.06);">
+        <!-- 2. FILE NEW APPEAL FORM -->
+        <div id="appealFormContainer" style="display: ${isFormOpen ? 'block' : 'none'}; margin-bottom: 20px;">
+          <div style="background: #ffffff; border: 1.5px solid #e2e8f0; border-radius: 16px; padding: 18px 20px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.05);">
             
-            <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1.5px solid #f1f5f9; padding-bottom: 14px; margin-bottom: 18px;">
-              <div style="display: flex; align-items: center; gap: 10px;">
-                <div style="width: 36px; height: 36px; border-radius: 10px; background: #fee2e2; color: #dc2626; display: flex; align-items: center; justify-content: center;">
+            <div style="display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid #f1f5f9; padding-bottom: 12px; margin-bottom: 16px;">
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <div style="width: 32px; height: 32px; border-radius: 8px; background: #fee2e2; color: #dc2626; display: flex; align-items: center; justify-content: center;">
                   ${getIcon('appeal')}
                 </div>
                 <div>
-                  <h3 style="margin: 0; font-size: 16px; font-weight: 800; color: #0f172a;">Submit New Mentee Appeal</h3>
-                  <p style="margin: 2px 0 0 0; font-size: 12px; color: #64748b;">Notice will be instantly dispatched to the Controller Desk.</p>
+                  <h3 style="margin: 0; font-size: 15px; font-weight: 800; color: #0f172a;">Submit Mentee Appeal</h3>
+                  <p class="appeals-extra-desc" style="margin: 1px 0 0 0; font-size: 11.5px; color: #64748b;">Notice is dispatched directly to the Controller Desk.</p>
                 </div>
               </div>
-              <button type="button" id="btnCancelForm" class="btn btn-sm btn-outline" style="border-color: #cbd5e1; color: #64748b; font-weight: 700;">
-                Cancel
+              <button type="button" id="btnCancelForm" class="btn btn-sm btn-outline" style="border-color: #cbd5e1; color: #64748b; font-weight: 700; font-size: 11.5px; padding: 4px 10px;">
+                ✕ Close
               </button>
             </div>
 
@@ -227,62 +232,137 @@ export function renderTrainerAppealsView(container, navigateTo) {
                 You do not currently have any assigned mentees. Appeals can only be submitted for your assigned candidates.
               </div>
             ` : `
-              <form id="formSubmitAppeal" style="display: flex; flex-direction: column; gap: 18px;">
+              <form id="formSubmitAppeal" style="display: flex; flex-direction: column; gap: 16px;">
                 
-                <!-- Step 1: Select Candidate -->
-                <div>
-                  <label style="display: block; font-size: 12.5px; font-weight: 800; color: #1e293b; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.03em;">
-                    1. Select Assigned Mentee <span style="color: #ef4444;">*</span>
-                  </label>
-                  <select id="selectAppealCandidate" class="form-input" style="width: 100%; height: 44px; font-size: 13.5px; font-weight: 600; border-radius: 12px; border: 1.5px solid #cbd5e1; padding: 0 12px; background: #f8fafc;">
-                    ${assignedMentees.map(m => `
-                      <option value="${m.id}" ${m.id === selectedCandidateId ? 'selected' : ''}>
-                        ${m.name} • #${m.chestNo || m.adNo || m.id} • ${m.category || 'BIDĀYA'}
-                      </option>
-                    `).join('')}
-                  </select>
+                <!-- STEP 1: ENHANCED CANDIDATE SELECTION PANEL WITH SEARCH -->
+                <div class="appeal-form-section">
+                  <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
+                    <label style="font-size: 12px; font-weight: 800; color: #1e293b; text-transform: uppercase; letter-spacing: 0.03em;">
+                      1. Select Assigned Mentee <span style="color: #ef4444;">*</span>
+                    </label>
+                    ${activeCandidate && !isCandidatePickerOpen ? `
+                      <button type="button" id="btnChangeMenteePicker" style="background: none; border: none; color: #4f46e5; font-size: 11.5px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 4px;">
+                        ${getIcon('search')} <span>Change Mentee</span>
+                      </button>
+                    ` : ''}
+                  </div>
 
-                  ${activeCandidate ? `
-                    <div style="margin-top: 10px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 10px;">
+                  <!-- Selected Candidate Confirmed Card (When chosen and picker closed) -->
+                  ${activeCandidate && !isCandidatePickerOpen ? `
+                    <div style="background: #f0fdf4; border: 1.5px solid #86efac; border-radius: 12px; padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; gap: 10px;">
                       <div style="display: flex; align-items: center; gap: 10px;">
-                        <div style="width: 32px; height: 32px; border-radius: 50%; background: #4f46e5; color: #fff; font-weight: 800; font-size: 11px; display: flex; align-items: center; justify-content: center; overflow: hidden;">
+                        <div style="width: 38px; height: 38px; border-radius: 50%; background: #059669; color: #fff; font-weight: 800; font-size: 13px; display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0;">
                           ${activeCandidate.photo ? `<img src="${activeCandidate.photo}" alt="${activeCandidate.name}" style="width: 100%; height: 100%; object-fit: cover;" />` : activeCandidate.name.split(' ').map(n => n[0]).slice(0, 2).join('')}
                         </div>
                         <div>
-                          <div style="font-size: 13px; font-weight: 800; color: #0f172a;">${activeCandidate.name}</div>
-                          <div style="font-size: 11px; color: #64748b;">
-                            Chest #${activeCandidate.chestNo || activeCandidate.adNo} • <span style="font-weight: 700; color: #4338ca;">${activeCandidate.category}</span>
+                          <div style="font-size: 13.5px; font-weight: 800; color: #064e3b; display: flex; align-items: center; gap: 6px;">
+                            <span>${activeCandidate.name}</span>
+                            <span style="font-size: 10.5px; background: #059669; color: #fff; padding: 1px 6px; border-radius: 4px;">✓ Selected</span>
+                          </div>
+                          <div style="font-size: 11px; color: #047857; margin-top: 1px;">
+                            Chest #${activeCandidate.chestNo || activeCandidate.adNo} &bull; <strong>${activeCandidate.category}</strong>
                           </div>
                         </div>
                       </div>
-                      <div style="font-size: 11.5px; color: #475569; background: #e0e7ff; padding: 3px 8px; border-radius: 8px; font-weight: 700;">
-                        ${state.getCandidatePrograms(activeCandidate.id).length} Enrolled Program(s)
-                      </div>
+                      <button type="button" id="btnReopenPicker" class="btn btn-sm btn-outline" style="border-color: #86efac; color: #047857; font-size: 11px; font-weight: 700; border-radius: 8px;">
+                        Change
+                      </button>
                     </div>
-                  ` : ''}
+                  ` : `
+                    <!-- Searchable Candidate Selection Panel -->
+                    <div style="background: #f8fafc; border: 1.5px solid #cbd5e1; border-radius: 14px; padding: 12px;">
+                      <!-- Realtime Search Input -->
+                      <div style="position: relative; margin-bottom: 10px;">
+                        <span style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: #94a3b8; display: flex;">
+                          ${getIcon('search')}
+                        </span>
+                        <input 
+                          type="text" 
+                          id="inputSearchMentee" 
+                          placeholder="Search mentee by name, chest #, or category..." 
+                          value="${candidateSearchQuery}" 
+                          style="width: 100%; height: 38px; border-radius: 10px; border: 1.5px solid #cbd5e1; padding: 0 10px 0 34px; font-size: 12.5px; font-family: inherit; background: #ffffff; box-sizing: border-box;"
+                        />
+                        ${candidateSearchQuery ? `
+                          <button type="button" id="btnClearMenteeSearch" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #94a3b8; cursor: pointer; padding: 2px;">
+                            ✕
+                          </button>
+                        ` : ''}
+                      </div>
+
+                      <!-- Candidate Selection Cards List -->
+                      <div class="candidate-select-cards-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(210px, 1fr)); gap: 8px; max-height: 230px; overflow-y: auto; padding-right: 4px;">
+                        ${filteredMentees.length === 0 ? `
+                          <div style="grid-column: 1 / -1; text-align: center; padding: 16px; color: #64748b; font-size: 12px;">
+                            No assigned mentees match "${candidateSearchQuery}".
+                          </div>
+                        ` : filteredMentees.map(m => {
+                          const isSelected = m.id === selectedCandidateId;
+                          return `
+                            <div 
+                              class="mentee-select-card" 
+                              data-candidate-id="${m.id}" 
+                              style="
+                                display: flex; 
+                                align-items: center; 
+                                gap: 10px; 
+                                padding: 8px 10px; 
+                                border-radius: 10px; 
+                                border: 1.5px solid ${isSelected ? '#10b981' : '#e2e8f0'}; 
+                                background: ${isSelected ? '#ecfdf5' : '#ffffff'}; 
+                                cursor: pointer; 
+                                transition: all 0.15s ease;
+                              "
+                            >
+                              <div style="width: 32px; height: 32px; border-radius: 50%; background: #4f46e5; color: #ffffff; font-weight: 800; font-size: 11px; display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0;">
+                                ${m.photo ? `<img src="${m.photo}" alt="${m.name}" style="width: 100%; height: 100%; object-fit: cover;" />` : m.name.split(' ').map(n => n[0]).slice(0, 2).join('')}
+                              </div>
+                              <div style="flex: 1; min-width: 0;">
+                                <div style="font-size: 12.5px; font-weight: 800; color: ${isSelected ? '#065f46' : '#1e293b'}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                                  ${m.name}
+                                </div>
+                                <div style="font-size: 10.5px; color: #64748b; display: flex; align-items: center; gap: 4px;">
+                                  <span>#${m.chestNo || m.adNo}</span>
+                                  <span>&bull;</span>
+                                  <span style="font-weight: 700; color: #4338ca;">${m.category}</span>
+                                </div>
+                              </div>
+                              ${isSelected ? `<span style="color: #10b981; font-weight: 800; font-size: 13px;">✓</span>` : ''}
+                            </div>
+                          `;
+                        }).join('')}
+                      </div>
+
+                      ${!selectedCandidateId ? `
+                        <div style="margin-top: 8px; font-size: 11px; color: #ef4444; font-weight: 600; text-align: center;">
+                          👆 Tap any candidate above to select
+                        </div>
+                      ` : ''}
+                    </div>
+                  `}
                 </div>
 
-                <!-- Step 2: Choose Prepared Reason -->
-                <div>
-                  <label style="display: block; font-size: 12.5px; font-weight: 800; color: #1e293b; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.03em;">
+                <!-- STEP 2: CHOOSE ESCALATION REASON -->
+                <div class="appeal-form-section">
+                  <label style="display: block; font-size: 12px; font-weight: 800; color: #1e293b; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.03em;">
                     2. Choose Escalation Reason <span style="color: #ef4444;">*</span>
                   </label>
-                  <div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 8px;">
+                  <div class="reasons-pills-grid" style="display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 8px;">
                     ${PREPARED_REASONS.map(r => {
                       const isSelected = selectedReason.id === r.id;
                       return `
                         <button type="button" class="btn-reason-pill" data-reason-id="${r.id}" style="
                           text-align: left;
-                          padding: 10px 12px;
-                          border-radius: 12px;
+                          padding: 9px 12px;
+                          border-radius: 10px;
                           border: 1.5px solid ${isSelected ? '#ef4444' : '#e2e8f0'};
                           background: ${isSelected ? '#fef2f2' : '#ffffff'};
                           color: ${isSelected ? '#991b1b' : '#334155'};
                           font-weight: ${isSelected ? '800' : '600'};
-                          font-size: 12.5px;
+                          font-size: 12px;
                           display: flex;
                           align-items: center;
-                          gap: 9px;
+                          gap: 8px;
                           cursor: pointer;
                           transition: all 0.15s ease;
                         ">
@@ -295,57 +375,25 @@ export function renderTrainerAppealsView(container, navigateTo) {
                   </div>
                 </div>
 
-                <!-- Step 3: Urgency Level -->
-                <div>
-                  <label style="display: block; font-size: 12.5px; font-weight: 800; color: #1e293b; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 0.03em;">
-                    3. Urgency / Severity Level
+                <!-- STEP 3: SITUATION DETAILS & SPECIFIC NOTES -->
+                <div class="appeal-form-section">
+                  <label style="display: block; font-size: 12px; font-weight: 800; color: #1e293b; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.03em;">
+                    3. Details & Specific Notes <span style="color: #ef4444;">*</span>
                   </label>
-                  <div style="display: flex; gap: 10px; flex-wrap: wrap;">
-                    <label class="urgency-option" style="flex: 1; min-width: 130px; display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-radius: 12px; border: 1.5px solid ${selectedUrgency === 'normal' ? '#94a3b8' : '#e2e8f0'}; background: ${selectedUrgency === 'normal' ? '#f8fafc' : '#ffffff'}; cursor: pointer;">
-                      <input type="radio" name="appealUrgency" value="normal" ${selectedUrgency === 'normal' ? 'checked' : ''} style="accent-color: #64748b;" />
-                      <div>
-                        <div style="font-size: 12.5px; font-weight: 800; color: #334155;">Normal Notice</div>
-                        <div style="font-size: 10.5px; color: #64748b;">Informational record</div>
-                      </div>
-                    </label>
-
-                    <label class="urgency-option" style="flex: 1; min-width: 130px; display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-radius: 12px; border: 1.5px solid ${selectedUrgency === 'high' ? '#f97316' : '#e2e8f0'}; background: ${selectedUrgency === 'high' ? '#fff7ed' : '#ffffff'}; cursor: pointer;">
-                      <input type="radio" name="appealUrgency" value="high" ${selectedUrgency === 'high' ? 'checked' : ''} style="accent-color: #f97316;" />
-                      <div>
-                        <div style="font-size: 12.5px; font-weight: 800; color: #c2410c;">High Priority</div>
-                        <div style="font-size: 10.5px; color: #ea580c;">Follow-up needed</div>
-                      </div>
-                    </label>
-
-                    <label class="urgency-option" style="flex: 1; min-width: 130px; display: flex; align-items: center; gap: 8px; padding: 10px 14px; border-radius: 12px; border: 1.5px solid ${selectedUrgency === 'critical' ? '#ef4444' : '#e2e8f0'}; background: ${selectedUrgency === 'critical' ? '#fef2f2' : '#ffffff'}; cursor: pointer;">
-                      <input type="radio" name="appealUrgency" value="critical" ${selectedUrgency === 'critical' ? 'checked' : ''} style="accent-color: #ef4444;" />
-                      <div>
-                        <div style="font-size: 12.5px; font-weight: 800; color: #b91c1c;">Critical / Urgent</div>
-                        <div style="font-size: 10.5px; color: #dc2626;">Immediate action</div>
-                      </div>
-                    </label>
+                  <textarea id="txtAppealDescription" class="form-input" rows="3" style="width: 100%; border-radius: 10px; border: 1.5px solid #cbd5e1; padding: 8px 12px; font-size: 12.5px; font-family: inherit; line-height: 1.45; resize: vertical; box-sizing: border-box;" placeholder="Type detailed circumstances (e.g. absent 3 days consecutively, assignment pending since Monday)...">${customDescription}</textarea>
+                  <div class="appeals-extra-desc" style="font-size: 11px; color: #64748b; margin-top: 4px;">
+                    Provide dates or specific occurrences to assist the Controller in taking prompt action.
                   </div>
                 </div>
 
-                <!-- Step 4: Specific Remarks Textarea -->
-                <div>
-                  <label style="display: block; font-size: 12.5px; font-weight: 800; color: #1e293b; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.03em;">
-                    4. Situation Details & Specific Notes <span style="color: #ef4444;">*</span>
-                  </label>
-                  <textarea id="txtAppealDescription" class="form-input" rows="3" style="width: 100%; border-radius: 12px; border: 1.5px solid #cbd5e1; padding: 10px 12px; font-size: 13px; font-family: inherit; line-height: 1.45; resize: vertical;" placeholder="Type detailed circumstances (e.g. absent 3 days consecutively, guardian phone switched off, assignment pending since Monday)...">${customDescription}</textarea>
-                  <div style="font-size: 11px; color: #64748b; margin-top: 4px;">
-                    Provide accurate dates, occurrences, or specific program names to assist the Controller in taking prompt action.
-                  </div>
-                </div>
-
-                <!-- Form Submit Action -->
-                <div style="display: flex; align-items: center; justify-content: flex-end; gap: 10px; margin-top: 6px; border-top: 1.5px solid #f1f5f9; padding-top: 14px;">
-                  <button type="button" id="btnCancelFormBottom" class="btn btn-outline" style="font-weight: 700; border-color: #cbd5e1; color: #475569; border-radius: 10px;">
+                <!-- FORM SUBMIT ACTION BUTTONS -->
+                <div style="display: flex; align-items: center; justify-content: flex-end; gap: 8px; margin-top: 4px; border-top: 1px solid #f1f5f9; padding-top: 12px;">
+                  <button type="button" id="btnCancelFormBottom" class="btn btn-outline" style="font-weight: 700; font-size: 12px; border-color: #cbd5e1; color: #475569; border-radius: 8px; padding: 8px 14px;">
                     Cancel
                   </button>
-                  <button type="submit" id="btnSubmitAppealForm" class="btn btn-primary" style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); border: none; font-weight: 800; font-size: 13.5px; padding: 10px 22px; border-radius: 10px; box-shadow: 0 4px 14px rgba(239, 68, 68, 0.35); display: flex; align-items: center; gap: 8px;">
+                  <button type="submit" id="btnSubmitAppealForm" class="btn btn-primary" style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); border: none; font-weight: 800; font-size: 13px; padding: 8px 18px; border-radius: 8px; box-shadow: 0 4px 12px rgba(239, 68, 68, 0.35); display: flex; align-items: center; gap: 6px;">
                     ${getIcon('send')}
-                    <span>Dispatch Appeal to Controller</span>
+                    <span>Dispatch Appeal</span>
                   </button>
                 </div>
               </form>
@@ -353,126 +401,133 @@ export function renderTrainerAppealsView(container, navigateTo) {
           </div>
         </div>
 
-        <!-- 3. SUBMITTED APPEALS STATUS & HISTORY SECTION -->
-        <div>
-          <div style="display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 14px;">
-            <div>
-              <h2 style="margin: 0; font-size: 18px; font-weight: 800; color: #0f172a;">
-                Appeals Filed by You (${trainerAppeals.length})
-              </h2>
-              <p style="margin: 2px 0 0 0; font-size: 12px; color: #64748b;">
-                Track controller review status, resolutions, and official actions taken.
-              </p>
+        <!-- 3. SUBMITTED APPEALS STATUS & SEARCH/FILTER IN A ROW -->
+        <div class="appeals-list-section">
+          
+          <!-- SEARCH & FILTER ROW (Combined in a single compact row for phone view) -->
+          <div class="appeals-filter-bar-row" style="display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 12px; flex-wrap: wrap;">
+            
+            <!-- Quick Search Input -->
+            <div class="appeals-search-wrap" style="position: relative; flex: 1; min-width: 160px;">
+              <span style="position: absolute; left: 10px; top: 50%; transform: translateY(-50%); color: #94a3b8; display: flex;">
+                ${getIcon('search')}
+              </span>
+              <input 
+                type="text" 
+                id="inputTrainerAppealSearch" 
+                placeholder="Search appeals..." 
+                value="${appealsSearchQuery}" 
+                style="width: 100%; height: 36px; border-radius: 999px; border: 1.5px solid #cbd5e1; padding: 0 10px 0 32px; font-size: 12px; font-family: inherit; background: #ffffff; box-sizing: border-box;"
+              />
+              ${appealsSearchQuery ? `
+                <button type="button" id="btnClearTrainerSearch" style="position: absolute; right: 10px; top: 50%; transform: translateY(-50%); background: none; border: none; color: #94a3b8; cursor: pointer; padding: 2px;">
+                  ✕
+                </button>
+              ` : ''}
             </div>
 
-            <!-- Filter Status Pills -->
-            <div style="display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
-              <button type="button" class="btn-filter-pill ${filterStatus === 'ALL' ? 'active' : ''}" data-filter="ALL" style="padding: 6px 12px; border-radius: 999px; font-size: 12px; font-weight: 700; border: 1.5px solid ${filterStatus === 'ALL' ? '#4f46e5' : '#e2e8f0'}; background: ${filterStatus === 'ALL' ? '#eef2ff' : '#ffffff'}; color: ${filterStatus === 'ALL' ? '#4f46e5' : '#64748b'}; cursor: pointer;">
+            <!-- Filter Status Pills In-Row -->
+            <div class="appeals-status-pills-row" style="display: flex; align-items: center; gap: 5px; flex-shrink: 0;">
+              <button type="button" class="btn-filter-pill ${filterStatus === 'ALL' ? 'active' : ''}" data-filter="ALL" style="padding: 5px 11px; border-radius: 999px; font-size: 11.5px; font-weight: 700; border: 1.5px solid ${filterStatus === 'ALL' ? '#4f46e5' : '#e2e8f0'}; background: ${filterStatus === 'ALL' ? '#eef2ff' : '#ffffff'}; color: ${filterStatus === 'ALL' ? '#4f46e5' : '#64748b'}; cursor: pointer; white-space: nowrap;">
                 All (${trainerAppeals.length})
               </button>
-              <button type="button" class="btn-filter-pill ${filterStatus === 'pending' ? 'active' : ''}" data-filter="pending" style="padding: 6px 12px; border-radius: 999px; font-size: 12px; font-weight: 700; border: 1.5px solid ${filterStatus === 'pending' ? '#f59e0b' : '#e2e8f0'}; background: ${filterStatus === 'pending' ? '#fef3c7' : '#ffffff'}; color: ${filterStatus === 'pending' ? '#92400e' : '#64748b'}; cursor: pointer;">
+              <button type="button" class="btn-filter-pill ${filterStatus === 'pending' ? 'active' : ''}" data-filter="pending" style="padding: 5px 11px; border-radius: 999px; font-size: 11.5px; font-weight: 700; border: 1.5px solid ${filterStatus === 'pending' ? '#f59e0b' : '#e2e8f0'}; background: ${filterStatus === 'pending' ? '#fef3c7' : '#ffffff'}; color: ${filterStatus === 'pending' ? '#92400e' : '#64748b'}; cursor: pointer; white-space: nowrap;">
                 Pending (${pendingCount})
               </button>
-              <button type="button" class="btn-filter-pill ${filterStatus === 'resolved' ? 'active' : ''}" data-filter="resolved" style="padding: 6px 12px; border-radius: 999px; font-size: 12px; font-weight: 700; border: 1.5px solid ${filterStatus === 'resolved' ? '#10b981' : '#e2e8f0'}; background: ${filterStatus === 'resolved' ? '#ecfdf5' : '#ffffff'}; color: ${filterStatus === 'resolved' ? '#047857' : '#64748b'}; cursor: pointer;">
+              <button type="button" class="btn-filter-pill ${filterStatus === 'resolved' ? 'active' : ''}" data-filter="resolved" style="padding: 5px 11px; border-radius: 999px; font-size: 11.5px; font-weight: 700; border: 1.5px solid ${filterStatus === 'resolved' ? '#10b981' : '#e2e8f0'}; background: ${filterStatus === 'resolved' ? '#ecfdf5' : '#ffffff'}; color: ${filterStatus === 'resolved' ? '#047857' : '#64748b'}; cursor: pointer; white-space: nowrap;">
                 Resolved (${resolvedCount})
               </button>
             </div>
+
           </div>
 
-          <!-- Appeals List -->
+          <!-- Appeals List Feed -->
           ${filteredAppeals.length === 0 ? `
-            <div style="background: #ffffff; border: 1.5px dashed #cbd5e1; border-radius: 16px; padding: 36px 16px; text-align: center;">
-              <div style="font-size: 32px; margin-bottom: 8px;">📋</div>
-              <h4 style="margin: 0; font-size: 15px; font-weight: 700; color: #1e293b;">No Appeals Found</h4>
-              <p style="margin: 4px 0 16px 0; font-size: 12.5px; color: #64748b;">
-                ${filterStatus === 'ALL' ? 'You haven’t filed any mentee appeals yet. Use "File New Appeal" whenever a candidate needs controller intervention.' : 'No appeals match this filter criteria.'}
+            <div style="background: #ffffff; border: 1.5px dashed #cbd5e1; border-radius: 14px; padding: 28px 14px; text-align: center;">
+              <div style="font-size: 28px; margin-bottom: 6px;">📋</div>
+              <h4 style="margin: 0; font-size: 14px; font-weight: 700; color: #1e293b;">No Appeals Found</h4>
+              <p style="margin: 3px 0 12px 0; font-size: 12px; color: #64748b;">
+                ${appealsSearchQuery ? 'No appeals match your search.' : (filterStatus === 'ALL' ? 'You have not submitted any appeals yet.' : 'No appeals in this filter category.')}
               </p>
               ${!isFormOpen && assignedMentees.length > 0 ? `
-                <button type="button" id="btnEmptyStateNewAppeal" class="btn btn-sm btn-primary" style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); border: none; font-weight: 800; border-radius: 10px; padding: 8px 16px;">
+                <button type="button" id="btnEmptyStateNewAppeal" class="btn btn-sm btn-primary" style="background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); border: none; font-weight: 800; border-radius: 8px; padding: 6px 14px; font-size: 12px;">
                   + File First Appeal
                 </button>
               ` : ''}
             </div>
           ` : `
-            <div style="display: flex; flex-direction: column; gap: 12px;">
+            <div style="display: flex; flex-direction: column; gap: 10px;">
               ${filteredAppeals.map(a => {
                 const cand = state.getCandidateById(a.candidateId);
                 const hasControllerResponse = Boolean(a.controllerNotes && a.controllerNotes.trim());
 
                 return `
-                  <div class="appeal-card" style="background: #ffffff; border: 1.5px solid ${a.urgency === 'critical' ? '#fecaca' : '#e2e8f0'}; border-radius: 16px; padding: 18px 20px; box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03); transition: transform 0.15s ease, box-shadow 0.15s ease;">
+                  <div class="appeal-card" style="background: #ffffff; border: 1.5px solid #e2e8f0; border-radius: 14px; padding: 14px 16px; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.03); transition: transform 0.15s ease, box-shadow 0.15s ease;">
                     
-                    <!-- Top Info Row -->
-                    <div style="display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-bottom: 12px;">
-                      <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
-                        ${getUrgencyBadge(a.urgency)}
-                        ${getStatusBadge(a.status)}
-                      </div>
-                      <div style="font-size: 11.5px; color: #64748b; font-weight: 600;">
-                        Filed ${formatRelativeTime(a.createdAt)} • ${new Date(a.createdAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}
-                      </div>
-                    </div>
-
-                    <!-- Mentee & Issue Row -->
-                    <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 14px; flex-wrap: wrap;">
-                      <div style="display: flex; align-items: center; gap: 12px;">
-                        <div style="width: 42px; height: 42px; border-radius: 50%; background: #4f46e5; color: #ffffff; font-weight: 800; font-size: 13px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; overflow: hidden; box-shadow: 0 2px 6px rgba(0,0,0,0.1);">
+                    <!-- Top Info Row: Candidate & Status -->
+                    <div style="display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 10px;">
+                      <div style="display: flex; align-items: center; gap: 10px;">
+                        <div style="width: 38px; height: 38px; border-radius: 50%; background: #4f46e5; color: #ffffff; font-weight: 800; font-size: 12px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; overflow: hidden; box-shadow: 0 2px 4px rgba(0,0,0,0.08);">
                           ${cand && cand.photo ? `<img src="${cand.photo}" alt="${a.candidateName}" style="width: 100%; height: 100%; object-fit: cover;" />` : a.candidateName.split(' ').map(n => n[0]).slice(0, 2).join('')}
                         </div>
                         <div>
-                          <div style="font-size: 15px; font-weight: 800; color: #0f172a; display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                          <div style="font-size: 14px; font-weight: 800; color: #0f172a; display: flex; align-items: center; gap: 6px; flex-wrap: wrap;">
                             <span>${a.candidateName}</span>
-                            <span style="font-size: 11px; font-weight: 800; background: #e0e7ff; color: #3730a3; padding: 2px 8px; border-radius: 6px;">
+                            <span style="font-size: 10px; font-weight: 800; background: #e0e7ff; color: #3730a3; padding: 1px 6px; border-radius: 4px;">
                               #${a.candidateChestNo}
                             </span>
-                            <span style="font-size: 11px; font-weight: 700; color: #64748b;">
+                            <span style="font-size: 10.5px; font-weight: 700; color: #64748b;">
                               ${a.candidateCategory}
                             </span>
                           </div>
-                          <div style="font-size: 13px; font-weight: 800; color: #b91c1c; margin-top: 3px; display: flex; align-items: center; gap: 6px;">
-                            ${getIcon('alertTriangle')}
-                            <span>${a.reasonCategory}</span>
+                          <div style="font-size: 11px; color: #64748b; margin-top: 1px;">
+                            ${formatRelativeTime(a.createdAt)}
                           </div>
                         </div>
                       </div>
 
-                      <!-- Actions -->
-                      <div style="display: flex; align-items: center; gap: 8px;">
+                      <div style="display: flex; align-items: center; gap: 6px; flex-shrink: 0;">
+                        ${getStatusBadge(a.status)}
                         ${a.status === 'pending' ? `
-                          <button type="button" class="btn btn-sm btn-outline btn-delete-appeal" data-appeal-id="${a.id}" style="border-color: #fee2e2; color: #ef4444; font-size: 11px; font-weight: 700; padding: 4px 10px; border-radius: 8px;" title="Withdraw this appeal">
-                            ${getIcon('trash')} Withdraw
+                          <button type="button" class="btn-delete-appeal" data-appeal-id="${a.id}" style="background: none; border: 1px solid #fee2e2; color: #ef4444; font-size: 11px; font-weight: 700; padding: 3px 8px; border-radius: 6px; cursor: pointer;" title="Withdraw this appeal">
+                            Withdraw
                           </button>
                         ` : ''}
                       </div>
                     </div>
 
+                    <!-- Reason Heading -->
+                    <div style="font-size: 12.5px; font-weight: 800; color: #b91c1c; margin-bottom: 6px; display: flex; align-items: center; gap: 6px;">
+                      ${getIcon('alertTriangle')}
+                      <span>${a.reasonCategory}</span>
+                    </div>
+
                     <!-- Description Quote -->
-                    <div style="margin-top: 12px; background: #f8fafc; border-left: 3.5px solid ${a.urgency === 'critical' ? '#ef4444' : '#6366f1'}; border-radius: 0 10px 10px 0; padding: 10px 14px; font-size: 13px; color: #334155; line-height: 1.45;">
+                    <div style="background: #f8fafc; border-left: 3px solid #6366f1; border-radius: 0 8px 8px 0; padding: 8px 12px; font-size: 12px; color: #334155; line-height: 1.45;">
                       ${a.description ? a.description : '<em>No additional details provided.</em>'}
                     </div>
 
                     <!-- Controller Response Section (If Available) -->
                     ${hasControllerResponse ? `
-                      <div style="margin-top: 12px; background: #ecfdf5; border: 1.5px solid #a7f3d0; border-radius: 12px; padding: 12px 14px;">
-                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 4px;">
-                          <div style="display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 800; color: #065f46;">
-                            <span style="width: 18px; height: 18px; border-radius: 50%; background: #10b981; color: #fff; display: flex; align-items: center; justify-content: center; font-size: 10px;">✓</span>
-                            <span>Controller Resolution & Action Taken:</span>
+                      <div style="margin-top: 10px; background: #ecfdf5; border: 1px solid #a7f3d0; border-radius: 10px; padding: 10px 12px;">
+                        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 3px;">
+                          <div style="display: flex; align-items: center; gap: 5px; font-size: 11.5px; font-weight: 800; color: #065f46;">
+                            <span>✓ Controller Resolution:</span>
                           </div>
                           ${a.resolvedAt ? `
-                            <span style="font-size: 11px; color: #047857; font-weight: 600;">
+                            <span style="font-size: 10.5px; color: #047857;">
                               ${formatRelativeTime(a.resolvedAt)}
                             </span>
                           ` : ''}
                         </div>
-                        <div style="font-size: 13px; font-weight: 600; color: #064e3b; line-height: 1.4; padding-left: 24px;">
+                        <div style="font-size: 12px; font-weight: 600; color: #064e3b; line-height: 1.4;">
                           ${a.controllerNotes}
                         </div>
                       </div>
                     ` : a.status === 'in-review' ? `
-                      <div style="margin-top: 10px; font-size: 12px; color: #1e40af; background: #eff6ff; border-radius: 8px; padding: 8px 12px; display: flex; align-items: center; gap: 6px;">
+                      <div style="margin-top: 8px; font-size: 11px; color: #1e40af; background: #eff6ff; border-radius: 6px; padding: 6px 10px; display: flex; align-items: center; gap: 5px;">
                         ${getIcon('clock')}
-                        <span>Controller has opened this appeal and is currently reviewing or contacting the mentee.</span>
+                        <span>Controller is currently reviewing this appeal.</span>
                       </div>
                     ` : ''}
 
@@ -496,6 +551,9 @@ export function renderTrainerAppealsView(container, navigateTo) {
     if (btnToggle) {
       btnToggle.onclick = () => {
         isFormOpen = !isFormOpen;
+        if (isFormOpen && !selectedCandidateId) {
+          isCandidatePickerOpen = true;
+        }
         render();
         if (isFormOpen) {
           const formCard = container.querySelector('#appealFormContainer');
@@ -524,17 +582,120 @@ export function renderTrainerAppealsView(container, navigateTo) {
     if (btnEmptyNew) {
       btnEmptyNew.onclick = () => {
         isFormOpen = true;
+        isCandidatePickerOpen = true;
         render();
         const formCard = container.querySelector('#appealFormContainer');
         if (formCard) formCard.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
       };
     }
 
-    // 2. Select Candidate change
-    const selCand = container.querySelector('#selectAppealCandidate');
-    if (selCand) {
-      selCand.onchange = (e) => {
-        selectedCandidateId = e.target.value;
+    // 2. Candidate Selection Events
+    const inputSearchMentee = container.querySelector('#inputSearchMentee');
+    if (inputSearchMentee) {
+      inputSearchMentee.oninput = (e) => {
+        candidateSearchQuery = e.target.value;
+        renderCandidateCardsOnly();
+      };
+    }
+
+    const btnClearMenteeSearch = container.querySelector('#btnClearMenteeSearch');
+    if (btnClearMenteeSearch) {
+      btnClearMenteeSearch.onclick = () => {
+        candidateSearchQuery = '';
+        renderCandidateCardsOnly();
+      };
+    }
+
+    // Attach click to mentee select cards
+    function attachMenteeCardClicks() {
+      container.querySelectorAll('.mentee-select-card').forEach(card => {
+        card.onclick = () => {
+          const cId = card.getAttribute('data-candidate-id');
+          if (cId) {
+            selectedCandidateId = cId;
+            isCandidatePickerOpen = false;
+            candidateSearchQuery = '';
+            render();
+          }
+        };
+      });
+    }
+    attachMenteeCardClicks();
+
+    // Partial re-render for candidate cards during search so input focus isn't lost
+    function renderCandidateCardsOnly() {
+      const grid = container.querySelector('.candidate-select-cards-grid');
+      if (!grid) {
+        render();
+        return;
+      }
+      const filtered = assignedMentees.filter(m => {
+        if (!candidateSearchQuery) return true;
+        const q = candidateSearchQuery.toLowerCase().trim();
+        const name = (m.name || '').toLowerCase();
+        const chest = (m.chestNo || m.adNo || '').toLowerCase();
+        const cat = (m.category || '').toLowerCase();
+        return name.includes(q) || chest.includes(q) || cat.includes(q);
+      });
+
+      if (filtered.length === 0) {
+        grid.innerHTML = `
+          <div style="grid-column: 1 / -1; text-align: center; padding: 16px; color: #64748b; font-size: 12px;">
+            No assigned mentees match "${candidateSearchQuery}".
+          </div>
+        `;
+      } else {
+        grid.innerHTML = filtered.map(m => {
+          const isSelected = m.id === selectedCandidateId;
+          return `
+            <div 
+              class="mentee-select-card" 
+              data-candidate-id="${m.id}" 
+              style="
+                display: flex; 
+                align-items: center; 
+                gap: 10px; 
+                padding: 8px 10px; 
+                border-radius: 10px; 
+                border: 1.5px solid ${isSelected ? '#10b981' : '#e2e8f0'}; 
+                background: ${isSelected ? '#ecfdf5' : '#ffffff'}; 
+                cursor: pointer; 
+                transition: all 0.15s ease;
+              "
+            >
+              <div style="width: 32px; height: 32px; border-radius: 50%; background: #4f46e5; color: #ffffff; font-weight: 800; font-size: 11px; display: flex; align-items: center; justify-content: center; overflow: hidden; flex-shrink: 0;">
+                ${m.photo ? `<img src="${m.photo}" alt="${m.name}" style="width: 100%; height: 100%; object-fit: cover;" />` : m.name.split(' ').map(n => n[0]).slice(0, 2).join('')}
+              </div>
+              <div style="flex: 1; min-width: 0;">
+                <div style="font-size: 12.5px; font-weight: 800; color: ${isSelected ? '#065f46' : '#1e293b'}; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">
+                  ${m.name}
+                </div>
+                <div style="font-size: 10.5px; color: #64748b; display: flex; align-items: center; gap: 4px;">
+                  <span>#${m.chestNo || m.adNo}</span>
+                  <span>&bull;</span>
+                  <span style="font-weight: 700; color: #4338ca;">${m.category}</span>
+                </div>
+              </div>
+              ${isSelected ? `<span style="color: #10b981; font-weight: 800; font-size: 13px;">✓</span>` : ''}
+            </div>
+          `;
+        }).join('');
+        attachMenteeCardClicks();
+      }
+    }
+
+    const btnChangeMentee = container.querySelector('#btnChangeMenteePicker');
+    if (btnChangeMentee) {
+      btnChangeMentee.onclick = () => {
+        isCandidatePickerOpen = true;
+        render();
+      };
+    }
+
+    const btnReopen = container.querySelector('#btnReopenPicker');
+    if (btnReopen) {
+      btnReopen.onclick = () => {
+        isCandidatePickerOpen = true;
         render();
       };
     }
@@ -556,14 +717,7 @@ export function renderTrainerAppealsView(container, navigateTo) {
       };
     });
 
-    // 4. Urgency Radios
-    container.querySelectorAll('input[name="appealUrgency"]').forEach(radio => {
-      radio.onchange = (e) => {
-        selectedUrgency = e.target.value;
-      };
-    });
-
-    // 5. Description textarea
+    // 4. Description textarea
     const txtDesc = container.querySelector('#txtAppealDescription');
     if (txtDesc) {
       txtDesc.oninput = (e) => {
@@ -571,15 +725,22 @@ export function renderTrainerAppealsView(container, navigateTo) {
       };
     }
 
-    // 6. Submit Appeal Form
+    // 5. Submit Appeal Form
     const form = container.querySelector('#formSubmitAppeal');
     if (form) {
       form.onsubmit = async (e) => {
         e.preventDefault();
 
+        if (!selectedCandidateId) {
+          toast.error('Please tap and select an assigned mentee to appeal.');
+          isCandidatePickerOpen = true;
+          render();
+          return;
+        }
+
         const candidate = assignedMentees.find(m => m.id === selectedCandidateId);
         if (!candidate) {
-          toast.error('Please select an assigned mentee to appeal.');
+          toast.error('Selected candidate was not found in your assigned mentees.');
           return;
         }
 
@@ -609,23 +770,41 @@ export function renderTrainerAppealsView(container, navigateTo) {
             trainerSpecialization: currentTrainer.expertise || 'Specialized Mentor',
             reasonCategory: reason,
             description,
-            urgency: selectedUrgency
+            urgency: 'normal'
           });
 
           toast.success(`Appeal for ${candidate.name} submitted to Controller successfully!`);
           isFormOpen = false;
+          selectedCandidateId = '';
+          isCandidatePickerOpen = true;
           customDescription = PREPARED_REASONS[0].defaultText;
           selectedReason = PREPARED_REASONS[0];
-          selectedUrgency = 'normal';
           render();
         } catch (err) {
           console.error('Error submitting appeal:', err);
           toast.error('Failed to submit appeal. Please try again.');
           if (btnSubmit) {
             btnSubmit.disabled = false;
-            btnSubmit.innerHTML = `${getIcon('send')} <span>Dispatch Appeal to Controller</span>`;
+            btnSubmit.innerHTML = `${getIcon('send')} <span>Dispatch Appeal</span>`;
           }
         }
+      };
+    }
+
+    // 6. Appeals List Search Input
+    const inputAppealsSearch = container.querySelector('#inputTrainerAppealSearch');
+    if (inputAppealsSearch) {
+      inputAppealsSearch.oninput = (e) => {
+        appealsSearchQuery = e.target.value;
+        render();
+      };
+    }
+
+    const btnClearSearch = container.querySelector('#btnClearTrainerSearch');
+    if (btnClearSearch) {
+      btnClearSearch.onclick = () => {
+        appealsSearchQuery = '';
+        render();
       };
     }
 

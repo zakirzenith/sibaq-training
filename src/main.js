@@ -89,6 +89,9 @@ class App {
     // Subscribe to state changes to keep badges and views in sync across all devices
     state.subscribe(() => {
       this.updateBadges();
+      if (this.isAuthenticated) {
+        this.updatePortalUI();
+      }
 
       // Auto-refresh views when changes arrive from Cloud Firestore
       const activeModal = document.querySelector('.modal-backdrop');
@@ -174,7 +177,9 @@ class App {
     const isTrainer = session.role === 'trainer' || this.currentPortal === 'trainer';
     const isMentee = session.role === 'mentee' || this.currentPortal === 'mentee';
     const activeTrainer = isTrainer ? state.getActiveTrainer() : null;
-    const activeMentee = isMentee && session.candidate ? session.candidate : null;
+    const activeMentee = (isMentee && session && session.candidate)
+      ? (state.getCandidateById(session.candidate.id) || session.candidate)
+      : (session && session.candidate ? (state.getCandidateById(session.candidate.id) || session.candidate) : null);
 
     const overlay = document.createElement('div');
     overlay.className = 'modal-backdrop';
@@ -221,10 +226,12 @@ class App {
             <div style="display: inline-flex; align-items: center; justify-content: center; width: 62px; height: 62px; border-radius: 50%; background: ${isTrainer && activeTrainer ? (activeTrainer.color || '#6366f1') : (isMentee ? '#059669' : '#ffffff')}; color: #fff; font-size: 22px; font-weight: 800; box-shadow: 0 4px 12px rgba(0,0,0,0.08); border: 3px solid #ffffff; margin-bottom: 10px; overflow: hidden;">
               ${isTrainer && activeTrainer 
                 ? (activeTrainer.photo 
-                    ? `<img src="${activeTrainer.photo}" alt="${activeTrainer.name}" style="width: 100%; height: 100%; object-fit: cover;" />` 
+                    ? `<img src="${activeTrainer.photo}" alt="${activeTrainer.name}" style="width: 100%; height: 100%; object-fit: cover;" onerror="this.style.display='none'; if(this.parentElement) this.parentElement.innerText='${activeTrainer.name.split(' ').filter(Boolean).map(n => n[0]).slice(0, 2).join('')}';" />` 
                     : activeTrainer.name.split(' ').map(n => n[0]).slice(0, 2).join(''))
                 : isMentee && activeMentee
-                  ? activeMentee.name.split(' ').map(n => n[0]).slice(0, 2).join('')
+                  ? (activeMentee.photo
+                      ? `<img src="${activeMentee.photo}" alt="${activeMentee.name}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%; display: block;" onerror="this.style.display='none'; if(this.parentElement) this.parentElement.innerText='${activeMentee.name.split(' ').filter(Boolean).map(n => n[0]).slice(0, 2).join('')}';" />`
+                      : activeMentee.name.split(' ').map(n => n[0]).slice(0, 2).join(''))
                   : `<img src="/logo.png" alt="Logo" style="width: 100%; height: 100%; object-fit: contain; padding: 4px;" />`}
             </div>
             <h3 style="font-size: 16.5px; font-weight: 800; color: #0f172a; margin: 0 0 4px 0;">${userName}</h3>
@@ -428,7 +435,9 @@ class App {
     const isTrainer = this.currentPortal === 'trainer';
     const isMentee = this.currentPortal === 'mentee' || isRealMenteeSession;
     const activeTrainer = state.getActiveTrainer();
-    const activeMentee = session && session.role === 'mentee' ? session.candidate : null;
+    const activeMentee = (session && session.role === 'mentee' && session.candidate)
+      ? (state.getCandidateById(session.candidate.id) || session.candidate)
+      : (session && session.candidate ? (state.getCandidateById(session.candidate.id) || session.candidate) : null);
 
     const brandSubtitle = document.querySelector('.logo-subtitle');
     const statusCapsule = document.querySelector('.topbar-status-capsule');
@@ -571,9 +580,12 @@ class App {
         statusCapsule.innerHTML = `<span class="dot-stage" style="background: #10b981;"></span> Mentee: <strong>${activeMentee.name}</strong>`;
       }
       if (userPill) {
+        const menteeInitials = activeMentee.name ? activeMentee.name.split(' ').filter(Boolean).map(n => n[0]).slice(0, 2).join('').toUpperCase() : 'M';
         userPill.innerHTML = `
           <div class="sup-avatar" style="width: 28px; height: 28px; border-radius: 50%; background: #059669; color: #fff; font-weight: 700; font-size: 11px; display: flex; align-items: center; justify-content: center; overflow: hidden;">
-            ${activeMentee.name.split(' ').map(n => n[0]).slice(0, 2).join('')}
+            ${activeMentee.photo 
+              ? `<img src="${activeMentee.photo}" alt="${activeMentee.name}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%; display: block;" onerror="this.style.display='none'; if(this.parentElement) this.parentElement.innerText='${menteeInitials}';" />` 
+              : menteeInitials}
           </div>
           <div class="sup-info">
             <span class="sup-name">${activeMentee.name}</span>
@@ -648,7 +660,9 @@ class App {
           </button>
           <button class="mobile-nav-btn" data-action="open-profile">
             <span style="display:inline-flex; align-items:center; justify-content:center; width:22px; height:22px; border-radius:50%; background:#059669; color:#fff; font-weight:700; font-size:11px; overflow:hidden;">
-              ${activeMentee.name.split(' ').map(n => n[0]).slice(0, 2).join('')}
+              ${activeMentee.photo
+                ? `<img src="${activeMentee.photo}" alt="${activeMentee.name}" style="width: 100%; height: 100%; object-fit: cover; border-radius: 50%; display: block;" onerror="this.style.display='none'; if(this.parentElement) this.parentElement.innerText='${activeMentee.name.split(' ').filter(Boolean).map(n => n[0]).slice(0, 2).join('')}';" />`
+                : activeMentee.name.split(' ').filter(Boolean).map(n => n[0]).slice(0, 2).join('')}
             </span>
             <span>Profile</span>
           </button>

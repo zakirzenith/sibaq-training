@@ -3153,6 +3153,14 @@ code,
   justify-content: center;
 }
 
+.sup-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 50%;
+  display: block;
+}
+
 .sup-name {
   font-size: 12px;
   font-weight: 600;

@@ -31,15 +31,17 @@ export function renderDeviceVerificationView(container, tagOrId = null, onNaviga
               <h2 class="dv-status-heading">No Device Record Found</h2>
             </div>
           </div>
-          <div class="dv-card-body">
+          <div class="dv-card-body" style="padding: 16px 20px;">
             <p class="dv-desc-text">
               No registered institutional device permit matches tag <strong>"${tagOrId || 'N/A'}"</strong>.
             </p>
-            <div class="dv-warning-box">
+            <div class="dv-warning-box" style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 12px; font-size: 12.5px; color: #991b1b; margin-top: 10px;">
               ⚠️ <strong>Security Notice:</strong> If this phone is being used on campus, it is unauthorized. Please escort the student to the Controller Office.
             </div>
             <div class="dv-actions-row" style="margin-top: 20px;">
-              <button class="btn btn-primary" id="btnDvGoHome">Return to Portal</button>
+              <button class="btn btn-primary" id="btnDvGoHome" style="width: 100%; height: 42px; font-weight: 700;">
+                Return to Device Desk
+              </button>
             </div>
           </div>
         </div>
@@ -48,10 +50,12 @@ export function renderDeviceVerificationView(container, tagOrId = null, onNaviga
     const btnHome = container.querySelector('#btnDvGoHome');
     if (btnHome) {
       btnHome.onclick = () => {
-        if (window.history.length > 1) {
-          window.location.href = window.location.origin;
-        } else if (onNavigate) {
-          onNavigate('dashboard');
+        const cleanUrl = window.location.origin + window.location.pathname;
+        window.history.pushState({}, '', cleanUrl);
+        if (onNavigate) {
+          onNavigate('devices');
+        } else {
+          window.location.reload();
         }
       };
     }
@@ -132,7 +136,7 @@ export function renderDeviceVerificationView(container, tagOrId = null, onNaviga
             <span class="dv-rc-v">09:00 AM — 10:00 PM</span>
           </div>
           <div class="dv-rc-item">
-            <span class="dv-rc-k">Today's Inspection Time:</span>
+            <span class="dv-rc-k">Inspection Time:</span>
             <span class="dv-rc-v">${timeFormatted}</span>
           </div>
           <div class="dv-rc-item">
@@ -201,11 +205,13 @@ export function renderDeviceVerificationView(container, tagOrId = null, onNaviga
         </div>
 
         <!-- Programs Breakdown & Scores -->
-        <h4 class="dv-sub-heading">Enrolled Competition Programs &amp; Mentor Evaluations</h4>
+        <h4 class="dv-sub-heading" style="font-size: 13px; font-weight: 800; color: #0f172a; margin: 14px 0 8px 0;">
+          Enrolled Competition Programs &amp; Mentor Evaluations
+        </h4>
         
         ${programs.length === 0 ? `
-          <div class="dv-empty-programs">
-            <p class="text-muted">No programs currently assigned to this candidate.</p>
+          <div class="dv-empty-programs" style="padding: 16px; text-align: center; background: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 8px;">
+            <p class="text-muted" style="margin: 0; font-size: 12.5px;">No programs currently assigned to this candidate.</p>
           </div>
         ` : `
           <div class="dv-programs-list">
@@ -268,16 +274,16 @@ export function renderDeviceVerificationView(container, tagOrId = null, onNaviga
             </button>
           `}
 
-          <button class="btn btn-outline dv-btn-action" id="btnDvFlagMisuse" style="border-color: #fca5a5; color: #b91c1c;">
+          <button class="btn btn-outline dv-btn-action" id="btnDvFlagMisuse" style="border-color: #fca5a5; color: #b91c1c; background: #ffffff;">
             ${getIcon('flag')} Flag Irregularity / Non-Practice Use
           </button>
         </div>
       </div>
 
-      <!-- Bottom Nav / Back to Portal -->
-      <div class="dv-footer-nav">
-        <button class="btn btn-secondary" id="btnDvReturnPortal" style="width: 100%;">
-          ${getIcon('chevronLeft')} Return to Sibaq Mentoring System
+      <!-- Bottom Nav / Back to Desk -->
+      <div class="dv-footer-nav" style="margin-top: 6px;">
+        <button class="btn btn-secondary" id="btnDvReturnPortal" style="width: 100%; height: 42px; font-weight: 700;">
+          ${getIcon('chevronLeft')} Return to Student Device Desk
         </button>
       </div>
 
@@ -291,7 +297,7 @@ export function renderDeviceVerificationView(container, tagOrId = null, onNaviga
       const supervisorName = prompt('Enter Teacher / Supervisor Name who received the phone:', 'Duty Teacher');
       if (supervisorName === null) return;
       
-      const res = state.submitDevice(permit.id, supervisorName.trim() || 'Supervisor');
+      const res = state.submitDevice(permit.id, supervisorName.trim() || 'Duty Teacher');
       if (res.success) {
         toast.success(`Device ${permit.deviceTag} successfully marked as SUBMITTED!`);
         renderDeviceVerificationView(container, permit.deviceTag, onNavigate);
@@ -305,7 +311,7 @@ export function renderDeviceVerificationView(container, tagOrId = null, onNaviga
       const issuerName = prompt('Enter Teacher / Supervisor Name issuing this phone:', 'Duty Teacher');
       if (issuerName === null) return;
 
-      const res = state.checkoutDevice(permit.id, issuerName.trim() || 'Supervisor');
+      const res = state.checkoutDevice(permit.id, issuerName.trim() || 'Duty Teacher');
       if (res.success) {
         toast.success(`Device ${permit.deviceTag} issued to candidate!`);
         renderDeviceVerificationView(container, permit.deviceTag, onNavigate);
@@ -329,11 +335,11 @@ export function renderDeviceVerificationView(container, tagOrId = null, onNaviga
   const btnReturnPortal = container.querySelector('#btnDvReturnPortal');
   if (btnReturnPortal) {
     btnReturnPortal.onclick = () => {
-      // Clear URL parameter so it returns cleanly to dashboard
+      // Clear URL parameter so it returns cleanly to devices desk
       const cleanUrl = window.location.origin + window.location.pathname;
       window.history.pushState({}, '', cleanUrl);
       if (onNavigate) {
-        onNavigate('dashboard');
+        onNavigate('devices');
       } else {
         window.location.reload();
       }

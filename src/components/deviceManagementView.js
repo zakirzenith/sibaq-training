@@ -574,6 +574,14 @@ export function renderDeviceManagementView(container, navigateTo) {
     };
   }
 
+  // Subscribe to real-time state changes
+  state.subscribe(() => {
+    if (document.body.contains(container)) {
+      updateMetrics();
+      updateList();
+    }
+  });
+
   // Initial Load
   updateMetrics();
   updateList();

@@ -2669,7 +2669,7 @@ class StateService {
     this.saveState();
 
     if (firebaseService.isInitialized) {
-      firebaseService.set('devicePermits', id, newPermit).catch(e => console.error(e));
+      firebaseService.setDoc('devicePermits', id, newPermit).catch(e => console.error(e));
     }
     return newPermit;
   }
@@ -2691,7 +2691,7 @@ class StateService {
     this.saveState();
 
     if (firebaseService.isInitialized) {
-      firebaseService.set('devicePermits', id, updated).catch(e => console.error(e));
+      firebaseService.setDoc('devicePermits', id, updated).catch(e => console.error(e));
     }
     return updated;
   }
@@ -2704,7 +2704,7 @@ class StateService {
     this.saveState();
 
     if (firebaseService.isInitialized) {
-      firebaseService.delete('devicePermits', id).catch(e => console.error(e));
+      firebaseService.deleteDoc('devicePermits', id).catch(e => console.error(e));
     }
     return true;
   }

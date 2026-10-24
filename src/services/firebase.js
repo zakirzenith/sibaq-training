@@ -184,6 +184,11 @@ class FirebaseService {
     }
   }
 
+  // Alias for setDoc
+  async set(collectionName, docId, data) {
+    return this.setDoc(collectionName, docId, data);
+  }
+
   async deleteDoc(collectionName, docId) {
     if (!this.db || !this.isInitialized) return null;
     try {
@@ -194,6 +199,11 @@ class FirebaseService {
       console.error(`Error deleting document from ${collectionName}/${docId}:`, e);
       throw e;
     }
+  }
+
+  // Alias for deleteDoc
+  async delete(collectionName, docId) {
+    return this.deleteDoc(collectionName, docId);
   }
 
   async batchSync(collectionName, items) {

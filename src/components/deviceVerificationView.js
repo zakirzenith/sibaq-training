@@ -1,12 +1,15 @@
 import { state } from '../services/state.js';
 import { getIcon } from './icons.js';
 import { toast } from './toast.js';
+import { openDeviceReportModal } from './modals/deviceReportModal.js';
 
 /**
  * Live Device Verification & Program Progress Inspection View
  * Loaded when scanning the physical QR sticker on back of phone or clicking Inspect.
- * Shows instant legal/illegal status, permitted hours countdown, and
- * live candidate competition progress to verify productive educational use.
+ * Allows teachers and campus mentors to verify student pass legitimacy,
+ * review educational progress ("Is he progressing from his phone?"),
+ * and submit structured violation / irregularity reports to the Controller Panel.
+ * Uses 100% SVG icons (zero raw emojis) and strict teacher permission boundaries.
  */
 export function renderDeviceVerificationView(container, tagOrId = null, onNavigate = null) {
   // If not passed directly, parse from URL query string
@@ -17,8 +20,11 @@ export function renderDeviceVerificationView(container, tagOrId = null, onNaviga
 
   const permit = state.getDevicePermitByTag(tagOrId) || state.getDevicePermitById(tagOrId);
   const now = new Date();
-  const timeFormatted = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-  const dateFormatted = now.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric', year: 'numeric' });
+  const timeFormatted = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+  // Access check
+  const session = state.getAuthSession();
+  const isController = !session || session.role === 'controller';
 
   if (!permit) {
     container.innerHTML = `
@@ -35,8 +41,11 @@ export function renderDeviceVerificationView(container, tagOrId = null, onNaviga
             <p class="dv-desc-text">
               No registered institutional device permit matches tag <strong>"${tagOrId || 'N/A'}"</strong>.
             </p>
-            <div class="dv-warning-box" style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 12px; font-size: 12.5px; color: #991b1b; margin-top: 10px;">
-              ⚠️ <strong>Security Notice:</strong> If this phone is being used on campus, it is unauthorized. Please escort the student to the Controller Office.
+            <div class="dv-warning-box" style="background: #fef2f2; border: 1px solid #fecaca; border-radius: 8px; padding: 12px; font-size: 12.5px; color: #991b1b; margin-top: 10px; display: flex; align-items: flex-start; gap: 8px;">
+              <span style="display: flex; margin-top: 2px;">${getIcon('alertTriangle')}</span>
+              <div>
+                <strong>Security Notice:</strong> If this phone is being held on campus, it is unauthorized. Please escort the student to the Controller Office.
+              </div>
             </div>
             <div class="dv-actions-row" style="margin-top: 20px;">
               <button class="btn btn-primary" id="btnDvGoHome" style="width: 100%; height: 42px; font-weight: 700;">
@@ -94,6 +103,10 @@ export function renderDeviceVerificationView(container, tagOrId = null, onNaviga
     statusClass = 'status-red';
     pillClass = 'pill-red';
     statusIcon = getIcon('alertTriangle');
+  } else if (status.code === 'SUSPENDED') {
+    statusClass = 'status-amber';
+    pillClass = 'pill-amber';
+    statusIcon = getIcon('pauseCircle');
   } else if (status.code === 'SUBMITTED') {
     statusClass = 'status-amber';
     pillClass = 'pill-amber';
@@ -104,6 +117,9 @@ export function renderDeviceVerificationView(container, tagOrId = null, onNaviga
     statusIcon = getIcon('clock');
   }
 
+  const irregularities = Array.isArray(permit.irregularities) ? permit.irregularities : [];
+  const pendingIrregularities = irregularities.filter(i => i.status === 'pending');
+
   container.innerHTML = `
     <div class="device-verify-wrapper">
       
@@ -112,7 +128,7 @@ export function renderDeviceVerificationView(container, tagOrId = null, onNaviga
         <div class="dv-crest-left">
           <img src="/logo.png" alt="DH Bengal" class="dv-crest-logo" />
           <div>
-            <div class="dv-crest-title">SIBAQ 2026 • DEVICE INSPECTION DESK</div>
+            <div class="dv-crest-title">SIBAQ 2026 • TEACHER INSPECTION DESK</div>
             <div class="dv-crest-sub">Official Academic Practice &amp; Smartphone Compliance Radar</div>
           </div>
         </div>
@@ -148,11 +164,13 @@ export function renderDeviceVerificationView(container, tagOrId = null, onNaviga
           </div>
           <div class="dv-rc-item">
             <span class="dv-rc-k">Status Detail:</span>
-            <span class="dv-rc-v" style="font-weight: 800;">
-              ${status.remainingMinutes !== null ? `⏳ ${Math.floor(status.remainingMinutes / 60)}h ${status.remainingMinutes % 60}m remaining until 10:00 PM` : ''}
-              ${status.overdueMinutes !== null ? `🚨 OVERDUE by ${status.overdueMinutes} mins! Return Now!` : ''}
-              ${status.code === 'SUBMITTED' ? `✅ Safe in Storage` : ''}
-              ${status.code === 'NOT_CHECKED_OUT' ? `⚠️ Unrecorded Checkout` : ''}
+            <span class="dv-rc-v" style="font-weight: 800; display: inline-flex; align-items: center; gap: 4px;">
+              ${status.remainingMinutes !== null ? `<span>${getIcon('clock')}</span> <span>${Math.floor(status.remainingMinutes / 60)}h ${status.remainingMinutes % 60}m remaining until 10:00 PM</span>` : ''}
+              ${status.overdueMinutes !== null ? `<span>${getIcon('alertTriangle')}</span> <span style="color: #dc2626;">OVERDUE by ${status.overdueMinutes} mins! Return to desk!</span>` : ''}
+              ${status.code === 'SUBMITTED' ? `<span>${getIcon('lock')}</span> <span>Stored Safely in Desk Locker</span>` : ''}
+              ${status.code === 'NOT_CHECKED_OUT' ? `<span>${getIcon('info')}</span> <span>Unrecorded Checkout (Desk action required)</span>` : ''}
+              ${status.code === 'SUSPENDED' ? `<span>${getIcon('pauseCircle')}</span> <span>Temporarily Suspended</span>` : ''}
+              ${status.code === 'REVOKED' ? `<span>${getIcon('ban')}</span> <span>Access Permanently Revoked</span>` : ''}
             </span>
           </div>
         </div>
@@ -189,7 +207,7 @@ export function renderDeviceVerificationView(container, tagOrId = null, onNaviga
             </div>
           </div>
           <div class="dv-practice-indicator ${hasMetToday ? 'dpi-active' : 'dpi-idle'}">
-            ${hasMetToday ? '🟢 Rehearsals Logged Today' : '🟡 No Practice Logged Yet Today'}
+            ${hasMetToday ? 'Rehearsals Logged Today' : 'No Practice Logged Yet Today'}
           </div>
         </div>
 
@@ -252,7 +270,7 @@ export function renderDeviceVerificationView(container, tagOrId = null, onNaviga
 
                   ${hasCritique ? `
                     <div class="dv-mentor-critique">
-                      <span class="dv-critique-quote">“</span>
+                      <span class="dv-critique-quote">${getIcon('quote')}</span>
                       <span>${critiqueText}</span>
                     </div>
                   ` : `
@@ -267,24 +285,29 @@ export function renderDeviceVerificationView(container, tagOrId = null, onNaviga
         `}
       </div>
 
-      <!-- SUPERVISOR / TEACHER QUICK ACTIONS BAR -->
+      <!-- PENDING TEACHER REPORTS NOTICE (IF ANY) -->
+      ${pendingIrregularities.length > 0 ? `
+        <div class="dv-card" style="border: 1.5px solid #fecaca; background: #fff5f5;">
+          <div style="display: flex; align-items: center; gap: 8px; color: #b91c1c; font-weight: 800; font-size: 13px;">
+            <span>${getIcon('alertTriangle')}</span>
+            <span>Active Violation Flags on Record (${pendingIrregularities.length})</span>
+          </div>
+          <div style="margin-top: 6px; font-size: 12px; color: #7f1d1d;">
+            Teacher <strong>${pendingIrregularities[0].reportedBy}</strong> reported: "${pendingIrregularities[0].notes}"
+          </div>
+        </div>
+      ` : ''}
+
+      <!-- TEACHER ON-DUTY ACTION: REPORT IRREGULARITY -->
       <div class="dv-card dv-actions-card">
-        <h3 class="dv-actions-title">Supervisor / Teacher On-Duty Actions</h3>
-        <p class="dv-actions-desc">You can directly record the device return or report misuse without leaving this page.</p>
+        <h3 class="dv-actions-title">Teacher On-Campus Inspection Tools</h3>
+        <p class="dv-actions-desc">
+          Teachers cannot issue or submit phones (reserved for Controller Desk). If you observe non-academic usage, gaming, or policy violations, report it immediately below.
+        </p>
 
         <div class="dv-action-buttons-grid">
-          ${status.code === 'LEGAL' || status.code === 'ILLEGAL_OVERDUE' ? `
-            <button type="button" class="btn btn-primary dv-btn-action" id="btnDvSubmitPhone" style="background: #059669; border-color: #059669;">
-              ${getIcon('check')} Submit &amp; Return Phone to Locker
-            </button>
-          ` : `
-            <button type="button" class="btn btn-secondary dv-btn-action" id="btnDvCheckoutPhone">
-              ${getIcon('plus')} Issue / Check Out Phone for Today
-            </button>
-          `}
-
-          <button type="button" class="btn btn-outline dv-btn-action" id="btnDvFlagMisuse" style="border-color: #fca5a5; color: #b91c1c; background: #ffffff;">
-            ${getIcon('flag')} Flag Irregularity / Non-Practice Use
+          <button type="button" class="btn btn-primary dv-btn-action" id="btnDvReportViolation" style="background: #dc2626; border-color: #dc2626; font-weight: 800;">
+            ${getIcon('flag')} Report Irregularity / Non-Compliance
           </button>
         </div>
       </div>
@@ -299,42 +322,20 @@ export function renderDeviceVerificationView(container, tagOrId = null, onNaviga
     </div>
   `;
 
-  // --- INTERACTIVE ACTION HANDLERS (Prompt-free 1-tap execution) ---
-  const btnSubmitPhone = container.querySelector('#btnDvSubmitPhone');
-  if (btnSubmitPhone) {
-    btnSubmitPhone.onclick = () => {
-      const res = state.submitDevice(permit.id, 'Duty Teacher');
-      if (res.success) {
-        toast.success(`Device ${permit.deviceTag} successfully marked as SUBMITTED!`);
-        renderDeviceVerificationView(container, permit.deviceTag, onNavigate);
-      }
+  // Report Irregularity Handler (Opens professional structured report modal)
+  const btnReportViolation = container.querySelector('#btnDvReportViolation');
+  if (btnReportViolation) {
+    btnReportViolation.onclick = () => {
+      openDeviceReportModal({
+        permitId: permit.id,
+        onSubmitted: () => {
+          renderDeviceVerificationView(container, permit.deviceTag, onNavigate);
+        }
+      });
     };
   }
 
-  const btnCheckoutPhone = container.querySelector('#btnDvCheckoutPhone');
-  if (btnCheckoutPhone) {
-    btnCheckoutPhone.onclick = () => {
-      const res = state.checkoutDevice(permit.id, 'Duty Teacher');
-      if (res.success) {
-        toast.success(`Device ${permit.deviceTag} issued to candidate!`);
-        renderDeviceVerificationView(container, permit.deviceTag, onNavigate);
-      }
-    };
-  }
-
-  const btnFlagMisuse = container.querySelector('#btnDvFlagMisuse');
-  if (btnFlagMisuse) {
-    btnFlagMisuse.onclick = () => {
-      const note = prompt('Describe the irregularity or non-practice use (e.g. Gaming, refusal to submit, unapproved apps):');
-      if (!note) return;
-
-      const updatedNotes = permit.notes ? `${permit.notes}\n[FLAGGED ${new Date().toLocaleTimeString()}]: ${note}` : `[FLAGGED ${new Date().toLocaleTimeString()}]: ${note}`;
-      state.updateDevicePermit(permit.id, { notes: updatedNotes });
-      toast.warning('Irregularity recorded on student device permit.');
-      renderDeviceVerificationView(container, permit.deviceTag, onNavigate);
-    };
-  }
-
+  // Return to Desk
   const btnReturnPortal = container.querySelector('#btnDvReturnPortal');
   if (btnReturnPortal) {
     btnReturnPortal.onclick = () => {

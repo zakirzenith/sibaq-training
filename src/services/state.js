@@ -2771,6 +2771,105 @@ class StateService {
     return { success: true, permit: this.getDevicePermitById(permitId) };
   }
 
+  suspendDevicePermit(permitId, { suspendedUntil = null, reason = '', supervisor = 'Controller Desk' } = {}) {
+    const permit = this.getDevicePermitById(permitId);
+    if (!permit) return { success: false, error: 'Permit not found' };
+
+    return this.updateDevicePermit(permit.id, {
+      status: 'suspended',
+      suspendedUntil: suspendedUntil || new Date(Date.now() + 86400000).toISOString().split('T')[0],
+      suspensionReason: reason || 'Violation under supervisor review',
+      suspendedBy: supervisor,
+      suspendedAt: new Date().toISOString()
+    });
+  }
+
+  revokeDevicePermit(permitId, { reason = '', supervisor = 'Controller Desk' } = {}) {
+    const permit = this.getDevicePermitById(permitId);
+    if (!permit) return { success: false, error: 'Permit not found' };
+
+    return this.updateDevicePermit(permit.id, {
+      status: 'revoked',
+      revokedAt: new Date().toISOString(),
+      revokedReason: reason || 'Official cancellation by Controller Office',
+      revokedBy: supervisor
+    });
+  }
+
+  reinstateDevicePermit(permitId, { supervisor = 'Controller Desk' } = {}) {
+    const permit = this.getDevicePermitById(permitId);
+    if (!permit) return { success: false, error: 'Permit not found' };
+
+    return this.updateDevicePermit(permit.id, {
+      status: 'active',
+      suspendedUntil: null,
+      suspensionReason: null,
+      revokedAt: null,
+      revokedReason: null,
+      reinstatedBy: supervisor,
+      reinstatedAt: new Date().toISOString()
+    });
+  }
+
+  reportDeviceIrregularity(permitId, report) {
+    const permit = this.getDevicePermitById(permitId);
+    if (!permit) return { success: false, error: 'Permit not found' };
+
+    const irregularities = Array.isArray(permit.irregularities) ? [...permit.irregularities] : [];
+    const newRecord = {
+      id: `irr_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
+      reportedAt: new Date().toISOString(),
+      reportedBy: report.reportedBy || 'Teacher on Duty',
+      category: report.category || 'OTHER',
+      notes: report.notes || '',
+      status: 'pending', // 'pending' | 'action_taken' | 'dismissed'
+      actionTaken: null,
+      actionDate: null
+    };
+
+    irregularities.unshift(newRecord);
+    this.updateDevicePermit(permit.id, { irregularities });
+    return { success: true, irregularity: newRecord, permit: this.getDevicePermitById(permitId) };
+  }
+
+  resolveDeviceIrregularity(permitId, irregularityId, { action = 'dismissed', actionNote = '', supervisor = 'Controller Desk' } = {}) {
+    const permit = this.getDevicePermitById(permitId);
+    if (!permit) return { success: false, error: 'Permit not found' };
+
+    const irregularities = Array.isArray(permit.irregularities) ? [...permit.irregularities] : [];
+    const idx = irregularities.findIndex(i => i.id === irregularityId);
+    if (idx >= 0) {
+      irregularities[idx] = {
+        ...irregularities[idx],
+        status: action,
+        actionTaken: actionNote || (action === 'dismissed' ? 'Dismissed by Controller' : 'Action taken'),
+        resolvedBy: supervisor,
+        actionDate: new Date().toISOString()
+      };
+      this.updateDevicePermit(permit.id, { irregularities });
+      return { success: true };
+    }
+    return { success: false, error: 'Report not found' };
+  }
+
+  getAllDeviceIrregularities() {
+    const all = [];
+    (this.devicePermits || []).forEach(p => {
+      const cand = this.getCandidateById(p.candidateId) || { name: 'Unknown Candidate', chestNo: 'N/A', category: 'GENERAL' };
+      (p.irregularities || []).forEach(irr => {
+        all.push({
+          ...irr,
+          permitId: p.id,
+          deviceTag: p.deviceTag,
+          deviceModel: p.deviceModel,
+          candidate: cand
+        });
+      });
+    });
+
+    return all.sort((a, b) => new Date(b.reportedAt) - new Date(a.reportedAt));
+  }
+
   getDevicePermitStatus(permit, targetDate = new Date()) {
     if (!permit) {
       return {
@@ -2787,14 +2886,32 @@ class StateService {
       };
     }
 
-    if (permit.status === 'revoked' || permit.status === 'suspended') {
+    if (permit.status === 'suspended') {
+      const isPastSuspension = permit.suspendedUntil && new Date(permit.suspendedUntil + 'T23:59:59') < targetDate;
+      if (!isPastSuspension) {
+        return {
+          code: 'SUSPENDED',
+          badge: 'TEMPORARILY SUSPENDED',
+          color: '#d97706',
+          bgColor: '#fffbeb',
+          borderColor: '#fde68a',
+          description: `Device permit is temporarily suspended until ${permit.suspendedUntil || 'further notice'}. Reason: ${permit.suspensionReason || 'Disciplinary hold'}.`,
+          isLegal: false,
+          remainingMinutes: null,
+          overdueMinutes: null,
+          todayCheckout: null
+        };
+      }
+    }
+
+    if (permit.status === 'revoked') {
       return {
         code: 'REVOKED',
-        badge: 'PERMIT REVOKED',
+        badge: 'PERMANENTLY REVOKED',
         color: '#dc2626',
         bgColor: '#fef2f2',
         borderColor: '#fecaca',
-        description: 'Device permit has been officially suspended/revoked by administrators.',
+        description: `Device access has been permanently cancelled by Controller. Reason: ${permit.revokedReason || 'Official cancellation'}.`,
         isLegal: false,
         remainingMinutes: null,
         overdueMinutes: null,
@@ -2906,13 +3023,23 @@ class StateService {
     let submittedCount = 0;
     let overdueCount = 0;
     let activePermitsCount = 0;
+    let suspendedCount = 0;
+    let revokedCount = 0;
+    let pendingIrregularitiesCount = 0;
 
     permits.forEach(p => {
       if (p.status === 'active') activePermitsCount++;
+      else if (p.status === 'suspended') suspendedCount++;
+      else if (p.status === 'revoked') revokedCount++;
+
       const status = this.getDevicePermitStatus(p, now);
       if (status.code === 'LEGAL') checkedOutCount++;
       else if (status.code === 'SUBMITTED') submittedCount++;
       else if (status.code === 'ILLEGAL_OVERDUE') overdueCount++;
+
+      (p.irregularities || []).forEach(irr => {
+        if (irr.status === 'pending') pendingIrregularitiesCount++;
+      });
     });
 
     return {
@@ -2920,7 +3047,10 @@ class StateService {
       activePermitsCount,
       checkedOutCount,
       submittedCount,
-      overdueCount
+      overdueCount,
+      suspendedCount,
+      revokedCount,
+      pendingIrregularitiesCount
     };
   }
 }

@@ -4,26 +4,36 @@ import { toast } from './toast.js';
 import { openDevicePermitModal } from './modals/devicePermitModal.js';
 import { openDeviceStickerModal } from './modals/deviceStickerModal.js';
 import { openDeviceScannerModal } from './modals/deviceScannerModal.js';
+import { openDeviceActionModal } from './modals/deviceActionModal.js';
+import { openDeviceReportModal } from './modals/deviceReportModal.js';
 
 /**
- * Dedicated Controller & Mentor View: Student Device & Phone Management Desk
- * Manages approved phones, daily checkout/return (9am - 10pm), QR pass generation, and progress tracking.
- * Features an ultra-compact top report strip (keeping main content front-and-center)
- * and responsive mobile touch cards for small screen devices.
+ * Dedicated Student Device & Phone Management Desk
+ * Strict role-based access:
+ * - Controllers: Full registration, issue/checkout, return/locker, temporary suspension & permanent revocation, and reviewing teacher violation reports.
+ * - Teachers / Mentors: Scan-only access to inspect practice progress and file structured irregularity reports (no phone issuance/submission authority).
+ * 100% SVG icons (zero raw emojis) and responsive mobile touch cards.
  */
 export function renderDeviceManagementView(container, navigateTo) {
   let searchTerm = '';
   let categoryFilter = 'ALL';
   let statusFilter = 'ALL';
 
-  // 1. Render Static Shell (Top Header, Compact Radar Bar, Search/Filter, Dynamic List Container)
+  const session = state.getAuthSession();
+  const isController = !session || session.role === 'controller';
+
+  // 1. Render Static Shell
   container.innerHTML = `
     <div class="view-header" style="flex-wrap: wrap; gap: 10px; margin-bottom: 8px;">
       <div>
-        <div class="view-tag" style="font-size: 11px; padding: 2px 7px;">${getIcon('smartphone')} Hardware &amp; Asset Security</div>
+        <div class="view-tag" style="font-size: 11px; padding: 2px 7px;">
+          ${getIcon('smartphone')} Hardware &amp; Asset Security
+        </div>
         <h1 class="view-title" style="margin: 2px 0 0 0; font-size: 22px;">Student Device Desk</h1>
         <p class="view-desc" style="font-size: 12px; margin-top: 2px; color: #64748b;">
-          Regulated competition smartphones (09:00 AM – 10:00 PM). QR verification &amp; performance radar.
+          ${isController 
+            ? 'Regulated competition smartphones (09:00 AM – 10:00 PM). Desk checkout, QR verification &amp; disciplinary control.' 
+            : 'Teacher Inspection Radar: Scan QR codes, verify academic progress, and submit campus violation reports to Controller.'}
         </p>
       </div>
 
@@ -31,18 +41,26 @@ export function renderDeviceManagementView(container, navigateTo) {
         <button id="btnDeviceScanQr" class="btn btn-secondary btn-sm" title="Scan phone QR with camera" style="height: 34px; font-size: 12px; font-weight: 700; gap: 5px;">
           ${getIcon('qrCode')} <span>Scan QR</span>
         </button>
-        <button id="btnDeviceBatchStickers" class="btn btn-outline btn-sm" title="Print all phone stickers" style="border-color: #cbd5e1; background: #ffffff; height: 34px; font-size: 12px; font-weight: 700; gap: 5px;">
-          ${getIcon('printer')} <span>Batch Stickers</span>
-        </button>
-        <button id="btnDeviceIssuePermit" class="btn btn-primary btn-sm" title="Issue new phone pass" style="height: 34px; font-size: 12px; font-weight: 700; gap: 5px;">
-          ${getIcon('plus')} <span>Issue Phone Permit</span>
-        </button>
+
+        ${isController ? `
+          <button id="btnDeviceBatchStickers" class="btn btn-outline btn-sm" title="Print all phone stickers" style="border-color: #cbd5e1; background: #ffffff; height: 34px; font-size: 12px; font-weight: 700; gap: 5px;">
+            ${getIcon('printer')} <span>Batch Stickers</span>
+          </button>
+          <button id="btnDeviceIssuePermit" class="btn btn-primary btn-sm" title="Issue new phone pass" style="height: 34px; font-size: 12px; font-weight: 700; gap: 5px;">
+            ${getIcon('plus')} <span>Issue Phone Permit</span>
+          </button>
+        ` : ''}
       </div>
     </div>
 
-    <!-- COMPACT RADAR REPORT STRIP (Low profile to keep main concern front-and-center) -->
+    <!-- COMPACT RADAR REPORT STRIP (Low profile, 100% SVG icons) -->
     <div id="deviceMetricsContainer" class="compact-device-stats-bar">
       <!-- Injected dynamically -->
+    </div>
+
+    <!-- CONTROLLER INCIDENT REPORTS FEED CONTAINER (Rendered if pending reports exist) -->
+    <div id="controllerIncidentReportsContainer">
+      <!-- Injected dynamically for Controller -->
     </div>
 
     <!-- SEARCH & FILTER BAR -->
@@ -52,7 +70,7 @@ export function renderDeviceManagementView(container, navigateTo) {
           <span class="search-icon" style="position: absolute; left: 11px; top: 50%; transform: translateY(-50%); color: #94a3b8; pointer-events: none; display: flex;">
             ${getIcon('search')}
           </span>
-          <input type="text" id="inputDeviceSearch" class="form-input" placeholder="Search by student name, chest #, or DEV tag..." 
+          <input type="text" id="inputDeviceSearch" class="form-input" placeholder="Search student name, chest #, or DEV tag..." 
                  value="${searchTerm}" style="padding-left: 34px; height: 36px; width: 100%; font-size: 12.5px;" />
         </div>
       </div>
@@ -63,8 +81,9 @@ export function renderDeviceManagementView(container, navigateTo) {
           <option value="ALL">All Statuses</option>
           <option value="CHECKED_OUT">Checked Out (In Hand)</option>
           <option value="SUBMITTED">Submitted to Locker</option>
-          <option value="OVERDUE">🚨 Overdue (&gt; 10 PM)</option>
-          <option value="REVOKED">Revoked</option>
+          <option value="OVERDUE">Overdue (&gt; 10 PM)</option>
+          <option value="SUSPENDED">Temporarily Suspended</option>
+          <option value="REVOKED">Permanently Revoked</option>
         </select>
 
         <!-- Category Filter -->
@@ -84,7 +103,7 @@ export function renderDeviceManagementView(container, navigateTo) {
     </div>
   `;
 
-  // 2. Metrics Updater (Compact, Slim Radar Bar)
+  // 2. Metrics Updater (Compact, 100% SVG Icons, Zero Emojis)
   const updateMetrics = () => {
     const metricsContainer = container.querySelector('#deviceMetricsContainer');
     if (!metricsContainer) return;
@@ -92,7 +111,7 @@ export function renderDeviceManagementView(container, navigateTo) {
 
     metricsContainer.innerHTML = `
       <div class="mini-stat-capsule" title="Total permitted phones in registry">
-        <span class="msc-icon">📱</span>
+        <span class="msc-icon" style="color: #4f46e5;">${getIcon('smartphone')}</span>
         <div class="msc-info">
           <span class="msc-label">Permits</span>
           <strong class="msc-val">${metrics.totalPermits}</strong>
@@ -100,7 +119,7 @@ export function renderDeviceManagementView(container, navigateTo) {
       </div>
 
       <div class="mini-stat-capsule ${metrics.checkedOutCount > 0 ? 'active' : ''}" title="Currently in student hand for competition practice">
-        <span class="msc-icon">🟢</span>
+        <span class="msc-icon" style="color: #059669;">${getIcon('checkCircle')}</span>
         <div class="msc-info">
           <span class="msc-label">In Hand</span>
           <strong class="msc-val" style="color: #059669;">${metrics.checkedOutCount}</strong>
@@ -108,7 +127,7 @@ export function renderDeviceManagementView(container, navigateTo) {
       </div>
 
       <div class="mini-stat-capsule" title="Safely returned to supervisor locker">
-        <span class="msc-icon">🔒</span>
+        <span class="msc-icon" style="color: #6366f1;">${getIcon('lock')}</span>
         <div class="msc-info">
           <span class="msc-label">In Locker</span>
           <strong class="msc-val" style="color: #6366f1;">${metrics.submittedCount}</strong>
@@ -116,16 +135,93 @@ export function renderDeviceManagementView(container, navigateTo) {
       </div>
 
       <div class="mini-stat-capsule ${metrics.overdueCount > 0 ? 'danger' : ''}" title="Past 10:00 PM cutoff time without return">
-        <span class="msc-icon">${metrics.overdueCount > 0 ? '🚨' : '🛡️'}</span>
+        <span class="msc-icon" style="${metrics.overdueCount > 0 ? 'color: #dc2626;' : 'color: #64748b;'}">
+          ${metrics.overdueCount > 0 ? getIcon('alertTriangle') : getIcon('shieldCheck')}
+        </span>
         <div class="msc-info">
           <span class="msc-label">Overdue</span>
           <strong class="msc-val" style="${metrics.overdueCount > 0 ? 'color: #dc2626;' : 'color: #64748b;'}">${metrics.overdueCount}</strong>
         </div>
       </div>
     `;
+
+    // 2b. Render Controller Violation Feed
+    const reportsContainer = container.querySelector('#controllerIncidentReportsContainer');
+    if (reportsContainer && isController) {
+      const allIrregularities = state.getAllDeviceIrregularities();
+      const pending = allIrregularities.filter(i => i.status === 'pending');
+
+      if (pending.length === 0) {
+        reportsContainer.innerHTML = '';
+      } else {
+        reportsContainer.innerHTML = `
+          <div style="background: #fff5f5; border: 1.5px solid #fecaca; border-radius: 12px; padding: 12px 16px; margin: 0 0 14px 0;">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+              <div style="display: flex; align-items: center; gap: 8px; color: #b91c1c; font-weight: 800; font-size: 13px;">
+                <span style="display: flex;">${getIcon('shieldAlert')}</span>
+                <span>Teacher Incident Reports (${pending.length} Action Required)</span>
+              </div>
+            </div>
+
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+              ${pending.slice(0, 3).map(irr => `
+                <div style="background: #ffffff; border: 1px solid #fee2e2; border-radius: 8px; padding: 10px 12px; display: flex; justify-content: space-between; align-items: center; gap: 10px; flex-wrap: wrap;">
+                  <div>
+                    <div style="display: flex; align-items: center; gap: 6px;">
+                      <span class="mdc-tag-capsule" style="font-size: 11px; padding: 1px 6px;">${irr.deviceTag}</span>
+                      <strong style="font-size: 13px; color: #0f172a;">${irr.candidate.name}</strong>
+                      <span style="font-size: 11px; color: #64748b;">(CHEST: ${irr.candidate.chestNo || irr.candidate.adNo})</span>
+                    </div>
+                    <div style="font-size: 12px; color: #991b1b; margin-top: 3px;">
+                      <strong>${irr.category.replace(/_/g, ' ')}:</strong> "${irr.notes}"
+                    </div>
+                    <div style="font-size: 10.5px; color: #64748b; margin-top: 2px;">
+                      Reported by: <strong>${irr.reportedBy}</strong> • ${new Date(irr.reportedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                    </div>
+                  </div>
+
+                  <div style="display: flex; gap: 6px; flex-shrink: 0;">
+                    <button type="button" class="btn btn-sm btn-outline btn-dismiss-feed-report" data-pid="${irr.permitId}" data-iid="${irr.id}" style="height: 30px; font-size: 11.5px; border-color: #cbd5e1;">
+                      Dismiss
+                    </button>
+                    <button type="button" class="btn btn-sm btn-primary btn-action-feed-report" data-pid="${irr.permitId}" style="height: 30px; font-size: 11.5px; background: #dc2626; border-color: #dc2626; gap: 4px;">
+                      ${getIcon('shieldAlert')} <span>Take Action</span>
+                    </button>
+                  </div>
+                </div>
+              `).join('')}
+            </div>
+          </div>
+        `;
+
+        reportsContainer.querySelectorAll('.btn-dismiss-feed-report').forEach(b => {
+          b.onclick = () => {
+            const pid = b.getAttribute('data-pid');
+            const iid = b.getAttribute('data-iid');
+            state.resolveDeviceIrregularity(pid, iid, { action: 'dismissed' });
+            toast.info('Incident report dismissed.');
+            updateMetrics();
+            updateList();
+          };
+        });
+
+        reportsContainer.querySelectorAll('.btn-action-feed-report').forEach(b => {
+          b.onclick = () => {
+            const pid = b.getAttribute('data-pid');
+            openDeviceActionModal({
+              permitId: pid,
+              onActionComplete: () => {
+                updateMetrics();
+                updateList();
+              }
+            });
+          };
+        });
+      }
+    }
   };
 
-  // 3. Dynamic Device List Updater (Desktop Table + Mobile Cards)
+  // 3. Dynamic Device List Updater
   const updateList = () => {
     const listContainer = container.querySelector('#devicesListContainer');
     if (!listContainer) return;
@@ -133,7 +229,6 @@ export function renderDeviceManagementView(container, navigateTo) {
     const permits = state.getDevicePermits();
     const now = new Date();
 
-    // Filter permits
     const filteredPermits = permits.filter(p => {
       const cand = state.getCandidateById(p.candidateId) || { name: '', category: '', chestNo: '', adNo: '' };
       const status = state.getDevicePermitStatus(p, now);
@@ -158,6 +253,7 @@ export function renderDeviceManagementView(container, navigateTo) {
         if (statusFilter === 'CHECKED_OUT' && status.code !== 'LEGAL') return false;
         if (statusFilter === 'SUBMITTED' && status.code !== 'SUBMITTED') return false;
         if (statusFilter === 'OVERDUE' && status.code !== 'ILLEGAL_OVERDUE') return false;
+        if (statusFilter === 'SUSPENDED' && status.code !== 'SUSPENDED') return false;
         if (statusFilter === 'REVOKED' && status.code !== 'REVOKED') return false;
       }
 
@@ -167,16 +263,20 @@ export function renderDeviceManagementView(container, navigateTo) {
     if (filteredPermits.length === 0) {
       listContainer.innerHTML = `
         <div class="empty-state-card" style="padding: 42px 20px; text-align: center; background: #ffffff; border: 1px solid #e2e8f0; border-radius: 14px;">
-          <div style="font-size: 38px; margin-bottom: 8px;">📱</div>
+          <div style="display: flex; justify-content: center; margin-bottom: 12px; color: #94a3b8;">
+            <svg xmlns="http://www.w3.org/2000/svg" width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></svg>
+          </div>
           <h3 style="font-size: 17px; font-weight: 700; color: #0f172a; margin-bottom: 4px;">No Device Permits Found</h3>
           <p class="text-muted" style="max-width: 420px; margin: 0 auto 16px auto; font-size: 12.5px;">
             ${permits.length === 0 
-              ? 'No candidates have been issued a smartphone permit yet. Click "Issue Phone Permit" to authorize students who extremely need a phone for competition practice.'
+              ? (isController ? 'No smartphone permits have been issued yet. Click "Issue Phone Permit" to authorize candidates.' : 'No active candidate phone permits in the registry.')
               : 'No devices match your current search and filter criteria.'}
           </p>
-          <button class="btn btn-primary" id="btnEmptyIssuePermit" style="gap: 6px; font-weight: 700;">
-            ${getIcon('plus')} Issue First Permit
-          </button>
+          ${isController ? `
+            <button class="btn btn-primary" id="btnEmptyIssuePermit" style="gap: 6px; font-weight: 700;">
+              ${getIcon('plus')} Issue First Permit
+            </button>
+          ` : ''}
         </div>
       `;
 
@@ -204,9 +304,9 @@ export function renderDeviceManagementView(container, navigateTo) {
                 <tr style="background: #f8fafc; border-bottom: 1px solid #e2e8f0; text-align: left; color: #64748b; font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.5px;">
                   <th style="padding: 12px 16px;">Device Tag</th>
                   <th style="padding: 12px 16px;">Candidate / Student</th>
-                  <th style="padding: 12px 16px;">Live Status (9 AM – 10 PM)</th>
-                  <th style="padding: 12px 16px;">Practice Progress Indicator</th>
-                  <th style="padding: 12px 16px; text-align: right;">Supervisor Actions</th>
+                  <th style="padding: 12px 16px;">Compliance Status (9 AM – 10 PM)</th>
+                  <th style="padding: 12px 16px;">Practice Indicator</th>
+                  <th style="padding: 12px 16px; text-align: right;">${isController ? 'Controller Operations' : 'Teacher Inspection'}</th>
                 </tr>
               </thead>
               <tbody>
@@ -226,11 +326,11 @@ export function renderDeviceManagementView(container, navigateTo) {
                       <td style="padding: 12px 16px; vertical-align: middle;">
                         <div style="display: flex; align-items: center; gap: 8px;">
                           <span style="display: inline-flex; align-items: center; justify-content: center; width: 32px; height: 32px; border-radius: 8px; background: #eef2ff; color: #4f46e5; font-weight: 800; font-family: monospace; font-size: 13px;">
-                            📱
+                            ${getIcon('smartphone')}
                           </span>
                           <div>
                             <strong style="color: #0f172a; font-family: monospace; font-size: 13.5px;">${p.deviceTag}</strong>
-                            <div style="font-size: 11px; color: #64748b;">${p.deviceModel || 'Phone'}</div>
+                            <div style="font-size: 11px; color: #64748b;">${p.deviceModel || 'Smartphone'}</div>
                           </div>
                         </div>
                       </td>
@@ -253,17 +353,19 @@ export function renderDeviceManagementView(container, navigateTo) {
                         </div>
                       </td>
 
-                      <!-- Live Status -->
+                      <!-- Live Compliance Status -->
                       <td style="padding: 12px 16px; vertical-align: middle;">
                         <div style="display: inline-flex; align-items: center; gap: 6px; padding: 3px 9px; border-radius: 9999px; font-size: 11.5px; font-weight: 700; background: ${status.bgColor}; color: ${status.color}; border: 1px solid ${status.borderColor};">
                           <span style="width: 6px; height: 6px; border-radius: 50%; background: ${status.color};"></span>
                           <span>${status.badge}</span>
                         </div>
                         <div style="font-size: 11px; color: #64748b; margin-top: 3px;">
-                          ${status.remainingMinutes !== null ? `⏳ ${Math.floor(status.remainingMinutes / 60)}h ${status.remainingMinutes % 60}m remaining` : ''}
-                          ${status.overdueMinutes !== null ? `🚨 OVERDUE by ${status.overdueMinutes}m` : ''}
+                          ${status.remainingMinutes !== null ? `Time Left: ${Math.floor(status.remainingMinutes / 60)}h ${status.remainingMinutes % 60}m` : ''}
+                          ${status.overdueMinutes !== null ? `Overdue by ${status.overdueMinutes}m` : ''}
                           ${status.code === 'SUBMITTED' ? `Safe in locker` : ''}
                           ${status.code === 'NOT_CHECKED_OUT' ? `Desk checkout pending` : ''}
+                          ${status.code === 'SUSPENDED' ? `Suspended until ${p.suspendedUntil || 'further notice'}` : ''}
+                          ${status.code === 'REVOKED' ? `Access cancelled` : ''}
                         </div>
                       </td>
 
@@ -271,7 +373,7 @@ export function renderDeviceManagementView(container, navigateTo) {
                       <td style="padding: 12px 16px; vertical-align: middle;">
                         <div style="display: flex; align-items: center; gap: 6px;">
                           <span style="font-size: 12px; font-weight: 700; color: ${meetsToday > 0 ? '#059669' : '#d97706'};">
-                            ${meetsToday > 0 ? `🟢 ${meetsToday} Meets Today` : `🟡 0 Meets Today`}
+                            ${meetsToday > 0 ? `${meetsToday} Meets Today` : `0 Meets Logged Today`}
                           </span>
                         </div>
                         <div style="font-size: 11px; color: #64748b; margin-top: 2px;">
@@ -279,34 +381,40 @@ export function renderDeviceManagementView(container, navigateTo) {
                         </div>
                       </td>
 
-                      <!-- Supervisor Actions -->
+                      <!-- Actions -->
                       <td style="padding: 12px 16px; vertical-align: middle; text-align: right;">
                         <div style="display: flex; gap: 6px; justify-content: flex-end; align-items: center;">
-                          ${isCheckedOut ? `
-                            <button type="button" class="btn btn-sm btn-outline btn-return-phone" data-id="${p.id}" title="Submit Phone to Locker" style="border-color: #a7f3d0; background: #ecfdf5; color: #047857; font-weight: 700; height: 32px; padding: 0 10px;">
-                              ${getIcon('check')} Submit
+                          ${isController ? `
+                            <!-- Controller: Professional Desk & Revocation Actions -->
+                            <button type="button" class="btn btn-sm btn-primary btn-open-device-action" data-id="${p.id}" title="Manage Desk &amp; Revocation" style="height: 32px; font-size: 11.5px; font-weight: 700; gap: 5px;">
+                              ${getIcon('slider')} <span>Manage</span>
+                            </button>
+
+                            <button type="button" class="btn btn-sm btn-outline btn-inspect-phone" data-tag="${p.deviceTag}" title="Live QR &amp; Progress Inspection" style="border-color: #cbd5e1; height: 32px; padding: 0 8px;">
+                              ${getIcon('eye')}
+                            </button>
+
+                            <button type="button" class="btn btn-sm btn-outline btn-sticker-phone" data-id="${p.id}" title="Print Physical Phone Sticker" style="border-color: #cbd5e1; height: 32px; padding: 0 8px;">
+                              ${getIcon('printer')}
+                            </button>
+
+                            <button type="button" class="btn btn-sm btn-outline btn-edit-permit" data-id="${p.id}" title="Edit Permit" style="border-color: #cbd5e1; height: 32px; padding: 0 8px;">
+                              ${getIcon('edit')}
+                            </button>
+
+                            <button type="button" class="btn btn-sm btn-outline text-danger btn-delete-permit" data-id="${p.id}" title="Delete Permit" style="border-color: #fecaca; height: 32px; padding: 0 8px;">
+                              ${getIcon('trash')}
                             </button>
                           ` : `
-                            <button type="button" class="btn btn-sm btn-outline btn-checkout-phone" data-id="${p.id}" title="Issue Phone for Today" style="border-color: #cbd5e1; font-weight: 700; height: 32px; padding: 0 10px;">
-                              ${getIcon('plus')} Issue
+                            <!-- Teachers / Mentors: Scan, Inspect & Report Irregularity ONLY -->
+                            <button type="button" class="btn btn-sm btn-secondary btn-inspect-phone" data-tag="${p.deviceTag}" title="Inspect Progress" style="height: 32px; font-size: 12px; font-weight: 700; gap: 5px;">
+                              ${getIcon('eye')} <span>Inspect</span>
+                            </button>
+
+                            <button type="button" class="btn btn-sm btn-outline btn-report-violation" data-id="${p.id}" title="Report Violation" style="border-color: #fca5a5; color: #dc2626; height: 32px; font-size: 11.5px; font-weight: 700; gap: 4px;">
+                              ${getIcon('flag')} <span>Report</span>
                             </button>
                           `}
-
-                          <button type="button" class="btn btn-sm btn-outline btn-inspect-phone" data-tag="${p.deviceTag}" title="Live QR & Progress Inspection" style="border-color: #cbd5e1; height: 32px; padding: 0 8px;">
-                            ${getIcon('eye')}
-                          </button>
-
-                          <button type="button" class="btn btn-sm btn-outline btn-sticker-phone" data-id="${p.id}" title="Print Physical Phone Sticker" style="border-color: #cbd5e1; height: 32px; padding: 0 8px;">
-                            ${getIcon('printer')}
-                          </button>
-
-                          <button type="button" class="btn btn-sm btn-outline btn-edit-permit" data-id="${p.id}" title="Edit Permit" style="border-color: #cbd5e1; height: 32px; padding: 0 8px;">
-                            ${getIcon('edit')}
-                          </button>
-
-                          <button type="button" class="btn btn-sm btn-outline text-danger btn-delete-permit" data-id="${p.id}" title="Delete / Revoke Permit" style="border-color: #fecaca; height: 32px; padding: 0 8px;">
-                            ${getIcon('trash')}
-                          </button>
                         </div>
                       </td>
                     </tr>
@@ -337,10 +445,10 @@ export function renderDeviceManagementView(container, navigateTo) {
               <!-- Header Row: Tag & Status Badge -->
               <div class="mdc-header-row">
                 <span class="mdc-tag-capsule">
-                  <span>📱</span>
+                  <span>${getIcon('smartphone')}</span>
                   <span>${p.deviceTag}</span>
                 </span>
-                <div style="display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px; border-radius: 9999px; font-size: 11.5px; font-weight: 700; background: ${status.bgColor}; color: ${status.color}; border: 1px solid ${status.borderColor};">
+                <div style="display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px; border-radius: 9999px; font-size: 11px; font-weight: 800; background: ${status.bgColor}; color: ${status.color}; border: 1px solid ${status.borderColor};">
                   <span style="width: 6px; height: 6px; border-radius: 50%; background: ${status.color};"></span>
                   <span>${status.badge}</span>
                 </div>
@@ -358,7 +466,7 @@ export function renderDeviceManagementView(container, navigateTo) {
                   <div class="mdc-student-tags">
                     <span class="badge badge-category-pill" style="font-size: 10px; padding: 1px 6px;">${cand.category}</span>
                     <span>CHEST: <strong>${cand.chestNo || cand.adNo || 'N/A'}</strong></span>
-                    <span>• ${p.deviceModel || 'Phone'}</span>
+                    <span>• ${p.deviceModel || 'Smartphone'}</span>
                   </div>
                 </div>
               </div>
@@ -366,14 +474,16 @@ export function renderDeviceManagementView(container, navigateTo) {
               <!-- Permitted Time & Remaining Countdown Bar -->
               <div class="mdc-rule-strip">
                 <div>
-                  <span style="color: #64748b;">Hours:</span>
+                  <span style="color: #64748b;">Allowed Hours:</span>
                   <strong>09:00 AM – 10:00 PM</strong>
                 </div>
                 <div style="font-weight: 800; color: ${status.code === 'ILLEGAL_OVERDUE' ? '#dc2626' : (isCheckedOut ? '#059669' : '#64748b')};">
-                  ${status.remainingMinutes !== null ? `⏳ ${Math.floor(status.remainingMinutes / 60)}h ${status.remainingMinutes % 60}m left` : ''}
-                  ${status.overdueMinutes !== null ? `🚨 OVERDUE by ${status.overdueMinutes}m` : ''}
-                  ${status.code === 'SUBMITTED' ? `✅ In Locker` : ''}
-                  ${status.code === 'NOT_CHECKED_OUT' ? `⚠️ Not Checked Out` : ''}
+                  ${status.remainingMinutes !== null ? `Time Left: ${Math.floor(status.remainingMinutes / 60)}h ${status.remainingMinutes % 60}m` : ''}
+                  ${status.overdueMinutes !== null ? `OVERDUE by ${status.overdueMinutes}m` : ''}
+                  ${status.code === 'SUBMITTED' ? `In Locker` : ''}
+                  ${status.code === 'NOT_CHECKED_OUT' ? `Desk Checkout Pending` : ''}
+                  ${status.code === 'SUSPENDED' ? `Suspended` : ''}
+                  ${status.code === 'REVOKED' ? `Revoked` : ''}
                 </div>
               </div>
 
@@ -382,7 +492,7 @@ export function renderDeviceManagementView(container, navigateTo) {
                 <div>
                   <span style="color: #64748b;">Practice Today:</span>
                   <strong style="color: ${meetsToday > 0 ? '#059669' : '#d97706'};">
-                    ${meetsToday > 0 ? `🟢 ${meetsToday} Meets Done` : `🟡 0 Meets Logged`}
+                    ${meetsToday > 0 ? `${meetsToday} Meets Done` : `0 Meets Logged`}
                   </strong>
                 </div>
                 <div style="font-size: 11px; color: #64748b;">
@@ -392,32 +502,37 @@ export function renderDeviceManagementView(container, navigateTo) {
 
               <!-- Actions Area (Touch Buttons) -->
               <div class="mdc-actions-grid">
-                <!-- Large Primary Button -->
-                ${isCheckedOut ? `
-                  <button type="button" class="btn btn-outline btn-return-phone mdc-primary-btn" data-id="${p.id}" style="background: #ecfdf5; border-color: #059669; color: #047857;">
-                    ${getIcon('check')} Submit &amp; Return Phone to Locker
+                ${isController ? `
+                  <!-- Controller Mobile Touch Controls -->
+                  <button type="button" class="btn btn-primary mdc-primary-btn btn-open-device-action" data-id="${p.id}" style="font-weight: 800; gap: 6px;">
+                    ${getIcon('slider')} Manage Desk &amp; Disciplinary Actions
                   </button>
-                ` : `
-                  <button type="button" class="btn btn-primary btn-checkout-phone mdc-primary-btn" data-id="${p.id}">
-                    ${getIcon('plus')} Issue / Check Out Phone for Today
-                  </button>
-                `}
 
-                <!-- Secondary Action Buttons Strip -->
-                <div class="mdc-sub-actions-row">
-                  <button type="button" class="mdc-sub-btn btn-inspect-phone" data-tag="${p.deviceTag}" title="Inspect Progress">
-                    ${getIcon('eye')} <span>Inspect</span>
-                  </button>
-                  <button type="button" class="mdc-sub-btn btn-sticker-phone" data-id="${p.id}" title="Print QR Sticker">
-                    ${getIcon('printer')} <span>Sticker</span>
-                  </button>
-                  <button type="button" class="mdc-sub-btn btn-edit-permit" data-id="${p.id}" title="Edit">
-                    ${getIcon('edit')} <span>Edit</span>
-                  </button>
-                  <button type="button" class="mdc-sub-btn text-danger btn-delete-permit" data-id="${p.id}" title="Delete">
-                    ${getIcon('trash')}
-                  </button>
-                </div>
+                  <div class="mdc-sub-actions-row">
+                    <button type="button" class="mdc-sub-btn btn-inspect-phone" data-tag="${p.deviceTag}" title="Inspect Progress">
+                      ${getIcon('eye')} <span>Inspect</span>
+                    </button>
+                    <button type="button" class="mdc-sub-btn btn-sticker-phone" data-id="${p.id}" title="Print QR Sticker">
+                      ${getIcon('printer')} <span>Sticker</span>
+                    </button>
+                    <button type="button" class="mdc-sub-btn btn-edit-permit" data-id="${p.id}" title="Edit">
+                      ${getIcon('edit')} <span>Edit</span>
+                    </button>
+                    <button type="button" class="mdc-sub-btn text-danger btn-delete-permit" data-id="${p.id}" title="Delete">
+                      ${getIcon('trash')}
+                    </button>
+                  </div>
+                ` : `
+                  <!-- Teacher Mobile Touch Controls (Scan & Report Only) -->
+                  <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px;">
+                    <button type="button" class="btn btn-secondary btn-inspect-phone" data-tag="${p.deviceTag}" style="height: 38px; font-weight: 700; gap: 5px;">
+                      ${getIcon('eye')} <span>Inspect</span>
+                    </button>
+                    <button type="button" class="btn btn-outline btn-report-violation" data-id="${p.id}" style="border-color: #fca5a5; color: #dc2626; height: 38px; font-weight: 700; gap: 5px;">
+                      ${getIcon('flag')} <span>Report</span>
+                    </button>
+                  </div>
+                `}
               </div>
             </div>
           `;
@@ -428,49 +543,43 @@ export function renderDeviceManagementView(container, navigateTo) {
     listContainer.innerHTML = desktopTableHtml + mobileCardsHtml;
   };
 
-  // 4. Robust Event Delegation on listContainer (100% Reliable Click Handling, Zero prompt() Blocking)
+  // 4. Robust Event Delegation on listContainer
   const listContainer = container.querySelector('#devicesListContainer');
   if (listContainer) {
     listContainer.onclick = (e) => {
-      // A. Checkout / Issue Phone
-      const btnCheckout = e.target.closest('.btn-checkout-phone');
-      if (btnCheckout) {
+      // Controller: Open Professional Action Modal (Issue, Return, Suspend, Revoke)
+      const btnAction = e.target.closest('.btn-open-device-action');
+      if (btnAction) {
         e.preventDefault();
         e.stopPropagation();
-        const id = btnCheckout.getAttribute('data-id');
-        const permit = state.getDevicePermitById(id);
-        const cand = permit ? state.getCandidateById(permit.candidateId) : null;
-        const candName = cand ? cand.name : (permit ? permit.deviceTag : 'Student');
-
-        const res = state.checkoutDevice(id, 'Duty Teacher');
-        if (res.success) {
-          toast.success(`📱 Phone issued to ${candName} for today. Return before 10:00 PM.`);
-          updateMetrics();
-          updateList();
-        }
+        const id = btnAction.getAttribute('data-id');
+        openDeviceActionModal({
+          permitId: id,
+          onActionComplete: () => {
+            updateMetrics();
+            updateList();
+          }
+        });
         return;
       }
 
-      // B. Submit / Return Phone
-      const btnReturn = e.target.closest('.btn-return-phone');
-      if (btnReturn) {
+      // Teacher / Controller: Report Violation Modal
+      const btnReport = e.target.closest('.btn-report-violation');
+      if (btnReport) {
         e.preventDefault();
         e.stopPropagation();
-        const id = btnReturn.getAttribute('data-id');
-        const permit = state.getDevicePermitById(id);
-        const cand = permit ? state.getCandidateById(permit.candidateId) : null;
-        const candName = cand ? cand.name : (permit ? permit.deviceTag : 'Student');
-
-        const res = state.submitDevice(id, 'Duty Teacher');
-        if (res.success) {
-          toast.success(`✅ Phone returned by ${candName} and safely locked in locker.`);
-          updateMetrics();
-          updateList();
-        }
+        const id = btnReport.getAttribute('data-id');
+        openDeviceReportModal({
+          permitId: id,
+          onSubmitted: () => {
+            updateMetrics();
+            updateList();
+          }
+        });
         return;
       }
 
-      // C. Inspect QR & Progress
+      // Inspect QR & Progress
       const btnInspect = e.target.closest('.btn-inspect-phone');
       if (btnInspect) {
         e.preventDefault();
@@ -480,7 +589,7 @@ export function renderDeviceManagementView(container, navigateTo) {
         return;
       }
 
-      // D. Print Phone Sticker
+      // Print Phone Sticker
       const btnSticker = e.target.closest('.btn-sticker-phone');
       if (btnSticker) {
         e.preventDefault();
@@ -490,9 +599,9 @@ export function renderDeviceManagementView(container, navigateTo) {
         return;
       }
 
-      // E. Edit Permit
+      // Edit Permit (Controller Only)
       const btnEdit = e.target.closest('.btn-edit-permit');
-      if (btnEdit) {
+      if (btnEdit && isController) {
         e.preventDefault();
         e.stopPropagation();
         const id = btnEdit.getAttribute('data-id');
@@ -506,13 +615,13 @@ export function renderDeviceManagementView(container, navigateTo) {
         return;
       }
 
-      // F. Delete Permit
+      // Delete Permit (Controller Only)
       const btnDelete = e.target.closest('.btn-delete-permit');
-      if (btnDelete) {
+      if (btnDelete && isController) {
         e.preventDefault();
         e.stopPropagation();
         const id = btnDelete.getAttribute('data-id');
-        if (confirm('Are you sure you want to delete / revoke this student device permit?')) {
+        if (confirm('Are you sure you want to delete / remove this student device permit?')) {
           state.deleteDevicePermit(id);
           toast.info('Device permit removed.');
           updateMetrics();
@@ -523,7 +632,7 @@ export function renderDeviceManagementView(container, navigateTo) {
     };
   }
 
-  // 5. Wire Static Search & Filter Handlers Once
+  // 5. Wire Static Search & Filter Handlers
   const inputSearch = container.querySelector('#inputDeviceSearch');
   if (inputSearch) {
     inputSearch.oninput = (e) => {
@@ -548,7 +657,7 @@ export function renderDeviceManagementView(container, navigateTo) {
     };
   }
 
-  // 6. Wire Top Global Actions
+  // 6. Wire Global Actions
   const btnScanQr = container.querySelector('#btnDeviceScanQr');
   if (btnScanQr) {
     btnScanQr.onclick = () => {

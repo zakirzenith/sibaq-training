@@ -86,7 +86,7 @@ export function openDeviceStickerModal({ permitId = null, batchAll = false } = {
         <!-- Time Window & Institutional Rule Ribbon -->
         <div class="pqs-rule-ribbon">
           <div class="pqs-rule-time">
-            <span class="pqs-clock-icon">⏰</span>
+            <span class="pqs-clock-icon" style="display: flex; align-items: center;">${getIcon('clock')}</span>
             <span>PERMITTED: <strong>09:00 AM — 10:00 PM</strong></span>
           </div>
           <div class="pqs-rule-sub">Mandatory Nightly Submission Before 10:00 PM</div>
@@ -127,8 +127,8 @@ export function openDeviceStickerModal({ permitId = null, batchAll = false } = {
       </div>
 
       <div class="modal-footer" style="padding: 12px 20px; border-top: 1px solid #e2e8f0; display: flex; justify-content: space-between; align-items: center; flex-shrink: 0; background: #ffffff; flex-wrap: wrap; gap: 8px;">
-        <div class="pqs-print-instructions text-muted" style="font-size: 11.5px;">
-          💡 <strong>Tip:</strong> In print dialog, set Margin to <em>None</em> or <em>Minimum</em> and enable <em>Background graphics</em>.
+        <div class="pqs-print-instructions text-muted" style="font-size: 11.5px; display: flex; align-items: center; gap: 4px;">
+          <span>${getIcon('info')}</span> <span><strong>Print Tip:</strong> In print dialog, set Margin to <em>None</em> or <em>Minimum</em> and enable <em>Background graphics</em>.</span>
         </div>
         <div style="display: flex; gap: 8px;">
           <button type="button" class="btn btn-secondary" id="btnCancelStickerModal" style="height: 36px;">Close</button>

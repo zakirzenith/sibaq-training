@@ -134,7 +134,7 @@ export function openDevicePermitModal({ permitId = null, onSaved = null } = {}) 
 
           <!-- Institutional Rule Notice Box -->
           <div style="background: #ffffff; border: 1px solid #cbd5e1; border-left: 4px solid #4f46e5; border-radius: 8px; padding: 11px 13px; font-size: 12px; color: #334155; display: flex; align-items: flex-start; gap: 8px;">
-            <span style="font-size: 16px; line-height: 1;">📌</span>
+            <span style="display: flex; margin-top: 1px; color: #4f46e5;">${getIcon('info')}</span>
             <div>
               <strong>Enforced Campus Rule:</strong> Phones can be checked out from <strong>09:00 AM</strong> onwards. They must be submitted back to the desk before <strong>10:00 PM</strong> daily. Any phone held past 10:00 PM triggers an instant Red Overdue Alert.
             </div>

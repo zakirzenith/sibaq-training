@@ -24,11 +24,7 @@ import { openCloudDatabaseModal } from './components/modals/cloudDatabaseModal.j
 import { openTrainerLoginModal } from './components/modals/trainerLoginModal.js';
 import { pwaService } from './services/pwaService.js';
 import { openPwaInstallModal } from './components/modals/pwaInstallModal.js';
-import { renderDeviceManagementView } from './components/deviceManagementView.js';
-import { renderDeviceVerificationView } from './components/deviceVerificationView.js';
-import { openDeviceScannerModal } from './components/modals/deviceScannerModal.js';
-import { openDeviceStickerModal } from './components/modals/deviceStickerModal.js';
-import { openDevicePermitModal } from './components/modals/devicePermitModal.js';
+
 
 class App {
   constructor() {
@@ -66,14 +62,7 @@ class App {
       }
     }
 
-    // Check for QR Code Device Inspection in URL query params
-    const urlParams = new URLSearchParams(window.location.search);
-    const isDeviceVerify = urlParams.get('verify') === 'device' || urlParams.has('device') || urlParams.has('tag');
-    const deviceVerifyTag = urlParams.get('tag') || urlParams.get('device') || '';
 
-    if (isDeviceVerify && deviceVerifyTag) {
-      this.currentView = `device-verify:${deviceVerifyTag}`;
-    }
 
     this.initTheme();
     this.initPortalTriggers();
@@ -147,12 +136,7 @@ class App {
       };
     }
 
-    const btnTopDevices = document.getElementById('btnTopDevices');
-    if (btnTopDevices) {
-      btnTopDevices.onclick = () => {
-        this.navigateTo('devices');
-      };
-    }
+
 
     const userPill = document.getElementById('topbarUserProfileBtn') || document.querySelector('.saas-user-pill');
     if (userPill) {
@@ -304,9 +288,6 @@ class App {
           <!-- Controller Shortcuts (Controller Only) -->
           ${session.role === 'controller' ? `
             <div style="margin-bottom: 12px; display: flex; flex-direction: column; gap: 6px;">
-              <button type="button" id="btnModalOpenDevices" class="btn btn-outline" style="width: 100%; height: 38px; font-weight: 700; font-size: 12px; border-radius: 10px; border-color: #cbd5e1; display: flex; align-items: center; justify-content: center; gap: 6px; background: #ffffff;">
-                <span>📱</span> Manage Student Phones &amp; QR
-              </button>
               ${this.currentPortal === 'trainer' ? `
                 <button type="button" id="btnModalSwitchToController" class="btn btn-outline" style="width: 100%; height: 38px; font-weight: 700; font-size: 12px; border-radius: 10px;">
                   ${getIcon('logout')} Return to Controller Panel
@@ -380,13 +361,7 @@ class App {
       };
     }
 
-    const btnModalOpenDev = overlay.querySelector('#btnModalOpenDevices');
-    if (btnModalOpenDev) {
-      btnModalOpenDev.onclick = () => {
-        close();
-        this.navigateTo('devices');
-      };
-    }
+
   }
 
   handleLoginSuccess(role, data) {
@@ -817,7 +792,7 @@ class App {
 
     const session = state.getAuthSession();
     if (session && session.role === 'trainer') {
-      const allowedTrainerViews = ['trainer-dashboard', 'trainer-daily-progress', 'trainer-reports', 'trainer-appeals', 'devices'];
+      const allowedTrainerViews = ['trainer-dashboard', 'trainer-daily-progress', 'trainer-reports', 'trainer-appeals'];
       if (!allowedTrainerViews.includes(viewName)) {
         toast.error('Access Restricted: Trainer accounts cannot access Controller views.');
         this.currentView = 'trainer-dashboard';
@@ -856,7 +831,6 @@ class App {
       'daily-progress': 'Daily Progress & Scoring',
       'reports': 'Performance Reports & Dossiers',
       'appeals': 'Trainer Appeals & Escalation Desk',
-      'devices': 'Student Phone & Device Desk',
       'trainer-dashboard': 'Trainer Dashboard',
       'trainer-daily-progress': 'Trainer Daily Progress',
       'trainer-reports': 'Performance & Mentorship Reports',
@@ -899,35 +873,6 @@ class App {
       const count = activeTrn ? state.getTrainerAppeals(activeTrn.id).length : 0;
       trnAppealBadge.textContent = count;
       trnAppealBadge.style.display = count > 0 ? 'inline-block' : 'none';
-    }
-
-    // Devices & Phones Badges (Sidebar & Mobile Topbar)
-    const deviceBadge = document.getElementById('sidebarDeviceBadge');
-    const topDeviceBadge = document.getElementById('topbarDeviceBadge');
-    if (state.getDeviceMetrics) {
-      const devMetrics = state.getDeviceMetrics();
-      if (deviceBadge) {
-        deviceBadge.textContent = devMetrics.checkedOutCount > 0 ? `${devMetrics.checkedOutCount} Active` : devMetrics.totalPermits;
-        if (devMetrics.overdueCount > 0) {
-          deviceBadge.style.background = '#fee2e2';
-          deviceBadge.style.color = '#b91c1c';
-        } else if (devMetrics.checkedOutCount > 0) {
-          deviceBadge.style.background = '#ecfdf5';
-          deviceBadge.style.color = '#047857';
-        } else {
-          deviceBadge.style.background = '#e0e7ff';
-          deviceBadge.style.color = '#4338ca';
-        }
-      }
-      if (topDeviceBadge) {
-        if (devMetrics.totalPermits > 0) {
-          topDeviceBadge.style.display = 'inline-flex';
-          topDeviceBadge.textContent = devMetrics.overdueCount > 0 ? `🚨 ${devMetrics.overdueCount}` : (devMetrics.checkedOutCount > 0 ? `${devMetrics.checkedOutCount}` : `${devMetrics.totalPermits}`);
-          topDeviceBadge.style.background = devMetrics.overdueCount > 0 ? '#dc2626' : (devMetrics.checkedOutCount > 0 ? '#059669' : '#6366f1');
-        } else {
-          topDeviceBadge.style.display = 'none';
-        }
-      }
     }
   }
 
@@ -1169,9 +1114,7 @@ class App {
       case 'appeals':
         renderAppealsView(this.mainContent, navigate);
         break;
-      case 'devices':
-        renderDeviceManagementView(this.mainContent, navigate);
-        break;
+
       case 'trainer-dashboard':
         renderTrainerDashboardView(this.mainContent, navigate);
         break;

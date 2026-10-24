@@ -164,8 +164,7 @@ class StateService {
         this.trainers = Array.isArray(parsed.trainers) ? parsed.trainers : [];
         this.dailyMeets = Array.isArray(parsed.dailyMeets) ? parsed.dailyMeets : [];
         this.appeals = Array.isArray(parsed.appeals) ? parsed.appeals : [];
-        this.devicePermits = Array.isArray(parsed.devicePermits) ? parsed.devicePermits : [];
-
+        
         // Ensure accurate Stage vs Non-Stage classification on startup
         if (this.programs.length > 0) {
           this.reclassifyProgramsStageType(false);
@@ -182,8 +181,7 @@ class StateService {
     this.trainers = [];
     this.dailyMeets = [];
     this.appeals = [];
-    this.devicePermits = [];
-    this.saveState();
+        this.saveState();
   }
 
   saveState(triggerNotify = true) {
@@ -196,8 +194,7 @@ class StateService {
           trainers: this.trainers,
           dailyMeets: this.dailyMeets,
           appeals: this.appeals,
-          devicePermits: this.devicePermits || [],
-          lastUpdated: new Date().toISOString()
+                    lastUpdated: new Date().toISOString()
         })
       );
     } catch (e) {
@@ -290,15 +287,8 @@ class StateService {
       this.saveState();
     });
 
-    const unsubDevices = firebaseService.subscribe('devicePermits', (items) => {
-      this.devicePermits = items.map(d => ({
-        ...d,
-        id: String(d.id || '').trim()
-      }));
-      this.saveState();
-    });
-
-    this.cloudUnsubscribers.push(unsubCandidates, unsubPrograms, unsubTrainers, unsubMeets, unsubAppeals, unsubDevices);
+    
+    this.cloudUnsubscribers.push(unsubCandidates, unsubPrograms, unsubTrainers, unsubMeets, unsubAppeals);
   }
 
   async syncAllLocalToCloud() {
@@ -321,10 +311,7 @@ class StateService {
     if (this.appeals && this.appeals.length > 0) {
       await firebaseService.batchSync('appeals', this.appeals);
     }
-    if (this.devicePermits && this.devicePermits.length > 0) {
-      await firebaseService.batchSync('devicePermits', this.devicePermits);
-    }
-    return true;
+        return true;
   }
 
   async fetchFromCloud() {
@@ -332,20 +319,18 @@ class StateService {
       throw new Error('Firebase Firestore is not connected.');
     }
 
-    const [cand, prog, trn, meets, dev] = await Promise.all([
+    const [cand, prog, trn, meets] = await Promise.all([
       firebaseService.fetchAll('candidates'),
       firebaseService.fetchAll('programs'),
       firebaseService.fetchAll('trainers'),
-      firebaseService.fetchAll('dailyMeets'),
-      firebaseService.fetchAll('devicePermits')
+      firebaseService.fetchAll('dailyMeets')
     ]);
 
     this.candidates = cand;
     this.programs = prog;
     this.trainers = trn;
     this.dailyMeets = meets;
-    this.devicePermits = dev || [];
-    this.saveState();
+        this.saveState();
     return true;
   }
 
@@ -1949,38 +1934,7 @@ class StateService {
     this.trainers = [...SAMPLE_DEMO_TRAINERS];
     this.dailyMeets = [];
     this.appeals = [];
-    const firstCand = this.candidates[0];
-    if (firstCand) {
-      const todayStr = new Date().toISOString().split('T')[0];
-      this.devicePermits = [
-        {
-          id: 'dev_demo_01',
-          candidateId: firstCand.id,
-          deviceTag: 'DEV-01',
-          deviceModel: 'Samsung Galaxy A15',
-          reason: 'Arabic Elocution Rehearsal & Audio Recording',
-          notes: 'Permitted exclusively for competition practice. Return before 10 PM.',
-          permittedBy: 'Controller Desk',
-          permittedAt: new Date().toISOString(),
-          validFrom: todayStr,
-          validUntil: '2026-11-30',
-          status: 'active',
-          checkouts: [
-            {
-              id: 'chk_demo_01',
-              date: todayStr,
-              issuedAt: new Date(Date.now() - 3600000 * 2).toISOString(),
-              issuedBy: 'Duty Supervisor',
-              submittedAt: null,
-              submittedTo: null,
-              remarks: 'Issued at 09:30 AM for audio rehearsal'
-            }
-          ]
-        }
-      ];
-    } else {
-      this.devicePermits = [];
-    }
+    
     this.saveState();
   }
 
@@ -1990,8 +1944,7 @@ class StateService {
     this.trainers = [];
     this.dailyMeets = [];
     this.appeals = [];
-    this.devicePermits = [];
-    this.saveState();
+        this.saveState();
   }
 
   clearAll() {
@@ -2000,8 +1953,7 @@ class StateService {
     this.trainers = [];
     this.dailyMeets = [];
     this.appeals = [];
-    this.devicePermits = [];
-    this.saveState();
+        this.saveState();
   }
 
   exportDataJson() {
@@ -2012,8 +1964,7 @@ class StateService {
         trainers: this.trainers,
         dailyMeets: this.dailyMeets,
         appeals: this.appeals || [],
-        devicePermits: this.devicePermits || [],
-        exportDate: new Date().toISOString(),
+                exportDate: new Date().toISOString(),
         version: '2.0'
       },
       null,
@@ -2032,8 +1983,7 @@ class StateService {
       this.trainers = data.trainers;
       this.dailyMeets = Array.isArray(data.dailyMeets) ? data.dailyMeets : [];
       this.appeals = Array.isArray(data.appeals) ? data.appeals : [];
-      this.devicePermits = Array.isArray(data.devicePermits) ? data.devicePermits : [];
-      this.saveState();
+            this.saveState();
 
       if (firebaseService.isInitialized) {
         this.syncAllLocalToCloud().catch(e => console.warn(e));
@@ -2621,438 +2571,6 @@ class StateService {
     return true;
   }
 
-  // ==========================================
-  // DEVICE & STUDENT PHONE MANAGEMENT METHODS
-  // ==========================================
-
-  getDevicePermits() {
-    return this.devicePermits || [];
-  }
-
-  getDevicePermitById(id) {
-    if (!id) return null;
-    return (this.devicePermits || []).find(d => String(d.id).trim() === String(id).trim()) || null;
-  }
-
-  getDevicePermitByTag(tag) {
-    if (!tag) return null;
-    const cleanTag = String(tag).trim().toUpperCase();
-    return (this.devicePermits || []).find(d => String(d.deviceTag || '').trim().toUpperCase() === cleanTag) || null;
-  }
-
-  getDevicePermitsByCandidateId(candidateId) {
-    if (!candidateId) return [];
-    return (this.devicePermits || []).filter(d => String(d.candidateId).trim() === String(candidateId).trim());
-  }
-
-  createDevicePermit(permitData) {
-    const id = permitData.id || `dev_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`;
-    const newPermit = {
-      id,
-      candidateId: String(permitData.candidateId || '').trim(),
-      deviceTag: String(permitData.deviceTag || `DEV-${(this.devicePermits.length + 1).toString().padStart(2, '0')}`).trim().toUpperCase(),
-      deviceModel: String(permitData.deviceModel || 'Smartphone').trim(),
-      reason: String(permitData.reason || 'Competition Rehearsal & Practice').trim(),
-      notes: String(permitData.notes || '').trim(),
-      permittedBy: permitData.permittedBy || 'Controller Desk',
-      permittedAt: permitData.permittedAt || new Date().toISOString(),
-      validFrom: permitData.validFrom || new Date().toISOString().split('T')[0],
-      validUntil: permitData.validUntil || '2026-11-30',
-      status: permitData.status || 'active', // 'active' | 'suspended' | 'revoked'
-      checkouts: Array.isArray(permitData.checkouts) ? permitData.checkouts : []
-    };
-
-    if (!Array.isArray(this.devicePermits)) {
-      this.devicePermits = [];
-    }
-    this.devicePermits.push(newPermit);
-    this.saveState();
-
-    if (firebaseService.isInitialized) {
-      firebaseService.setDoc('devicePermits', id, newPermit).catch(e => console.error(e));
-    }
-    return newPermit;
-  }
-
-  updateDevicePermit(id, updateData) {
-    const idx = (this.devicePermits || []).findIndex(d => String(d.id).trim() === String(id).trim());
-    if (idx === -1) return null;
-
-    const current = this.devicePermits[idx];
-    const updated = {
-      ...current,
-      ...updateData,
-      id: current.id,
-      deviceTag: updateData.deviceTag ? String(updateData.deviceTag).trim().toUpperCase() : current.deviceTag,
-      checkouts: updateData.checkouts !== undefined ? updateData.checkouts : current.checkouts
-    };
-
-    this.devicePermits[idx] = updated;
-    this.saveState();
-
-    if (firebaseService.isInitialized) {
-      firebaseService.setDoc('devicePermits', id, updated).catch(e => console.error(e));
-    }
-    return updated;
-  }
-
-  deleteDevicePermit(id) {
-    const idx = (this.devicePermits || []).findIndex(d => String(d.id).trim() === String(id).trim());
-    if (idx === -1) return false;
-
-    this.devicePermits.splice(idx, 1);
-    this.saveState();
-
-    if (firebaseService.isInitialized) {
-      firebaseService.deleteDoc('devicePermits', id).catch(e => console.error(e));
-    }
-    return true;
-  }
-
-  checkoutDevice(permitId, issuedBy = 'Supervisor', remarks = '') {
-    const permit = this.getDevicePermitById(permitId);
-    if (!permit) return { success: false, error: 'Permit not found' };
-
-    const todayStr = new Date().toISOString().split('T')[0];
-    const checkouts = Array.isArray(permit.checkouts) ? [...permit.checkouts] : [];
-
-    const existingIndex = checkouts.findIndex(c => c.date === todayStr);
-    const checkoutRecord = {
-      id: `chk_${Date.now()}`,
-      date: todayStr,
-      issuedAt: new Date().toISOString(),
-      issuedBy: issuedBy || 'Controller Desk',
-      submittedAt: null,
-      submittedTo: null,
-      remarks: remarks || ''
-    };
-
-    if (existingIndex >= 0) {
-      checkouts[existingIndex] = checkoutRecord;
-    } else {
-      checkouts.push(checkoutRecord);
-    }
-
-    this.updateDevicePermit(permit.id, { checkouts });
-    return { success: true, permit: this.getDevicePermitById(permitId) };
-  }
-
-  submitDevice(permitId, submittedTo = 'Supervisor', remarks = '') {
-    const permit = this.getDevicePermitById(permitId);
-    if (!permit) return { success: false, error: 'Permit not found' };
-
-    const todayStr = new Date().toISOString().split('T')[0];
-    const checkouts = Array.isArray(permit.checkouts) ? [...permit.checkouts] : [];
-
-    let checkout = checkouts.find(c => c.date === todayStr && !c.submittedAt);
-    if (!checkout) {
-      checkout = checkouts.slice().reverse().find(c => !c.submittedAt);
-    }
-
-    if (checkout) {
-      checkout.submittedAt = new Date().toISOString();
-      checkout.submittedTo = submittedTo || 'Supervisor';
-      if (remarks) {
-        checkout.remarks = checkout.remarks ? `${checkout.remarks} | ${remarks}` : remarks;
-      }
-    } else {
-      checkouts.push({
-        id: `chk_${Date.now()}`,
-        date: todayStr,
-        issuedAt: new Date(Date.now() - 3600000).toISOString(),
-        issuedBy: 'Unknown',
-        submittedAt: new Date().toISOString(),
-        submittedTo: submittedTo || 'Supervisor',
-        remarks: remarks || 'Direct submission'
-      });
-    }
-
-    this.updateDevicePermit(permit.id, { checkouts });
-    return { success: true, permit: this.getDevicePermitById(permitId) };
-  }
-
-  suspendDevicePermit(permitId, { suspendedUntil = null, reason = '', supervisor = 'Controller Desk' } = {}) {
-    const permit = this.getDevicePermitById(permitId);
-    if (!permit) return { success: false, error: 'Permit not found' };
-
-    return this.updateDevicePermit(permit.id, {
-      status: 'suspended',
-      suspendedUntil: suspendedUntil || new Date(Date.now() + 86400000).toISOString().split('T')[0],
-      suspensionReason: reason || 'Violation under supervisor review',
-      suspendedBy: supervisor,
-      suspendedAt: new Date().toISOString()
-    });
-  }
-
-  revokeDevicePermit(permitId, { reason = '', supervisor = 'Controller Desk' } = {}) {
-    const permit = this.getDevicePermitById(permitId);
-    if (!permit) return { success: false, error: 'Permit not found' };
-
-    return this.updateDevicePermit(permit.id, {
-      status: 'revoked',
-      revokedAt: new Date().toISOString(),
-      revokedReason: reason || 'Official cancellation by Controller Office',
-      revokedBy: supervisor
-    });
-  }
-
-  reinstateDevicePermit(permitId, { supervisor = 'Controller Desk' } = {}) {
-    const permit = this.getDevicePermitById(permitId);
-    if (!permit) return { success: false, error: 'Permit not found' };
-
-    return this.updateDevicePermit(permit.id, {
-      status: 'active',
-      suspendedUntil: null,
-      suspensionReason: null,
-      revokedAt: null,
-      revokedReason: null,
-      reinstatedBy: supervisor,
-      reinstatedAt: new Date().toISOString()
-    });
-  }
-
-  reportDeviceIrregularity(permitId, report) {
-    const permit = this.getDevicePermitById(permitId);
-    if (!permit) return { success: false, error: 'Permit not found' };
-
-    const irregularities = Array.isArray(permit.irregularities) ? [...permit.irregularities] : [];
-    const newRecord = {
-      id: `irr_${Date.now()}_${Math.random().toString(36).substr(2, 4)}`,
-      reportedAt: new Date().toISOString(),
-      reportedBy: report.reportedBy || 'Teacher on Duty',
-      category: report.category || 'OTHER',
-      notes: report.notes || '',
-      status: 'pending', // 'pending' | 'action_taken' | 'dismissed'
-      actionTaken: null,
-      actionDate: null
-    };
-
-    irregularities.unshift(newRecord);
-    this.updateDevicePermit(permit.id, { irregularities });
-    return { success: true, irregularity: newRecord, permit: this.getDevicePermitById(permitId) };
-  }
-
-  resolveDeviceIrregularity(permitId, irregularityId, { action = 'dismissed', actionNote = '', supervisor = 'Controller Desk' } = {}) {
-    const permit = this.getDevicePermitById(permitId);
-    if (!permit) return { success: false, error: 'Permit not found' };
-
-    const irregularities = Array.isArray(permit.irregularities) ? [...permit.irregularities] : [];
-    const idx = irregularities.findIndex(i => i.id === irregularityId);
-    if (idx >= 0) {
-      irregularities[idx] = {
-        ...irregularities[idx],
-        status: action,
-        actionTaken: actionNote || (action === 'dismissed' ? 'Dismissed by Controller' : 'Action taken'),
-        resolvedBy: supervisor,
-        actionDate: new Date().toISOString()
-      };
-      this.updateDevicePermit(permit.id, { irregularities });
-      return { success: true };
-    }
-    return { success: false, error: 'Report not found' };
-  }
-
-  getAllDeviceIrregularities() {
-    const all = [];
-    (this.devicePermits || []).forEach(p => {
-      const cand = this.getCandidateById(p.candidateId) || { name: 'Unknown Candidate', chestNo: 'N/A', category: 'GENERAL' };
-      (p.irregularities || []).forEach(irr => {
-        all.push({
-          ...irr,
-          permitId: p.id,
-          deviceTag: p.deviceTag,
-          deviceModel: p.deviceModel,
-          candidate: cand
-        });
-      });
-    });
-
-    return all.sort((a, b) => new Date(b.reportedAt) - new Date(a.reportedAt));
-  }
-
-  getDevicePermitStatus(permit, targetDate = new Date()) {
-    if (!permit) {
-      return {
-        code: 'NOT_FOUND',
-        badge: 'INVALID PASS',
-        color: '#dc2626',
-        bgColor: '#fef2f2',
-        borderColor: '#fecaca',
-        description: 'No registered device permit found for this QR code.',
-        isLegal: false,
-        remainingMinutes: null,
-        overdueMinutes: null,
-        todayCheckout: null
-      };
-    }
-
-    if (permit.status === 'suspended') {
-      const isPastSuspension = permit.suspendedUntil && new Date(permit.suspendedUntil + 'T23:59:59') < targetDate;
-      if (!isPastSuspension) {
-        return {
-          code: 'SUSPENDED',
-          badge: 'TEMPORARILY SUSPENDED',
-          color: '#d97706',
-          bgColor: '#fffbeb',
-          borderColor: '#fde68a',
-          description: `Device permit is temporarily suspended until ${permit.suspendedUntil || 'further notice'}. Reason: ${permit.suspensionReason || 'Disciplinary hold'}.`,
-          isLegal: false,
-          remainingMinutes: null,
-          overdueMinutes: null,
-          todayCheckout: null
-        };
-      }
-    }
-
-    if (permit.status === 'revoked') {
-      return {
-        code: 'REVOKED',
-        badge: 'PERMANENTLY REVOKED',
-        color: '#dc2626',
-        bgColor: '#fef2f2',
-        borderColor: '#fecaca',
-        description: `Device access has been permanently cancelled by Controller. Reason: ${permit.revokedReason || 'Official cancellation'}.`,
-        isLegal: false,
-        remainingMinutes: null,
-        overdueMinutes: null,
-        todayCheckout: null
-      };
-    }
-
-    const todayStr = targetDate.toISOString().split('T')[0];
-    const checkouts = Array.isArray(permit.checkouts) ? permit.checkouts : [];
-    const todayCheckout = checkouts.find(c => c.date === todayStr);
-
-    const hours = targetDate.getHours();
-    const minutes = targetDate.getMinutes();
-    const totalMinutes = hours * 60 + minutes;
-    const startMinutes = 9 * 60; // 09:00 AM = 540
-    const endMinutes = 22 * 60;   // 10:00 PM = 1320
-
-    // Time window evaluation:
-    if (totalMinutes < startMinutes) {
-      return {
-        code: 'ILLEGAL_EARLY',
-        badge: 'UNAUTHORIZED HOURS',
-        color: '#dc2626',
-        bgColor: '#fef2f2',
-        borderColor: '#fecaca',
-        description: `Holding phone before 09:00 AM is illegal! Phones can only be issued starting from 09:00 AM.`,
-        isLegal: false,
-        remainingMinutes: null,
-        overdueMinutes: null,
-        todayCheckout
-      };
-    }
-
-    if (totalMinutes >= endMinutes) {
-      const overdueMins = totalMinutes - endMinutes;
-      const hoursOver = Math.floor(overdueMins / 60);
-      const minsOver = overdueMins % 60;
-      const overdueStr = hoursOver > 0 ? `${hoursOver}h ${minsOver}m` : `${minsOver} min`;
-      return {
-        code: 'ILLEGAL_OVERDUE',
-        badge: 'ILLEGAL / OVERDUE',
-        color: '#dc2626',
-        bgColor: '#fef2f2',
-        borderColor: '#fecaca',
-        description: `CRITICAL RULE VIOLATION: Phones must be submitted before 10:00 PM! Overdue by ${overdueStr}. Phone must be submitted immediately!`,
-        isLegal: false,
-        remainingMinutes: null,
-        overdueMinutes: overdueMins,
-        todayCheckout
-      };
-    }
-
-    // Inside 09:00 AM to 10:00 PM:
-    if (todayCheckout && todayCheckout.submittedAt) {
-      const subTime = new Date(todayCheckout.submittedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-      return {
-        code: 'SUBMITTED',
-        badge: 'SUBMITTED TO DESK',
-        color: '#d97706',
-        bgColor: '#fffbeb',
-        borderColor: '#fde68a',
-        description: `Device was officially submitted at ${subTime} to ${todayCheckout.submittedTo || 'Supervisor'}. Phone is safely in storage.`,
-        isLegal: false,
-        remainingMinutes: null,
-        overdueMinutes: null,
-        todayCheckout
-      };
-    }
-
-    if (todayCheckout && !todayCheckout.submittedAt) {
-      const remainingMins = endMinutes - totalMinutes;
-      const remHours = Math.floor(remainingMins / 60);
-      const remMins = remainingMins % 60;
-      const remainingStr = remHours > 0 ? `${remHours}h ${remMins}m` : `${remMins} min`;
-
-      return {
-        code: 'LEGAL',
-        badge: 'LEGAL & ACTIVE PRACTICE PASS',
-        color: '#059669',
-        bgColor: '#ecfdf5',
-        borderColor: '#a7f3d0',
-        description: `VALID & PERMITTED: Candidate is authorized for competition practice. Must be submitted before 10:00 PM (${remainingStr} remaining).`,
-        isLegal: true,
-        remainingMinutes: remainingMins,
-        overdueMinutes: null,
-        todayCheckout
-      };
-    }
-
-    // Between 9am and 10pm, but not checked out today
-    return {
-      code: 'NOT_CHECKED_OUT',
-      badge: 'NOT CHECKED OUT TODAY',
-      color: '#475569',
-      bgColor: '#f8fafc',
-      borderColor: '#e2e8f0',
-      description: `Permit is registered for this candidate, but the phone was NOT officially checked out from the desk today.`,
-      isLegal: false,
-      remainingMinutes: null,
-      overdueMinutes: null,
-      todayCheckout: null
-    };
-  }
-
-  getDeviceMetrics() {
-    const permits = this.devicePermits || [];
-    const now = new Date();
-    let checkedOutCount = 0;
-    let submittedCount = 0;
-    let overdueCount = 0;
-    let activePermitsCount = 0;
-    let suspendedCount = 0;
-    let revokedCount = 0;
-    let pendingIrregularitiesCount = 0;
-
-    permits.forEach(p => {
-      if (p.status === 'active') activePermitsCount++;
-      else if (p.status === 'suspended') suspendedCount++;
-      else if (p.status === 'revoked') revokedCount++;
-
-      const status = this.getDevicePermitStatus(p, now);
-      if (status.code === 'LEGAL') checkedOutCount++;
-      else if (status.code === 'SUBMITTED') submittedCount++;
-      else if (status.code === 'ILLEGAL_OVERDUE') overdueCount++;
-
-      (p.irregularities || []).forEach(irr => {
-        if (irr.status === 'pending') pendingIrregularitiesCount++;
-      });
-    });
-
-    return {
-      totalPermits: permits.length,
-      activePermitsCount,
-      checkedOutCount,
-      submittedCount,
-      overdueCount,
-      suspendedCount,
-      revokedCount,
-      pendingIrregularitiesCount
-    };
-  }
 }
 
 export const state = new StateService();

@@ -8,6 +8,7 @@ export function renderDashboardView(container, navigateTo) {
   const programs = state.getPrograms();
   const trainers = state.getTrainers();
   const dailySummary = state.getDailySummary();
+  const deviceMetrics = state.getDeviceMetrics ? state.getDeviceMetrics() : { totalPermits: 0, checkedOutCount: 0, overdueCount: 0 };
 
   const unassignedTrainerPrograms = programs.filter(p => !p.trainerId || !state.getTrainerById(p.trainerId));
   const unassignedCandidatePrograms = programs.filter(p => !p.candidateIds || p.candidateIds.length === 0);
@@ -72,6 +73,17 @@ export function renderDashboardView(container, navigateTo) {
           <div class="stat-value">${dailySummary.metCount} / ${dailySummary.totalScheduled}</div>
           <div class="stat-foot text-emerald">
             ${dailySummary.partialCount > 0 ? `<span style="color: #ea580c; font-weight: 700;">${dailySummary.partialCount} partial</span> • ` : ''}${dailySummary.pendingCount} pending • Avg ${dailySummary.avgScore}% &rarr;
+          </div>
+        </div>
+      </div>
+
+      <div class="stat-card" data-nav="devices">
+        <div class="stat-icon-wrap" style="background: #eef2ff; color: #4f46e5;">${getIcon('smartphone')}</div>
+        <div class="stat-content">
+          <div class="stat-label">Permitted Phones &amp; QR</div>
+          <div class="stat-value">${deviceMetrics.totalPermits}</div>
+          <div class="stat-foot" style="color: ${deviceMetrics.overdueCount > 0 ? '#dc2626' : '#4f46e5'}; font-weight: 700;">
+            ${deviceMetrics.overdueCount > 0 ? `🚨 ${deviceMetrics.overdueCount} overdue` : `${deviceMetrics.checkedOutCount} active in hand`} (09 AM – 10 PM) &rarr;
           </div>
         </div>
       </div>

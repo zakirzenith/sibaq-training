@@ -15787,3 +15787,807 @@ select.auth-input option {
     font-size: 10.5px !important;
   }
 }
+
+/* ============================================================
+   DEVICE & STUDENT PHONE MANAGEMENT DESK STYLES
+   ============================================================ */
+
+.btn-devices-pill {
+  display: inline-flex !important;
+  align-items: center !important;
+  gap: 5px !important;
+  background: #f8fafc !important;
+  border: 1px solid #cbd5e1 !important;
+  border-radius: 9999px !important;
+  padding: 5px 11px !important;
+  font-weight: 700 !important;
+  font-size: 11.5px !important;
+  color: #334155 !important;
+  cursor: pointer !important;
+  transition: all 0.15s ease !important;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04) !important;
+}
+
+.btn-devices-pill:hover {
+  background: #eef2ff !important;
+  border-color: #c7d2fe !important;
+  color: #4338ca !important;
+  transform: translateY(-1px);
+}
+
+.stat-card-danger {
+  border-color: #fca5a5 !important;
+  background: #fef2f2 !important;
+}
+
+/* --- PHYSICAL PHONE STICKER LAYOUT --- */
+.pqs-print-sheet {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 10px;
+}
+
+.pqs-grid-sheet {
+  display: grid !important;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)) !important;
+  gap: 16px !important;
+}
+
+.phone-qr-sticker {
+  width: 250px;
+  background: #ffffff;
+  border: 2px solid #0f172a;
+  border-radius: 12px;
+  padding: 11px;
+  color: #0f172a;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.07);
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  page-break-inside: avoid;
+}
+
+.pqs-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  border-bottom: 1.5px solid #0f172a;
+  padding-bottom: 5px;
+}
+
+.pqs-brand {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.pqs-logo-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #4f46e5;
+}
+
+.pqs-title {
+  font-size: 10px;
+  font-weight: 800;
+  letter-spacing: 0.5px;
+  color: #0f172a;
+}
+
+.pqs-tag-capsule {
+  font-size: 11.5px;
+  font-weight: 900;
+  background: #0f172a;
+  color: #ffffff;
+  padding: 2px 7px;
+  border-radius: 5px;
+  font-family: monospace;
+}
+
+.pqs-body {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.pqs-qr-wrap {
+  width: 86px;
+  flex-shrink: 0;
+  text-align: center;
+}
+
+.pqs-qr-img {
+  width: 86px;
+  height: 86px;
+  display: block;
+  border-radius: 6px;
+  border: 1px solid #cbd5e1;
+}
+
+.pqs-scan-hint {
+  font-size: 8.5px;
+  font-weight: 800;
+  color: #64748b;
+  text-transform: uppercase;
+  margin-top: 3px;
+  display: block;
+}
+
+.pqs-candidate-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.pqs-avatar-row {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.pqs-avatar {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #10b981;
+  color: #fff;
+  font-weight: 800;
+  font-size: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.pqs-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.pqs-names {
+  min-width: 0;
+}
+
+.pqs-cand-name {
+  font-size: 12px;
+  font-weight: 800;
+  margin: 0;
+  color: #0f172a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.pqs-cand-meta {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 9.5px;
+  margin-top: 2px;
+}
+
+.pqs-cat-badge {
+  background: #ecfdf5;
+  color: #047857;
+  font-weight: 800;
+  padding: 1px 4px;
+  border-radius: 3px;
+  border: 0.5px solid #a7f3d0;
+}
+
+.pqs-ad-text {
+  font-weight: 700;
+  color: #334155;
+}
+
+.pqs-device-meta {
+  font-size: 10px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 5px;
+  padding: 4px 6px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.pqs-meta-line {
+  display: flex;
+  justify-content: space-between;
+  gap: 4px;
+}
+
+.pqs-meta-k {
+  color: #64748b;
+}
+
+.pqs-meta-v {
+  font-weight: 700;
+  color: #0f172a;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 85px;
+}
+
+.pqs-rule-ribbon {
+  background: #fef3c7;
+  border: 1px dashed #d97706;
+  border-radius: 6px;
+  padding: 4px 6px;
+  text-align: center;
+}
+
+.pqs-rule-time {
+  font-size: 10.5px;
+  font-weight: 800;
+  color: #92400e;
+}
+
+.pqs-rule-sub {
+  font-size: 8.5px;
+  font-weight: 700;
+  color: #b45309;
+  margin-top: 1px;
+}
+
+.pqs-footer {
+  display: flex;
+  justify-content: space-between;
+  font-size: 8px;
+  color: #94a3b8;
+  font-weight: 600;
+  border-top: 1px solid #f1f5f9;
+  padding-top: 3px;
+}
+
+/* --- LIVE VERIFICATION & INSPECTION VIEW STYLES --- */
+.device-verify-wrapper {
+  max-width: 660px;
+  margin: 0 auto;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.dv-top-crest-bar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  padding: 10px 14px;
+}
+
+.dv-crest-left {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.dv-crest-logo {
+  width: 32px;
+  height: 32px;
+  object-fit: contain;
+}
+
+.dv-crest-title {
+  font-size: 12px;
+  font-weight: 800;
+  color: #0f172a;
+  letter-spacing: 0.5px;
+}
+
+.dv-crest-sub {
+  font-size: 10.5px;
+  color: #64748b;
+}
+
+.dv-live-clock {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #0f172a;
+  color: #ffffff;
+  padding: 5px 10px;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 800;
+  font-family: monospace;
+}
+
+.dv-live-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #10b981;
+  box-shadow: 0 0 6px #10b981;
+}
+
+.dv-card {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 14px;
+  padding: 16px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.03);
+}
+
+.dv-card.status-green {
+  background: linear-gradient(180deg, #ecfdf5 0%, #ffffff 100%);
+  border: 1.5px solid #a7f3d0;
+}
+
+.dv-card.status-red {
+  background: linear-gradient(180deg, #fef2f2 0%, #ffffff 100%);
+  border: 1.5px solid #fecaca;
+}
+
+.dv-card.status-amber {
+  background: linear-gradient(180deg, #fffbeb 0%, #ffffff 100%);
+  border: 1.5px solid #fde68a;
+}
+
+.dv-status-header {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+}
+
+.dv-status-icon-wrap {
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.status-green .dv-status-icon-wrap {
+  background: #10b981;
+  color: #ffffff;
+}
+
+.status-red .dv-status-icon-wrap {
+  background: #ef4444;
+  color: #ffffff;
+  animation: pulse-red 1.5s infinite;
+}
+
+.status-amber .dv-status-icon-wrap {
+  background: #f59e0b;
+  color: #ffffff;
+}
+
+@keyframes pulse-red {
+  0% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0.4); }
+  70% { box-shadow: 0 0 0 10px rgba(239, 68, 68, 0); }
+  100% { box-shadow: 0 0 0 0 rgba(239, 68, 68, 0); }
+}
+
+.dv-status-title-group {
+  flex: 1;
+  min-width: 0;
+}
+
+.dv-status-pill {
+  font-size: 11px;
+  font-weight: 900;
+  padding: 3px 9px;
+  border-radius: 9999px;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.pill-green {
+  background: #059669;
+  color: #ffffff;
+}
+
+.pill-red {
+  background: #dc2626;
+  color: #ffffff;
+}
+
+.pill-amber {
+  background: #d97706;
+  color: #ffffff;
+}
+
+.pill-slate {
+  background: #475569;
+  color: #ffffff;
+}
+
+.dv-tag-pill {
+  background: #0f172a;
+  color: #ffffff;
+  font-size: 11px;
+  font-weight: 700;
+  padding: 3px 8px;
+  border-radius: 9999px;
+  font-family: monospace;
+}
+
+.dv-status-heading {
+  font-size: 18px;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 6px 0 0 0;
+  line-height: 1.3;
+}
+
+.dv-rule-countdown-bar {
+  margin-top: 14px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(0,0,0,0.06);
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+  gap: 10px;
+}
+
+.dv-rc-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.dv-rc-k {
+  font-size: 11px;
+  color: #64748b;
+}
+
+.dv-rc-v {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #0f172a;
+}
+
+.dv-cand-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.dv-cand-avatar {
+  width: 54px;
+  height: 54px;
+  border-radius: 50%;
+  background: #10b981;
+  color: #ffffff;
+  font-weight: 800;
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  border: 2px solid #e2e8f0;
+  flex-shrink: 0;
+}
+
+.dv-cand-avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.dv-cand-meta {
+  flex: 1;
+  min-width: 0;
+}
+
+.dv-cand-name {
+  font-size: 17px;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 4px 0 2px 0;
+}
+
+.dv-cand-inst {
+  font-size: 12px;
+  color: #64748b;
+  margin: 0;
+}
+
+.dv-card-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-bottom: 12px;
+}
+
+.dv-card-title-left {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.dv-title-icon {
+  color: #4f46e5;
+}
+
+.dv-section-title {
+  font-size: 15px;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0;
+}
+
+.dv-section-sub {
+  font-size: 11.5px;
+  color: #64748b;
+  margin: 2px 0 0 0;
+}
+
+.dv-practice-indicator {
+  font-size: 11px;
+  font-weight: 800;
+  padding: 4px 10px;
+  border-radius: 9999px;
+}
+
+.dpi-active {
+  background: #ecfdf5;
+  color: #047857;
+  border: 1px solid #a7f3d0;
+}
+
+.dpi-idle {
+  background: #fffbeb;
+  color: #b45309;
+  border: 1px solid #fde68a;
+}
+
+.dv-today-box {
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 10px;
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  text-align: center;
+  margin-bottom: 14px;
+}
+
+.dv-today-stat {
+  display: flex;
+  flex-direction: column;
+}
+
+.dv-tstat-val {
+  font-size: 18px;
+  font-weight: 900;
+  color: #0f172a;
+}
+
+.dv-tstat-lbl {
+  font-size: 10.5px;
+  color: #64748b;
+  margin-top: 1px;
+}
+
+.dv-sub-heading {
+  font-size: 12px;
+  font-weight: 800;
+  text-transform: uppercase;
+  color: #64748b;
+  letter-spacing: 0.5px;
+  margin: 0 0 8px 0;
+}
+
+.dv-programs-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dv-program-item {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 10px 12px;
+}
+
+.dv-prog-top {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.dv-prog-type-badge {
+  font-size: 9px;
+  font-weight: 800;
+  display: inline-block;
+  padding: 1px 5px;
+  border-radius: 3px;
+  letter-spacing: 0.5px;
+  margin-bottom: 2px;
+}
+
+.type-stage {
+  background: #fdf2f8;
+  color: #be185d;
+  border: 0.5px solid #fbcfe8;
+}
+
+.type-nonstage {
+  background: #eef2ff;
+  color: #4338ca;
+  border: 0.5px solid #c7d2fe;
+}
+
+.dv-prog-title {
+  font-size: 13.5px;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0;
+}
+
+.dv-prog-score-badge {
+  text-align: right;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  border-radius: 6px;
+  padding: 3px 8px;
+}
+
+.dv-score-label {
+  display: block;
+  font-size: 9px;
+  color: #64748b;
+  text-transform: uppercase;
+}
+
+.dv-score-val {
+  font-size: 13px;
+  font-weight: 800;
+  color: #0f172a;
+}
+
+.dv-prog-trainer-row {
+  font-size: 11.5px;
+  margin-top: 5px;
+  color: #475569;
+}
+
+.dv-mentor-critique {
+  background: #f8fafc;
+  border-left: 3px solid #6366f1;
+  padding: 6px 8px;
+  font-size: 11.5px;
+  color: #334155;
+  border-radius: 0 6px 6px 0;
+  margin-top: 6px;
+  font-style: italic;
+}
+
+.dv-critique-quote {
+  font-size: 14px;
+  color: #6366f1;
+  font-weight: 800;
+  margin-right: 4px;
+}
+
+.dv-actions-title {
+  font-size: 14px;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0;
+}
+
+.dv-actions-desc {
+  font-size: 11.5px;
+  color: #64748b;
+  margin: 2px 0 12px 0;
+}
+
+.dv-action-buttons-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 10px;
+}
+
+.dv-btn-action {
+  height: 42px;
+  font-weight: 700;
+  font-size: 12.5px;
+  border-radius: 10px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+}
+
+/* --- CAMERA SCANNER LASER ANIMATION --- */
+.scanner-laser-line {
+  width: 100%;
+  height: 2px;
+  background: #38bdf8;
+  box-shadow: 0 0 8px #38bdf8;
+  position: absolute;
+  top: 0;
+  animation: scan-laser 2s infinite ease-in-out;
+}
+
+@keyframes scan-laser {
+  0% { top: 5%; }
+  50% { top: 95%; }
+  100% { top: 5%; }
+}
+
+/* ============================================================
+   PRINT STYLES FOR PHONE STICKERS (@media print)
+   ============================================================ */
+@media print {
+  body * {
+    visibility: hidden;
+  }
+
+  .device-sticker-modal-backdrop,
+  .device-sticker-modal-backdrop * {
+    visibility: visible;
+  }
+
+  .device-sticker-modal-backdrop {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    background: transparent !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .device-sticker-dialog {
+    max-width: 100% !important;
+    width: 100% !important;
+    box-shadow: none !important;
+    border: none !important;
+    background: transparent !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .modal-header,
+  .modal-footer,
+  .modal-close-btn,
+  .app-sidebar,
+  .app-topbar,
+  .app-mobile-nav {
+    display: none !important;
+  }
+
+  .modal-body {
+    padding: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+  }
+
+  .pqs-print-sheet {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 12px !important;
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  .phone-qr-sticker {
+    box-shadow: none !important;
+    border: 2px solid #000000 !important;
+    page-break-inside: avoid !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}

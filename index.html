@@ -95,6 +95,16 @@
           <span>Mentee Appeals</span>
           <span id="sidebarAppealBadge" class="nav-item-badge" style="background:#fee2e2; color:#b91c1c; font-weight: 800;">0</span>
         </a>
+
+        <div class="nav-section-title" style="margin-top: 18px;">Assets & Security</div>
+
+        <a class="nav-item" data-view="devices" id="navDevices">
+          <span class="nav-item-icon">
+            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect width="14" height="20" x="5" y="2" rx="2" ry="2"/><path d="M12 18h.01"/></svg>
+          </span>
+          <span>Devices &amp; Phones</span>
+          <span id="sidebarDeviceBadge" class="nav-item-badge" style="background:#e0e7ff; color:#4338ca; font-weight: 800;">0</span>
+        </a>
       </nav>
 
       <div class="sidebar-footer">
@@ -147,6 +157,13 @@
           <button id="btnTopInstallApp" class="btn btn-sm btn-pwa-install-pill" title="Install Sibaq Mentoring as Web App" style="display: none; align-items: center; gap: 6px; background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%); color: #ffffff; border: none; font-weight: 700; font-size: 12px; border-radius: 999px; padding: 6px 12px; box-shadow: 0 2px 8px rgba(79, 70, 229, 0.25); cursor: pointer;">
             <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" x2="12" y1="15" y2="3"/></svg>
             <span class="btn-install-text">Install App</span>
+          </button>
+
+          <!-- Student Device Desk Button (1-Tap thumb access on Phone & Desktop) -->
+          <button id="btnTopDevices" class="btn btn-sm btn-devices-pill" title="Student Phone Management & QR" style="display: inline-flex; align-items: center; gap: 5px; background: #f8fafc; border: 1px solid #cbd5e1; border-radius: 9999px; padding: 5px 11px; font-weight: 700; font-size: 11.5px; color: #334155; cursor: pointer;">
+            <span style="font-size: 13px;">📱</span>
+            <span class="btn-devices-text">Phones</span>
+            <span id="topbarDeviceBadge" class="badge-mini-count" style="display: none; background: #6366f1; color: #fff; font-size: 10px; font-weight: 800; border-radius: 999px; padding: 1px 6px;">0</span>
           </button>
 
           <!-- User Pill / Profile Circle (Clickable on both Phone & Desktop) -->

@@ -6,12 +6,9 @@ import { toast } from '../toast.js';
 /**
  * Physical Phone Sticker & QR Pass Generator Modal
  * Renders print-ready, pocket/phone-sized stickers for transparent phone cases or adhesion.
- * Sized and formatted responsively for both desktop print previews and mobile phones.
+ * Immediately mounts modal on click for instant zero-latency feedback, then populates QR data.
  */
-export async function openDeviceStickerModal({ permitId = null, batchAll = false } = {}) {
-  const overlay = document.createElement('div');
-  overlay.className = 'modal-backdrop device-sticker-modal-backdrop';
-
+export function openDeviceStickerModal({ permitId = null, batchAll = false } = {}) {
   let permitsToPrint = [];
   if (batchAll) {
     permitsToPrint = state.getDevicePermits().filter(p => p.status === 'active');
@@ -28,26 +25,8 @@ export async function openDeviceStickerModal({ permitId = null, batchAll = false
     permitsToPrint = [permit];
   }
 
-  // Pre-generate QR data URLs for all permits
-  const qrMap = new Map();
-  for (const p of permitsToPrint) {
-    try {
-      const origin = window.location.origin;
-      const verifyUrl = `${origin}/?verify=device&tag=${encodeURIComponent(p.deviceTag)}`;
-      const qrDataUrl = await QRCode.toDataURL(verifyUrl, {
-        width: 320,
-        margin: 1,
-        color: {
-          dark: '#0f172a',
-          light: '#ffffff'
-        },
-        errorCorrectionLevel: 'M'
-      });
-      qrMap.set(p.id, qrDataUrl);
-    } catch (err) {
-      console.error('Failed to generate QR for permit:', p.id, err);
-    }
-  }
+  const overlay = document.createElement('div');
+  overlay.className = 'modal-backdrop device-sticker-modal-backdrop';
 
   const renderStickerHtml = (permit) => {
     const cand = state.getCandidateById(permit.candidateId) || {
@@ -55,7 +34,6 @@ export async function openDeviceStickerModal({ permitId = null, batchAll = false
       category: 'GENERAL',
       chestNo: 'N/A'
     };
-    const qrUrl = qrMap.get(permit.id) || '';
     const candInitials = (cand.name || 'C').split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase();
 
     return `
@@ -72,7 +50,7 @@ export async function openDeviceStickerModal({ permitId = null, batchAll = false
         <!-- Main Body: QR Code + Candidate Details -->
         <div class="pqs-body">
           <div class="pqs-qr-wrap">
-            <img src="${qrUrl}" alt="Device QR ${permit.deviceTag}" class="pqs-qr-img" />
+            <img id="qrImg-${permit.id}" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='80' height='80' viewBox='0 0 24 24'><text x='50%25' y='50%25' text-anchor='middle' dy='.3em' font-size='8' fill='%2394a3b8'>Generating...</text></svg>" alt="Device QR ${permit.deviceTag}" class="pqs-qr-img" />
             <span class="pqs-scan-hint">Scan to Verify</span>
           </div>
 
@@ -162,8 +140,10 @@ export async function openDeviceStickerModal({ permitId = null, batchAll = false
     </div>
   `;
 
+  // Immediately append overlay to body so user sees modal without any delay
   document.body.appendChild(overlay);
 
+  // Close handlers
   const close = () => {
     overlay.classList.add('modal-closing');
     setTimeout(() => overlay.remove(), 200);
@@ -178,4 +158,25 @@ export async function openDeviceStickerModal({ permitId = null, batchAll = false
   overlay.querySelector('#btnExecuteStickerPrint').onclick = () => {
     window.print();
   };
+
+  // Asynchronously generate and inject QR codes into image tags
+  const origin = window.location.origin;
+  permitsToPrint.forEach(async (p) => {
+    try {
+      const verifyUrl = `${origin}/?verify=device&tag=${encodeURIComponent(p.deviceTag)}`;
+      const qrDataUrl = await QRCode.toDataURL(verifyUrl, {
+        width: 320,
+        margin: 1,
+        color: {
+          dark: '#0f172a',
+          light: '#ffffff'
+        },
+        errorCorrectionLevel: 'M'
+      });
+      const img = overlay.querySelector(`#qrImg-${p.id}`);
+      if (img) img.src = qrDataUrl;
+    } catch (err) {
+      console.error('Failed to generate QR for permit:', p.id, err);
+    }
+  });
 }

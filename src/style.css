@@ -16608,6 +16608,66 @@ select.auth-input option {
   display: none;
 }
 
+/* --- COMPACT DEVICE RADAR BAR (Ultra-low profile so main content is front & center) --- */
+.compact-device-stats-bar {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+  margin: 10px 0 14px 0;
+}
+
+.mini-stat-capsule {
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  padding: 6px 12px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.02);
+  min-height: 44px;
+}
+
+.mini-stat-capsule.active {
+  border-color: #a7f3d0;
+  background: #f0fdf4;
+}
+
+.mini-stat-capsule.danger {
+  border-color: #fca5a5;
+  background: #fef2f2;
+}
+
+.msc-icon {
+  font-size: 18px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.msc-info {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.msc-label {
+  font-size: 10px;
+  font-weight: 700;
+  color: #64748b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  line-height: 1;
+}
+
+.msc-val {
+  font-size: 15px;
+  font-weight: 800;
+  color: #0f172a;
+  line-height: 1.2;
+}
+
 .mobile-device-card {
   background: #ffffff;
   border: 1px solid #e2e8f0;
@@ -16787,9 +16847,35 @@ select.auth-input option {
     gap: 12px !important;
   }
 
+  .compact-device-stats-bar {
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 6px !important;
+    margin: 6px 0 10px 0 !important;
+  }
+
+  .mini-stat-capsule {
+    padding: 6px 8px !important;
+    min-height: 38px !important;
+    gap: 6px !important;
+  }
+
+  .msc-icon {
+    font-size: 15px !important;
+  }
+
+  .msc-label {
+    font-size: 9px !important;
+  }
+
+  .msc-val {
+    font-size: 13.5px !important;
+  }
+
   .saas-filter-bar {
     flex-direction: column !important;
     align-items: stretch !important;
+    margin: 10px 0 !important;
+    padding: 10px 12px !important;
   }
 
   .saas-filter-bar > div {
@@ -16804,13 +16890,22 @@ select.auth-input option {
   .view-header {
     flex-direction: column !important;
     align-items: stretch !important;
+    gap: 10px !important;
+  }
+
+  .view-title {
+    font-size: 20px !important;
+  }
+
+  .view-desc {
+    font-size: 11.5px !important;
   }
 
   .view-actions {
     display: grid !important;
     grid-template-columns: 1fr 1fr !important;
     width: 100% !important;
-    gap: 8px !important;
+    gap: 6px !important;
   }
 
   .view-actions #btnDeviceIssuePermit {

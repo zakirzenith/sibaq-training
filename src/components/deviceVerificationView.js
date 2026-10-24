@@ -4,7 +4,7 @@ import { toast } from './toast.js';
 
 /**
  * Live Device Verification & Program Progress Inspection View
- * Loaded when scanning the physical QR sticker on back of phone.
+ * Loaded when scanning the physical QR sticker on back of phone or clicking Inspect.
  * Shows instant legal/illegal status, permitted hours countdown, and
  * live candidate competition progress to verify productive educational use.
  */
@@ -72,10 +72,17 @@ export function renderDeviceVerificationView(container, tagOrId = null, onNaviga
   const status = state.getDevicePermitStatus(permit, now);
   const candInitials = (candidate.name || 'C').split(' ').map(n => n[0]).slice(0, 2).join('').toUpperCase();
 
-  // Fetch candidate's progress and program dossier data
-  const dossierData = state.getCandidateMenteeDashboardData(candidate.id);
-  const programs = dossierData?.dossier?.programs || [];
-  const todayMeets = dossierData?.todayStatus?.meets || [];
+  // Fetch candidate's progress and program dossier data safely
+  let dossierData = null;
+  let programs = [];
+  let todayMeets = [];
+  try {
+    dossierData = state.getCandidateMenteeDashboardData(candidate.id);
+    programs = dossierData?.dossier?.programs || [];
+    todayMeets = dossierData?.todayStatus?.meets || [];
+  } catch (err) {
+    console.warn('Failed to load candidate dossier data:', err);
+  }
   const hasMetToday = todayMeets.length > 0;
 
   // Header status banner class & colors
@@ -171,9 +178,7 @@ export function renderDeviceVerificationView(container, tagOrId = null, onNaviga
         </div>
       </div>
 
-      <!-- ============================================================ -->
-      <!-- CORE TEACHER QUESTION: IS HE PROGRESSING FROM HIS PHONE?   -->
-      <!-- ============================================================ -->
+      <!-- CORE TEACHER QUESTION: IS HE PROGRESSING FROM HIS PHONE? -->
       <div class="dv-card dv-progress-card">
         <div class="dv-card-title-row">
           <div class="dv-card-title-left">
@@ -216,9 +221,13 @@ export function renderDeviceVerificationView(container, tagOrId = null, onNaviga
         ` : `
           <div class="dv-programs-list">
             ${programs.map(p => {
-              const progScore = p.latestScore !== null ? `${p.latestScore} / 100` : 'Not Scored';
-              const isStage = p.program.isStage;
-              const hasCritique = p.latestMeet && p.latestMeet.remarks;
+              const progName = p.program?.name || p.programName || 'Enrolled Program';
+              const progScore = p.latestScore !== null && p.latestScore !== undefined ? `${p.latestScore} / 100` : 'Not Scored';
+              const isStage = Boolean(p.program?.type === 'Stage' || p.program?.isStage);
+              const trainerName = p.trainer?.name || 'Assigned Mentor';
+              const meetCount = p.meetCount || 0;
+              const hasCritique = Boolean(p.latestMeet?.remark || p.latestMeet?.remarks);
+              const critiqueText = p.latestMeet?.remark || p.latestMeet?.remarks || '';
               
               return `
                 <div class="dv-program-item">
@@ -227,7 +236,7 @@ export function renderDeviceVerificationView(container, tagOrId = null, onNaviga
                       <div class="dv-prog-type-badge ${isStage ? 'type-stage' : 'type-nonstage'}">
                         ${isStage ? 'STAGE EVENT' : 'NON-STAGE EVENT'}
                       </div>
-                      <h4 class="dv-prog-title">${p.program.name}</h4>
+                      <h4 class="dv-prog-title">${progName}</h4>
                     </div>
                     <div class="dv-prog-score-badge">
                       <span class="dv-score-label">Score</span>
@@ -237,14 +246,14 @@ export function renderDeviceVerificationView(container, tagOrId = null, onNaviga
 
                   <div class="dv-prog-trainer-row">
                     <span class="text-muted">Mentor:</span>
-                    <strong>${p.trainer ? p.trainer.name : 'Unassigned'}</strong>
-                    <span class="dv-prog-meets-count">• ${p.meetCount} practice session(s)</span>
+                    <strong>${trainerName}</strong>
+                    <span class="dv-prog-meets-count">• ${meetCount} practice session(s)</span>
                   </div>
 
                   ${hasCritique ? `
                     <div class="dv-mentor-critique">
                       <span class="dv-critique-quote">“</span>
-                      <span>${p.latestMeet.remarks}</span>
+                      <span>${critiqueText}</span>
                     </div>
                   ` : `
                     <div class="dv-critique-pending text-muted" style="font-size: 11.5px; margin-top: 6px;">
@@ -265,16 +274,16 @@ export function renderDeviceVerificationView(container, tagOrId = null, onNaviga
 
         <div class="dv-action-buttons-grid">
           ${status.code === 'LEGAL' || status.code === 'ILLEGAL_OVERDUE' ? `
-            <button class="btn btn-primary dv-btn-action" id="btnDvSubmitPhone" style="background: #059669; border-color: #059669;">
+            <button type="button" class="btn btn-primary dv-btn-action" id="btnDvSubmitPhone" style="background: #059669; border-color: #059669;">
               ${getIcon('check')} Submit &amp; Return Phone to Locker
             </button>
           ` : `
-            <button class="btn btn-secondary dv-btn-action" id="btnDvCheckoutPhone">
+            <button type="button" class="btn btn-secondary dv-btn-action" id="btnDvCheckoutPhone">
               ${getIcon('plus')} Issue / Check Out Phone for Today
             </button>
           `}
 
-          <button class="btn btn-outline dv-btn-action" id="btnDvFlagMisuse" style="border-color: #fca5a5; color: #b91c1c; background: #ffffff;">
+          <button type="button" class="btn btn-outline dv-btn-action" id="btnDvFlagMisuse" style="border-color: #fca5a5; color: #b91c1c; background: #ffffff;">
             ${getIcon('flag')} Flag Irregularity / Non-Practice Use
           </button>
         </div>
@@ -282,7 +291,7 @@ export function renderDeviceVerificationView(container, tagOrId = null, onNaviga
 
       <!-- Bottom Nav / Back to Desk -->
       <div class="dv-footer-nav" style="margin-top: 6px;">
-        <button class="btn btn-secondary" id="btnDvReturnPortal" style="width: 100%; height: 42px; font-weight: 700;">
+        <button type="button" class="btn btn-secondary" id="btnDvReturnPortal" style="width: 100%; height: 42px; font-weight: 700;">
           ${getIcon('chevronLeft')} Return to Student Device Desk
         </button>
       </div>
@@ -290,14 +299,11 @@ export function renderDeviceVerificationView(container, tagOrId = null, onNaviga
     </div>
   `;
 
-  // --- INTERACTIVE ACTION HANDLERS ---
+  // --- INTERACTIVE ACTION HANDLERS (Prompt-free 1-tap execution) ---
   const btnSubmitPhone = container.querySelector('#btnDvSubmitPhone');
   if (btnSubmitPhone) {
     btnSubmitPhone.onclick = () => {
-      const supervisorName = prompt('Enter Teacher / Supervisor Name who received the phone:', 'Duty Teacher');
-      if (supervisorName === null) return;
-      
-      const res = state.submitDevice(permit.id, supervisorName.trim() || 'Duty Teacher');
+      const res = state.submitDevice(permit.id, 'Duty Teacher');
       if (res.success) {
         toast.success(`Device ${permit.deviceTag} successfully marked as SUBMITTED!`);
         renderDeviceVerificationView(container, permit.deviceTag, onNavigate);
@@ -308,10 +314,7 @@ export function renderDeviceVerificationView(container, tagOrId = null, onNaviga
   const btnCheckoutPhone = container.querySelector('#btnDvCheckoutPhone');
   if (btnCheckoutPhone) {
     btnCheckoutPhone.onclick = () => {
-      const issuerName = prompt('Enter Teacher / Supervisor Name issuing this phone:', 'Duty Teacher');
-      if (issuerName === null) return;
-
-      const res = state.checkoutDevice(permit.id, issuerName.trim() || 'Duty Teacher');
+      const res = state.checkoutDevice(permit.id, 'Duty Teacher');
       if (res.success) {
         toast.success(`Device ${permit.deviceTag} issued to candidate!`);
         renderDeviceVerificationView(container, permit.deviceTag, onNavigate);
@@ -335,7 +338,6 @@ export function renderDeviceVerificationView(container, tagOrId = null, onNaviga
   const btnReturnPortal = container.querySelector('#btnDvReturnPortal');
   if (btnReturnPortal) {
     btnReturnPortal.onclick = () => {
-      // Clear URL parameter so it returns cleanly to devices desk
       const cleanUrl = window.location.origin + window.location.pathname;
       window.history.pushState({}, '', cleanUrl);
       if (onNavigate) {

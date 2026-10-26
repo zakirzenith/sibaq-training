@@ -1048,96 +1048,127 @@ function printTrainerAssignedMenteesSheet(dossiers, trainer, meta = {}) {
           margin-bottom: 12px;
           border-bottom: 2px solid #6366f1;
         }
-        .header-box {
-          display: flex;
-          justify-content: space-between;
-          align-items: flex-start;
-          padding-bottom: 8px;
-          border-bottom: 2px solid #0f172a;
-          margin-bottom: 8px;
-        }
-        .brand-org {
-          font-size: 9px;
-          font-weight: 800;
-          letter-spacing: 0.08em;
-          color: #64748b;
-          text-transform: uppercase;
-        }
-        .brand-title {
-          font-size: 15px;
-          font-weight: 900;
-          color: #0f172a;
-        }
-        .scope-strip {
-          background: #f8fafc;
-          border: 1px solid #cbd5e1;
-          border-radius: 6px;
-          padding: 6px 10px;
+        /* Single Line Minimal Official Header */
+        .report-header-line {
           display: flex;
           justify-content: space-between;
           align-items: center;
+          padding: 4px 0 8px 0;
+          border-bottom: 2px solid #0f172a;
           margin-bottom: 8px;
         }
+        .rhl-left {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          flex-wrap: wrap;
+        }
+        .rhl-brand {
+          font-size: 13px;
+          font-weight: 900;
+          color: #0f172a;
+          letter-spacing: -0.01em;
+          white-space: nowrap;
+        }
+        .rhl-sep {
+          color: #94a3b8;
+          font-size: 11px;
+        }
+        .rhl-filter {
+          font-size: 10.5px;
+          font-weight: 600;
+          color: #334155;
+        }
+        .rhl-filter-label {
+          font-weight: 800;
+          color: #4338ca;
+          text-transform: uppercase;
+          font-size: 9px;
+          letter-spacing: 0.04em;
+          margin-right: 4px;
+        }
+        .rhl-right {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          font-size: 9.5px;
+          color: #475569;
+          white-space: nowrap;
+        }
+        .rhl-right strong {
+          color: #0f172a;
+        }
+
+        /* Clean Executive Report Table */
         table {
           width: 100% !important;
           max-width: 100% !important;
           border-collapse: collapse;
           table-layout: fixed;
-          font-size: 9.5px;
+          font-size: 9px;
+          box-sizing: border-box;
         }
         thead { display: table-header-group; }
         tr { page-break-inside: avoid; break-inside: avoid; }
         th {
-          background: #f1f5f9;
-          border-top: 1.5px solid #94a3b8;
-          border-bottom: 1.5px solid #94a3b8;
-          border-left: 1px solid #e2e8f0;
-          border-right: 1px solid #e2e8f0;
-          padding: 5px 6px;
+          background: #f8fafc;
+          border-bottom: 2px solid #0f172a;
+          border-top: none;
+          border-left: none;
+          border-right: none;
+          padding: 6.5px 8px;
           font-size: 8.5px;
           font-weight: 800;
           text-transform: uppercase;
-          color: #1e293b;
+          color: #475569;
+          letter-spacing: 0.05em;
           text-align: left;
         }
         td {
-          border: 1px solid #e2e8f0;
-          padding: 4.5px 6px;
+          border-bottom: 1px solid #e2e8f0;
+          border-top: none;
+          border-left: none;
+          border-right: none;
+          padding: 6px 8px;
           vertical-align: middle;
+          line-height: 1.3;
           overflow-wrap: break-word;
           word-break: break-word;
         }
-        tbody tr:nth-child(even) { background: #f8fafc; }
+        tbody tr:nth-child(even) { background: #fafbfc; }
         .badge {
           display: inline-block;
-          padding: 2px 5px;
+          padding: 2.5px 6px;
           border-radius: 4px;
           font-size: 8.5px;
           font-weight: 700;
           line-height: 1.2;
+          white-space: nowrap;
         }
         .badge-ready { background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; }
         .badge-track { background: #eff6ff; color: #1d4ed8; border: 1px solid #bfdbfe; }
         .badge-attention { background: #fef2f2; color: #b91c1c; border: 1px solid #fecaca; }
         .badge-pending { background: #fffbeb; color: #b45309; border: 1px solid #fde68a; }
         .chip {
-          display: inline-block;
-          background: #ffffff;
-          border: 1px solid #cbd5e1;
+          display: inline-flex;
+          align-items: center;
+          gap: 2.5px;
           border-radius: 3px;
-          padding: 1px 3px;
+          padding: 1.5px 5px;
           font-size: 8px;
-          margin: 1px;
+          margin: 1px 3px 1px 0;
           font-weight: 600;
-          color: #334155;
+          white-space: nowrap;
+          line-height: 1.2;
         }
         .doc-footer {
-          margin-top: 10px;
-          padding-top: 8px;
-          border-top: 1.5px solid #cbd5e1;
+          margin-top: 12px;
+          padding-top: 6px;
+          border-top: 1px solid #cbd5e1;
           display: flex;
           justify-content: space-between;
-          font-size: 8.5px;
+          align-items: center;
+          font-size: 8px;
           color: #64748b;
         }
         @media print {
@@ -1157,25 +1188,15 @@ function printTrainerAssignedMenteesSheet(dossiers, trainer, meta = {}) {
         </div>
       </div>
 
-      <div class="header-box">
-        <div>
-          <div class="brand-org">DARUL HUDA BENGAL • SIBAQ TRAINING ACADEMY</div>
-          <div class="brand-title">ASSIGNED MENTEE PERFORMANCE & READINESS DOSSIER</div>
-          <div style="font-size: 11px; color: #4338ca; font-weight: 700; margin-top: 2px;">Assigned Mentor: <strong>${trainer.name}</strong> (${trainer.expertise || 'Specialized Mentor'})</div>
+      <!-- Minimal Official Single-Line Header -->
+      <div class="report-header-line">
+        <div class="rhl-left">
+          <span class="rhl-brand">DH Bengal Sibaq 26 Report</span>
+          <span class="rhl-sep">—</span>
+          <span class="rhl-filter"><span class="rhl-filter-label">Filter:</span> Mentor: ${trainer.name} (${activeScope}${meta.searchQuery ? ` • Search: "${meta.searchQuery}"` : ''})</span>
         </div>
-        <div style="text-align: right; font-size: 9.5px; color: #475569;">
-          <div>Generated: <strong>${todayFormatted} • ${timeFormatted}</strong></div>
-          <div>Mentees in Scope: <strong>${dossiers.length}</strong></div>
-        </div>
-      </div>
-
-      <div class="scope-strip">
-        <div style="font-size: 9.5px; font-weight: 800; color: #0f172a;">
-          Filter Scope: <span style="background: #0f172a; color: #fff; padding: 2px 7px; border-radius: 999px;">${activeScope}</span>
-          ${meta.searchQuery ? `<span style="background: #fff; border: 1px solid #cbd5e1; padding: 2px 6px; border-radius: 4px; margin-left: 6px;">Search: "${meta.searchQuery}"</span>` : ''}
-        </div>
-        <div style="font-size: 9.5px; color: #64748b;">
-          Authorized Mentor Academic Assessment
+        <div class="rhl-right">
+          <span><strong>${dossiers.length}</strong> Mentees in Scope</span>
         </div>
       </div>
 
@@ -1184,12 +1205,11 @@ function printTrainerAssignedMenteesSheet(dossiers, trainer, meta = {}) {
           <tr>
             <th style="width: 6%;">Chest</th>
             <th style="width: 20%;">Mentee Name & Institution</th>
-            <th style="width: 9%;">Category</th>
+            <th style="width: 8%;">Category</th>
             <th style="width: 27%;">Assigned Programs & Readiness</th>
             <th style="width: 12%;">Overall Readiness</th>
-            <th style="width: 8%;">Meeting Rate</th>
-            <th style="width: 8%;">Trajectory</th>
-            <th style="width: 10%;">Latest Remark</th>
+            <th style="width: 10%;">Meeting Rate</th>
+            <th style="width: 17%;">Latest Remark</th>
           </tr>
         </thead>
         <tbody>
@@ -1201,16 +1221,16 @@ function printTrainerAssignedMenteesSheet(dossiers, trainer, meta = {}) {
 
             return `
               <tr>
-                <td style="font-weight: 800; font-family: ui-monospace, monospace;">${cleanChest}</td>
+                <td style="font-weight: 800; font-family: ui-monospace, monospace; color: #0f172a; font-size: 9px;">${cleanChest}</td>
                 <td>
-                  <strong style="color: #0f172a;">${d.candidate.name}</strong>
-                  ${d.candidate.institution ? `<div style="font-size: 8px; color: #64748b;">${d.candidate.institution}</div>` : ''}
+                  <div style="font-weight: 700; color: #0f172a; font-size: 9.5px;">${d.candidate.name}</div>
+                  ${d.candidate.institution ? `<div style="font-size: 8px; color: #64748b; margin-top: 1px;">${d.candidate.institution}</div>` : ''}
                 </td>
-                <td style="font-weight: 600; color: #334155;">${d.candidate.category}</td>
+                <td style="font-weight: 600; color: #334155; font-size: 8.5px;">${d.candidate.category}</td>
                 <td>
                   ${d.programReports.map(pr => `
-                    <span class="chip" style="background: ${pr.isMet ? '#f0fdf4' : '#fff'}; border-color: ${pr.isMet ? '#86efac' : '#cbd5e1'}; color: ${pr.isMet ? '#15803d' : '#475569'};">
-                      <strong>[${pr.program.code}]</strong> ${pr.isMet ? `${pr.latestScore}%` : 'Pending'}
+                    <span class="chip" style="background: ${pr.isMet ? '#f0fdf4' : '#f8fafc'}; border: 1px solid ${pr.isMet ? '#bbf7d0' : '#e2e8f0'}; color: ${pr.isMet ? '#166534' : '#64748b'};">
+                      <strong>${pr.program.code}</strong> ${pr.isMet ? `${pr.latestScore}%` : 'Pending'}
                     </span>
                   `).join('')}
                 </td>
@@ -1219,10 +1239,14 @@ function printTrainerAssignedMenteesSheet(dossiers, trainer, meta = {}) {
                     ${d.hasEvaluation ? `${d.overallReadiness}% • ${d.overallStatus.label}` : 'Pending Check-in'}
                   </span>
                 </td>
-                <td style="font-weight: 700;">${d.meetingRateLabel}</td>
-                <td style="font-weight: 600; color: #334155;">${d.momentumLabel}</td>
-                <td style="font-size: 8.5px; color: #334155;">
-                  ${d.latestRemark ? `"${d.latestRemark.text}"` : '-'}
+                <td>
+                  <div style="font-weight: 700; color: #0f172a;">${d.meetingRateLabel}</div>
+                  ${d.momentumLabel ? `<div style="font-size: 8px; color: #64748b;">${d.momentumLabel}</div>` : ''}
+                </td>
+                <td>
+                  ${d.latestRemark ? `
+                    <div style="font-style: italic; color: #1e293b; line-height: 1.25; font-size: 8.5px;">"${d.latestRemark.text}"</div>
+                  ` : '<span style="color: #94a3b8; font-size: 8px;">No remarks</span>'}
                 </td>
               </tr>
             `;
@@ -1230,9 +1254,10 @@ function printTrainerAssignedMenteesSheet(dossiers, trainer, meta = {}) {
         </tbody>
       </table>
 
+      <!-- Minimal Official Sign-off Footer -->
       <div class="doc-footer">
-        <div>Sibaq Training Academy • Mentor Performance Hub</div>
-        <div>Assigned Mentor Verification: ___________________________</div>
+        <div>DH Bengal Sibaq 26 • Mentee Evaluation Report (${trainer.name})</div>
+        <div>Authorized Academic Sign-Off: _________________________________________</div>
       </div>
 
       <script>

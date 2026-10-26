@@ -446,32 +446,55 @@ function printCandidateSingleDossierDocument(dossier) {
           max-width: 100%;
         }
 
-        /* Executive Header */
-        .header-box {
+        /* Single Line Minimal Official Header */
+        .report-header-line {
           display: flex;
           justify-content: space-between;
-          align-items: flex-start;
-          padding-bottom: 8px;
+          align-items: center;
+          padding: 4px 0 8px 0;
           border-bottom: 2px solid #0f172a;
           margin-bottom: 10px;
         }
-        .brand-org {
-          font-size: 9px;
-          font-weight: 800;
-          letter-spacing: 0.08em;
-          color: #64748b;
-          text-transform: uppercase;
+        .rhl-left {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          flex-wrap: wrap;
         }
-        .brand-title {
-          font-size: 16px;
+        .rhl-brand {
+          font-size: 13px;
           font-weight: 900;
           color: #0f172a;
-          margin: 1px 0 2px 0;
+          letter-spacing: -0.01em;
+          white-space: nowrap;
         }
-        .brand-sub {
+        .rhl-sep {
+          color: #94a3b8;
           font-size: 11px;
-          font-weight: 700;
+        }
+        .rhl-filter {
+          font-size: 10.5px;
+          font-weight: 600;
+          color: #334155;
+        }
+        .rhl-filter-label {
+          font-weight: 800;
           color: #4338ca;
+          text-transform: uppercase;
+          font-size: 9px;
+          letter-spacing: 0.04em;
+          margin-right: 4px;
+        }
+        .rhl-right {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          font-size: 9.5px;
+          color: #475569;
+          white-space: nowrap;
+        }
+        .rhl-right strong {
+          color: #0f172a;
         }
 
         /* Candidate Profile Card */
@@ -553,25 +576,32 @@ function printCandidateSingleDossierDocument(dossier) {
         thead { display: table-header-group; }
         tr { page-break-inside: avoid; break-inside: avoid; }
         th {
-          background: #f1f5f9;
-          border: 1px solid #cbd5e1;
-          padding: 5px 6px;
+          background: #f8fafc;
+          border-bottom: 2px solid #0f172a;
+          border-top: none;
+          border-left: none;
+          border-right: none;
+          padding: 6.5px 8px;
           font-size: 8.5px;
           font-weight: 800;
           text-transform: uppercase;
-          color: #1e293b;
+          color: #475569;
+          letter-spacing: 0.04em;
           text-align: left;
           overflow-wrap: break-word;
           word-break: break-word;
         }
         td {
-          border: 1px solid #e2e8f0;
-          padding: 4.5px 6px;
+          border-bottom: 1px solid #e2e8f0;
+          border-top: none;
+          border-left: none;
+          border-right: none;
+          padding: 6px 8px;
           vertical-align: top;
           overflow-wrap: break-word;
           word-break: break-word;
         }
-        tbody tr:nth-child(even) { background: #f8fafc; }
+        tbody tr:nth-child(even) { background: #fafbfc; }
 
         .score-pill {
           display: inline-block;
@@ -583,21 +613,16 @@ function printCandidateSingleDossierDocument(dossier) {
         .score-met { background: #ecfdf5; color: #047857; border: 1px solid #a7f3d0; }
         .score-pending { background: #f1f5f9; color: #64748b; border: 1px solid #cbd5e1; }
 
-        /* Sign-off Footer */
+        /* Minimal Official Sign-off Footer */
         .doc-footer {
           margin-top: 14px;
-          padding-top: 10px;
-          border-top: 1.5px solid #cbd5e1;
+          padding-top: 6px;
+          border-top: 1px solid #cbd5e1;
           display: flex;
           justify-content: space-between;
-          align-items: flex-end;
-          font-size: 8.5px;
+          align-items: center;
+          font-size: 8px;
           color: #64748b;
-        }
-        .sign-line {
-          width: 160px;
-          border-bottom: 1px solid #0f172a;
-          margin-bottom: 3px;
         }
 
         @media print {
@@ -625,16 +650,15 @@ function printCandidateSingleDossierDocument(dossier) {
       </div>
 
       <div class="sheet-container">
-        <!-- Letterhead -->
-        <div class="header-box">
-          <div>
-            <div class="brand-org">DARUL HUDA BENGAL • SIBAQ TRAINING ACADEMY</div>
-            <div class="brand-title">OFFICIAL CANDIDATE PERFORMANCE DOSSIER</div>
-            <div class="brand-sub">Comprehensive Mentorship & Continuous Evaluation Record</div>
+        <!-- Minimal Official Single-Line Header -->
+        <div class="report-header-line">
+          <div class="rhl-left">
+            <span class="rhl-brand">DH Bengal Sibaq 26 Report</span>
+            <span class="rhl-sep">—</span>
+            <span class="rhl-filter"><span class="rhl-filter-label">Candidate:</span> ${candidate.name} (${cleanChest}) • ${candidate.category}</span>
           </div>
-          <div style="text-align: right; font-size: 9.5px; color: #475569;">
-            <div>Date: <strong>${todayFormatted} • ${timeFormatted}</strong></div>
-            <div>Ref: <strong>${docRef}</strong></div>
+          <div class="rhl-right">
+            <span>Enrolled Programs: <strong>${programs.length}</strong></span>
           </div>
         </div>
 
@@ -746,20 +770,10 @@ function printCandidateSingleDossierDocument(dossier) {
           </table>
         `}
 
-        <!-- Document Sign-off -->
+        <!-- Minimal Official Sign-off Footer -->
         <div class="doc-footer">
-          <div>
-            <div style="font-weight: 800; color: #0f172a;">DARUL HUDA BENGAL • SIBAQ HUB</div>
-            <div>Official Candidate Performance Dossier • Ref: ${cleanChest}</div>
-          </div>
-          <div style="text-align: center;">
-            <div>Confidential Academic Evaluation</div>
-            <div style="font-size: 8px; color: #94a3b8;">Sibaq Candidate Management System</div>
-          </div>
-          <div style="text-align: right;">
-            <div class="sign-line"></div>
-            <div style="font-weight: 700; color: #0f172a;">Authorized Controller / Sign-Off</div>
-          </div>
+          <div>DH Bengal Sibaq 26 • Candidate Performance Dossier (${cleanChest})</div>
+          <div>Authorized Academic Sign-Off: _________________________________________</div>
         </div>
       </div>
 

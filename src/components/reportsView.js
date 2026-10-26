@@ -1467,18 +1467,23 @@ export function renderReportsView(container, navigateTo) {
       return;
     }
 
-    const now = new Date();
-    const todayFormatted = now.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-    const timeFormatted = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
-    const docRef = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}-${String(now.getTime()).slice(-4)}`;
-
     const scopeName = meta.scopeName || 'All Candidates';
-    const scopeClass = meta.quickFilterKey || 'ALL';
     const totalCount = meta.totalCount || dossiers.length;
     const filteredCount = meta.filteredCount !== undefined ? meta.filteredCount : dossiers.length;
     const avgScore = meta.avgScore !== undefined ? meta.avgScore : 0;
     const compliancePct = meta.compliancePct !== undefined ? meta.compliancePct : 0;
     const filterTags = meta.filterTags || [];
+
+    // Build concise, human-readable filter summary describing what data is shown
+    const activeSubFilters = filterTags.filter(t => !t.isMain);
+    const filterParts = [];
+    if (scopeName && scopeName !== 'All Candidates') {
+      filterParts.push(scopeName);
+    }
+    activeSubFilters.forEach(t => {
+      filterParts.push(`${t.label}: ${t.val}`);
+    });
+    const filterSummary = filterParts.length > 0 ? filterParts.join(' • ') : (scopeName || 'All Candidates');
 
     const printHtml = `
       <!DOCTYPE html>
@@ -1486,7 +1491,7 @@ export function renderReportsView(container, navigateTo) {
       <head>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <title>DH BENGAL - Candidate Performance Report [${scopeName}]</title>
+        <title>DH Bengal Sibaq 26 Report - ${filterSummary}</title>
         <style>
           @page {
             size: landscape;
@@ -1581,171 +1586,61 @@ export function renderReportsView(container, navigateTo) {
             width: 100%;
           }
 
-          /* Executive Header */
-          .header-box {
+          /* Single Line Minimal Official Header */
+          .report-header-line {
             display: flex;
             justify-content: space-between;
-            align-items: flex-start;
-            padding-bottom: 8px;
+            align-items: center;
+            padding: 4px 0 8px 0;
             border-bottom: 2px solid #0f172a;
             margin-bottom: 8px;
           }
-          .brand-row {
+          .rhl-left {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
+            flex-wrap: wrap;
           }
-          .brand-logo-sq {
-            width: 36px;
-            height: 36px;
-            border-radius: 6px;
-            background: #1e1b4b;
-            color: #ffffff;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 900;
-            font-size: 15px;
-            letter-spacing: 0.05em;
-            border: 1px solid #4338ca;
-            flex-shrink: 0;
-          }
-          .brand-org {
-            font-size: 9.5px;
-            font-weight: 800;
-            letter-spacing: 0.08em;
-            color: #64748b;
-            text-transform: uppercase;
-          }
-          .brand-title {
-            font-size: 16px;
+          .rhl-brand {
+            font-size: 13px;
             font-weight: 900;
             color: #0f172a;
             letter-spacing: -0.01em;
-            line-height: 1.15;
+            white-space: nowrap;
           }
-          .brand-sub {
-            font-size: 10px;
-            font-weight: 700;
-            color: #4338ca;
+          .rhl-sep {
+            color: #94a3b8;
+            font-size: 11px;
           }
-
-          .meta-box {
-            text-align: right;
-            font-size: 9.5px;
-            color: #475569;
-            line-height: 1.45;
-          }
-          .meta-line {
-            display: flex;
-            justify-content: flex-end;
-            gap: 6px;
-          }
-          .meta-k {
-            color: #64748b;
-          }
-          .meta-v {
-            font-weight: 700;
-            color: #0f172a;
-          }
-          .mono {
-            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-          }
-
-          /* Scope & Metrics Ribbon */
-          .scope-ribbon {
-            background: #f8fafc;
-            border: 1px solid #cbd5e1;
-            border-radius: 6px;
-            padding: 7px 11px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 8px;
-          }
-          .sr-left {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            flex-wrap: wrap;
-          }
-          .sr-lbl {
-            font-size: 9px;
-            font-weight: 800;
-            color: #64748b;
-            letter-spacing: 0.05em;
-            text-transform: uppercase;
-          }
-          .scope-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            padding: 2.5px 8px;
-            border-radius: 999px;
-            font-size: 10px;
-            font-weight: 800;
-          }
-          .scope-badge-ALL {
-            background: #0f172a;
-            color: #ffffff;
-          }
-          .scope-badge-READY {
-            background: #ecfdf5;
-            color: #047857;
-            border: 1.5px solid #10b981;
-          }
-          .scope-badge-PREPARING {
-            background: #eff6ff;
-            color: #1d4ed8;
-            border: 1.5px solid #3b82f6;
-          }
-          .scope-badge-AT_RISK {
-            background: #fef2f2;
-            color: #b91c1c;
-            border: 1.5px solid #ef4444;
-          }
-          .scope-badge-FULLY_MET {
-            background: #f0fdf4;
-            color: #15803d;
-            border: 1.5px solid #22c55e;
-          }
-          .scope-badge-PENDING {
-            background: #fffbeb;
-            color: #b45309;
-            border: 1.5px solid #f59e0b;
-          }
-          .sub-filter-pill {
-            background: #ffffff;
-            border: 1px solid #cbd5e1;
-            padding: 1.5px 6px;
-            border-radius: 4px;
-            font-size: 9px;
+          .rhl-filter {
+            font-size: 10.5px;
+            font-weight: 600;
             color: #334155;
           }
-
-          .sr-metrics {
+          .rhl-filter-label {
+            font-weight: 800;
+            color: #4338ca;
+            text-transform: uppercase;
+            font-size: 9px;
+            letter-spacing: 0.04em;
+            margin-right: 4px;
+          }
+          .rhl-right {
             display: flex;
             align-items: center;
-            gap: 14px;
+            gap: 8px;
+            font-size: 9.5px;
+            color: #475569;
+            white-space: nowrap;
           }
-          .m-box {
-            text-align: right;
-            line-height: 1.15;
-          }
-          .m-val {
-            font-size: 12px;
-            font-weight: 900;
+          .rhl-right strong {
             color: #0f172a;
           }
-          .m-lbl {
-            font-size: 8px;
-            font-weight: 700;
-            text-transform: uppercase;
-            color: #64748b;
-            letter-spacing: 0.04em;
+          .rhl-dot {
+            color: #cbd5e1;
           }
 
-          /* Executive Report Table */
+          /* Clean Executive Report Table (Spacious, Horizontal Dividers Only) */
           table {
             width: 100% !important;
             max-width: 100% !important;
@@ -1762,45 +1657,68 @@ export function renderReportsView(container, navigateTo) {
             break-inside: avoid;
           }
           th {
-            background: #f1f5f9;
-            border-top: 1.5px solid #94a3b8;
-            border-bottom: 1.5px solid #94a3b8;
-            border-left: 1px solid #e2e8f0;
-            border-right: 1px solid #e2e8f0;
-            padding: 5px 6px;
+            background: #f8fafc;
+            border-bottom: 2px solid #0f172a;
+            border-top: none;
+            border-left: none;
+            border-right: none;
+            padding: 6.5px 8px;
             font-size: 8.5px;
             font-weight: 800;
             text-transform: uppercase;
             letter-spacing: 0.04em;
-            color: #1e293b;
+            color: #475569;
             text-align: left;
             vertical-align: middle;
             overflow-wrap: break-word;
             word-break: break-word;
           }
           td {
-            border: 1px solid #e2e8f0;
-            padding: 4.5px 6px;
+            border-bottom: 1px solid #e2e8f0;
+            border-top: none;
+            border-left: none;
+            border-right: none;
+            padding: 6px 8px;
             vertical-align: middle;
-            line-height: 1.25;
+            line-height: 1.3;
             overflow-wrap: break-word;
             word-break: break-word;
           }
           tbody tr:nth-child(even) {
-            background: #f8fafc;
+            background: #fafbfc;
+          }
+
+          .td-chest {
+            font-weight: 800;
+            font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+            color: #0f172a;
+            font-size: 9px;
+          }
+          .cand-name {
+            font-weight: 700;
+            color: #0f172a;
+            font-size: 9.5px;
+          }
+          .cand-inst {
+            font-size: 8px;
+            color: #64748b;
+            margin-top: 1px;
+          }
+          .cand-cat {
+            font-weight: 600;
+            color: #334155;
+            font-size: 8.5px;
           }
 
           /* Status Badges */
           .badge {
             display: inline-block;
-            padding: 2px 5px;
+            padding: 2.5px 6px;
             border-radius: 4px;
             font-size: 8.5px;
             font-weight: 700;
-            white-space: normal;
             line-height: 1.2;
-            word-break: break-word;
-            text-align: center;
+            white-space: nowrap;
           }
           .badge-ready {
             background: #ecfdf5;
@@ -1824,48 +1742,50 @@ export function renderReportsView(container, navigateTo) {
           }
 
           .prog-chip {
-            display: inline-block;
-            background: #ffffff;
-            border: 1px solid #cbd5e1;
+            display: inline-flex;
+            align-items: center;
+            gap: 2.5px;
             border-radius: 3px;
-            padding: 1px 4px;
+            padding: 1.5px 5px;
             font-size: 8px;
-            margin: 1px 2px 1px 0;
+            margin: 1px 3px 1px 0;
             font-weight: 600;
-            color: #334155;
-            white-space: normal;
-            word-break: break-word;
+            white-space: nowrap;
             line-height: 1.2;
           }
           .prog-chip.met {
-            border-color: #86efac;
+            border: 1px solid #bbf7d0;
             background: #f0fdf4;
-            color: #15803d;
+            color: #166534;
           }
           .prog-chip.pending {
-            border-color: #e2e8f0;
-            background: #ffffff;
+            border: 1px solid #e2e8f0;
+            background: #f8fafc;
             color: #64748b;
           }
 
-          /* Document Sign-off Footer */
+          .remark-text {
+            font-style: italic;
+            color: #1e293b;
+            line-height: 1.25;
+            font-size: 8.5px;
+          }
+          .remark-author {
+            font-size: 7.5px;
+            color: #64748b;
+            margin-top: 2px;
+          }
+
+          /* Minimal Official Sign-off Footer */
           .doc-footer {
-            margin-top: 10px;
-            padding-top: 8px;
-            border-top: 1.5px solid #cbd5e1;
+            margin-top: 12px;
+            padding-top: 6px;
+            border-top: 1px solid #cbd5e1;
             display: flex;
             justify-content: space-between;
-            align-items: flex-end;
-            font-size: 8.5px;
+            align-items: center;
+            font-size: 8px;
             color: #64748b;
-          }
-          .f-col {
-            line-height: 1.4;
-          }
-          .f-sign-line {
-            width: 170px;
-            border-bottom: 1px solid #0f172a;
-            margin-bottom: 3px;
           }
 
           @media print {
@@ -1892,7 +1812,7 @@ export function renderReportsView(container, navigateTo) {
         <div class="screen-control-bar no-print">
           <div class="scb-left">
             <span class="scb-badge">A4 Landscape</span>
-            <span class="scb-title">Candidate Performance Report • ${scopeName}</span>
+            <span class="scb-title">DH Bengal Sibaq 26 Report • ${filterSummary}</span>
             <span class="scb-hint">Showing <strong>${filteredCount}</strong> of <strong>${totalCount}</strong> candidates</span>
           </div>
           <div class="scb-right">
@@ -1906,67 +1826,38 @@ export function renderReportsView(container, navigateTo) {
         </div>
 
         <div class="sheet-wrapper">
-          <!-- Document Letterhead -->
-          <div class="header-box">
-            <div class="brand-row">
-              <div class="brand-logo-sq">DH</div>
-              <div>
-                <div class="brand-org">DARUL HUDA BENGAL • SIBAQ TRAINING ACADEMY</div>
-                <div class="brand-title">CANDIDATE PERFORMANCE & READINESS DOSSIER</div>
-                <div class="brand-sub">Academic Mentorship, Continuous Evaluation & Candidate Readiness System</div>
-              </div>
+          <!-- Minimal Official Single-Line Header -->
+          <div class="report-header-line">
+            <div class="rhl-left">
+              <span class="rhl-brand">DH Bengal Sibaq 26 Report</span>
+              <span class="rhl-sep">—</span>
+              <span class="rhl-filter"><span class="rhl-filter-label">Filter:</span> ${filterSummary}</span>
             </div>
-            <div class="meta-box">
-              <div class="meta-line"><span class="meta-k">Date:</span> <span class="meta-v">${todayFormatted} • ${timeFormatted}</span></div>
-              <div class="meta-line"><span class="meta-k">Document Ref:</span> <span class="meta-v mono">DHB-CPRD-${docRef}</span></div>
-              <div class="meta-line"><span class="meta-k">Authority:</span> <span class="meta-v" style="color: #4338ca;">Academic Controller Sign-Off</span></div>
-            </div>
-          </div>
-
-          <!-- Filter Scope Ribbon -->
-          <div class="scope-ribbon">
-            <div class="sr-left">
-              <span class="sr-lbl">Filter Scope:</span>
-              <span class="scope-badge scope-badge-${scopeClass}">
-                ${scopeName}
-              </span>
-              ${filterTags.filter(t => !t.isMain).map(t => `
-                <span class="sub-filter-pill"><strong>${t.label}:</strong> ${t.val}</span>
-              `).join('')}
-            </div>
-            <div class="sr-metrics">
-              <div class="m-box">
-                <span class="m-val">${filteredCount} <small style="font-size: 8.5px; font-weight: normal; color: #64748b;">/ ${totalCount}</small></span>
-                <div class="m-lbl">In Filter Scope</div>
-              </div>
-              <div class="m-box">
-                <span class="m-val">${avgScore}%</span>
-                <div class="m-lbl">Avg Readiness</div>
-              </div>
-              <div class="m-box">
-                <span class="m-val">${compliancePct}%</span>
-                <div class="m-lbl">Program Meeting Rate</div>
-              </div>
+            <div class="rhl-right">
+              <span class="rhl-stat"><strong>${filteredCount}</strong> Candidates</span>
+              <span class="rhl-dot">•</span>
+              <span class="rhl-stat">Avg Readiness: <strong>${avgScore}%</strong></span>
+              <span class="rhl-dot">•</span>
+              <span class="rhl-stat">Meeting Rate: <strong>${compliancePct}%</strong></span>
             </div>
           </div>
 
           ${dossiers.length === 0 ? `
             <div style="padding: 40px; text-align: center; border: 1.5px dashed #cbd5e1; border-radius: 8px; color: #64748b; font-size: 13px;">
-              No candidates found matching the selected filter criteria: <strong>${scopeName}</strong>.
+              No candidates found matching the selected filter criteria: <strong>${filterSummary}</strong>.
             </div>
           ` : `
             <!-- Data Table -->
             <table>
               <thead>
                 <tr>
-                  <th style="width: 5%;">Chest</th>
-                  <th style="width: 19%;">Candidate Name & Institution</th>
+                  <th style="width: 6%;">Chest</th>
+                  <th style="width: 20%;">Candidate & Institution</th>
                   <th style="width: 8%;">Category</th>
-                  <th style="width: 28%;">Assigned Programs & Module Readiness</th>
-                  <th style="width: 12%;">Overall Readiness</th>
-                  <th style="width: 8%;">Meeting Rate</th>
-                  <th style="width: 8%;">Trajectory</th>
-                  <th style="width: 12%;">Latest Trainer Remark</th>
+                  <th style="width: 27%;">Assigned Programs & Readiness</th>
+                  <th style="width: 12%;">Readiness Status</th>
+                  <th style="width: 10%;">Meeting Rate</th>
+                  <th style="width: 17%;">Latest Trainer Remark</th>
                 </tr>
               </thead>
               <tbody>
@@ -1978,16 +1869,16 @@ export function renderReportsView(container, navigateTo) {
 
                   return `
                     <tr>
-                      <td style="font-weight: 800; font-family: ui-monospace, monospace; color: #0f172a;">${cleanChest}</td>
+                      <td class="td-chest">${cleanChest}</td>
                       <td>
-                        <div style="font-weight: 700; color: #0f172a; font-size: 10px;">${d.candidate.name}</div>
-                        ${d.candidate.institution ? `<div style="font-size: 8.5px; color: #64748b;">${d.candidate.institution}</div>` : ''}
+                        <div class="cand-name">${d.candidate.name}</div>
+                        ${d.candidate.institution ? `<div class="cand-inst">${d.candidate.institution}</div>` : ''}
                       </td>
-                      <td style="font-weight: 600; color: #334155;">${d.candidate.category}</td>
+                      <td class="cand-cat">${d.candidate.category}</td>
                       <td>
                         ${d.programReports.length > 0 ? d.programReports.map(pr => `
                           <span class="prog-chip ${pr.isMet ? 'met' : 'pending'}">
-                            <strong>[${pr.program.code}]</strong> ${pr.isMet ? `${pr.latestScore}%` : 'Pending'}
+                            <strong>${pr.program.code}</strong> ${pr.isMet ? `${pr.latestScore}%` : 'Pending'}
                           </span>
                         `).join('') : '<span style="color: #94a3b8; font-size: 8.5px;">No assigned programs</span>'}
                       </td>
@@ -1996,17 +1887,15 @@ export function renderReportsView(container, navigateTo) {
                           ${d.hasEvaluation ? `${d.overallReadiness}% • ${d.overallStatus.label}` : 'Pending Check-in'}
                         </span>
                       </td>
-                      <td style="font-weight: 700; color: #0f172a;">
-                        ${d.meetingRateLabel}
+                      <td>
+                        <div style="font-weight: 700; color: #0f172a;">${d.meetingRateLabel}</div>
+                        ${d.momentumLabel ? `<div style="font-size: 8px; color: #64748b;">${d.momentumLabel}</div>` : ''}
                       </td>
-                      <td style="font-weight: 600; font-size: 9px; color: #334155;">
-                        ${d.momentumLabel}
-                      </td>
-                      <td style="font-size: 9px; color: #334155;">
+                      <td>
                         ${d.latestRemark ? `
-                          <div style="font-style: italic; color: #1e293b; line-height: 1.2;">"${d.latestRemark.text}"</div>
-                          <div style="font-size: 8px; color: #64748b; margin-top: 1px;">— ${d.latestRemark.trainerName} (${d.latestRemark.date})</div>
-                        ` : '<span style="color: #94a3b8;">No remarks yet</span>'}
+                          <div class="remark-text">"${d.latestRemark.text}"</div>
+                          <div class="remark-author">— ${d.latestRemark.trainerName} (${d.latestRemark.date})</div>
+                        ` : '<span style="color: #94a3b8; font-size: 8px;">No remarks yet</span>'}
                       </td>
                     </tr>
                   `;
@@ -2015,20 +1904,10 @@ export function renderReportsView(container, navigateTo) {
             </table>
           `}
 
-          <!-- Footer with Sign-off -->
+          <!-- Minimal Official Sign-off Footer -->
           <div class="doc-footer">
-            <div class="f-col">
-              <div style="font-weight: 700; color: #0f172a;">DARUL HUDA BENGAL • SIBAQ TRAINING HUB</div>
-              <div>Report Filter: <strong>${scopeName}</strong> • Generated on ${todayFormatted}</div>
-            </div>
-            <div class="f-col" style="text-align: center;">
-              <div>Official Academic Evaluation Document</div>
-              <div style="font-size: 8px; color: #94a3b8;">Strictly Confidential & Controlled Document</div>
-            </div>
-            <div class="f-col" style="text-align: right;">
-              <div class="f-sign-line"></div>
-              <div style="font-weight: 700; color: #0f172a;">Authorized Controller / Sign-Off</div>
-            </div>
+            <div>DH Bengal Sibaq 26 • Official Performance & Readiness Report</div>
+            <div>Authorized Academic Sign-Off: _________________________________________</div>
           </div>
         </div>
 
@@ -2058,11 +1937,6 @@ export function renderReportsView(container, navigateTo) {
       return;
     }
 
-    const now = new Date();
-    const todayFormatted = now.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
-    const timeFormatted = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
-    const docRef = `${now.getFullYear()}${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}-${String(now.getTime()).slice(-4)}`;
-
     const scopeName = meta.scopeName || 'All Mentors';
     const totalCount = meta.totalCount || trainers.length;
     const filteredCount = meta.filteredCount !== undefined ? meta.filteredCount : trainers.length;
@@ -2071,13 +1945,24 @@ export function renderReportsView(container, navigateTo) {
     const avgCompliance = meta.avgCompliance !== undefined ? meta.avgCompliance : 0;
     const filterTags = meta.filterTags || [];
 
+    // Build concise, human-readable filter summary describing what data is shown
+    const activeSubFilters = filterTags.filter(t => !t.isMain);
+    const filterParts = [];
+    if (scopeName && scopeName !== 'All Mentors') {
+      filterParts.push(scopeName);
+    }
+    activeSubFilters.forEach(t => {
+      filterParts.push(`${t.label}: ${t.val}`);
+    });
+    const filterSummary = filterParts.length > 0 ? filterParts.join(' • ') : (scopeName || 'All Mentors');
+
     const printHtml = `
       <!DOCTYPE html>
       <html lang="en">
       <head>
         <meta charset="utf-8" />
         <meta name="viewport" content="width=device-width, initial-scale=1" />
-        <title>DH BENGAL - Trainer Mentorship & Evaluation Report [${scopeName}]</title>
+        <title>DH Bengal Sibaq 26 Report - ${filterSummary}</title>
         <style>
           @page {
             size: landscape;
@@ -2172,149 +2057,68 @@ export function renderReportsView(container, navigateTo) {
             width: 100%;
           }
 
-          /* Executive Header */
-          .header-box {
+          /* Single Line Minimal Official Header */
+          .report-header-line {
             display: flex;
             justify-content: space-between;
-            align-items: flex-start;
-            padding-bottom: 8px;
+            align-items: center;
+            padding: 4px 0 8px 0;
             border-bottom: 2px solid #0f172a;
             margin-bottom: 8px;
           }
-          .brand-row {
+          .rhl-left {
             display: flex;
             align-items: center;
-            gap: 10px;
+            gap: 8px;
+            flex-wrap: wrap;
           }
-          .brand-logo-sq {
-            width: 36px;
-            height: 36px;
-            border-radius: 6px;
-            background: #1e1b4b;
-            color: #ffffff;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-weight: 900;
-            font-size: 15px;
-            letter-spacing: 0.05em;
-            border: 1px solid #4338ca;
-            flex-shrink: 0;
-          }
-          .brand-org {
-            font-size: 9.5px;
-            font-weight: 800;
-            letter-spacing: 0.08em;
-            color: #64748b;
-            text-transform: uppercase;
-          }
-          .brand-title {
-            font-size: 16px;
+          .rhl-brand {
+            font-size: 13px;
             font-weight: 900;
             color: #0f172a;
             letter-spacing: -0.01em;
-            line-height: 1.15;
+            white-space: nowrap;
           }
-          .brand-sub {
-            font-size: 10px;
-            font-weight: 700;
-            color: #4338ca;
+          .rhl-sep {
+            color: #94a3b8;
+            font-size: 11px;
           }
-
-          .meta-box {
-            text-align: right;
-            font-size: 9.5px;
-            color: #475569;
-            line-height: 1.45;
-          }
-          .meta-line {
-            display: flex;
-            justify-content: flex-end;
-            gap: 6px;
-          }
-          .meta-k {
-            color: #64748b;
-          }
-          .meta-v {
-            font-weight: 700;
-            color: #0f172a;
-          }
-          .mono {
-            font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-          }
-
-          /* Scope & Metrics Ribbon */
-          .scope-ribbon {
-            background: #f8fafc;
-            border: 1px solid #cbd5e1;
-            border-radius: 6px;
-            padding: 7px 11px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 8px;
-          }
-          .sr-left {
-            display: flex;
-            align-items: center;
-            gap: 6px;
-            flex-wrap: wrap;
-          }
-          .sr-lbl {
-            font-size: 9px;
-            font-weight: 800;
-            color: #64748b;
-            letter-spacing: 0.05em;
-            text-transform: uppercase;
-          }
-          .scope-badge {
-            display: inline-flex;
-            align-items: center;
-            gap: 5px;
-            padding: 2.5px 8px;
-            border-radius: 999px;
-            font-size: 10px;
-            font-weight: 800;
-            background: #0f172a;
-            color: #ffffff;
-          }
-          .sub-filter-pill {
-            background: #ffffff;
-            border: 1px solid #cbd5e1;
-            padding: 1.5px 6px;
-            border-radius: 4px;
-            font-size: 9px;
+          .rhl-filter {
+            font-size: 10.5px;
+            font-weight: 600;
             color: #334155;
           }
-
-          .sr-metrics {
+          .rhl-filter-label {
+            font-weight: 800;
+            color: #4338ca;
+            text-transform: uppercase;
+            font-size: 9px;
+            letter-spacing: 0.04em;
+            margin-right: 4px;
+          }
+          .rhl-right {
             display: flex;
             align-items: center;
-            gap: 14px;
+            gap: 8px;
+            font-size: 9.5px;
+            color: #475569;
+            white-space: nowrap;
           }
-          .m-box {
-            text-align: right;
-            line-height: 1.15;
-          }
-          .m-val {
-            font-size: 12px;
-            font-weight: 900;
+          .rhl-right strong {
             color: #0f172a;
           }
-          .m-lbl {
-            font-size: 8px;
-            font-weight: 700;
-            text-transform: uppercase;
-            color: #64748b;
-            letter-spacing: 0.04em;
+          .rhl-dot {
+            color: #cbd5e1;
           }
 
-          /* Executive Report Table */
+          /* Clean Executive Report Table (Spacious, Horizontal Dividers Only) */
           table {
-            width: 100%;
+            width: 100% !important;
+            max-width: 100% !important;
             border-collapse: collapse;
             table-layout: fixed;
-            font-size: 9.5px;
+            font-size: 9px;
+            box-sizing: border-box;
           }
           thead {
             display: table-header-group;
@@ -2324,37 +2128,61 @@ export function renderReportsView(container, navigateTo) {
             break-inside: avoid;
           }
           th {
-            background: #f1f5f9;
-            border-top: 1.5px solid #94a3b8;
-            border-bottom: 1.5px solid #94a3b8;
-            border-left: 1px solid #e2e8f0;
-            border-right: 1px solid #e2e8f0;
-            padding: 5px 6px;
+            background: #f8fafc;
+            border-bottom: 2px solid #0f172a;
+            border-top: none;
+            border-left: none;
+            border-right: none;
+            padding: 6.5px 8px;
             font-size: 8.5px;
             font-weight: 800;
             text-transform: uppercase;
-            letter-spacing: 0.04em;
-            color: #1e293b;
+            letter-spacing: 0.05em;
+            color: #475569;
             text-align: left;
             vertical-align: middle;
+            overflow-wrap: break-word;
+            word-break: break-word;
           }
           td {
-            border: 1px solid #e2e8f0;
-            padding: 4.5px 6px;
+            border-bottom: 1px solid #e2e8f0;
+            border-top: none;
+            border-left: none;
+            border-right: none;
+            padding: 6px 8px;
             vertical-align: middle;
-            line-height: 1.25;
+            line-height: 1.3;
+            overflow-wrap: break-word;
+            word-break: break-word;
           }
           tbody tr:nth-child(even) {
-            background: #f8fafc;
+            background: #fafbfc;
+          }
+
+          .trn-name {
+            font-weight: 700;
+            color: #0f172a;
+            font-size: 9.5px;
+          }
+          .trn-phone {
+            font-size: 8px;
+            color: #64748b;
+            margin-top: 1px;
+          }
+          .trn-exp {
+            font-weight: 600;
+            color: #334155;
+            font-size: 8.5px;
           }
 
           /* Badges */
           .badge {
             display: inline-block;
-            padding: 2px 5px;
+            padding: 2.5px 6px;
             border-radius: 4px;
-            font-size: 9px;
+            font-size: 8.5px;
             font-weight: 700;
+            line-height: 1.2;
             white-space: nowrap;
           }
           .badge-comp-high {
@@ -2374,36 +2202,31 @@ export function renderReportsView(container, navigateTo) {
           }
 
           .prog-chip {
-            display: inline-block;
-            background: #ffffff;
-            border: 1px solid #cbd5e1;
+            display: inline-flex;
+            align-items: center;
+            gap: 2.5px;
             border-radius: 3px;
-            padding: 1px 4px;
-            font-size: 8.5px;
-            margin: 1px 2px 1px 0;
+            padding: 1.5px 5px;
+            font-size: 8px;
+            margin: 1px 3px 1px 0;
             font-weight: 600;
-            color: #334155;
             white-space: nowrap;
+            line-height: 1.2;
+            background: #f8fafc;
+            border: 1px solid #cbd5e1;
+            color: #334155;
           }
 
-          /* Document Sign-off Footer */
+          /* Minimal Official Sign-off Footer */
           .doc-footer {
-            margin-top: 10px;
-            padding-top: 8px;
-            border-top: 1.5px solid #cbd5e1;
+            margin-top: 12px;
+            padding-top: 6px;
+            border-top: 1px solid #cbd5e1;
             display: flex;
             justify-content: space-between;
-            align-items: flex-end;
-            font-size: 8.5px;
+            align-items: center;
+            font-size: 8px;
             color: #64748b;
-          }
-          .f-col {
-            line-height: 1.4;
-          }
-          .f-sign-line {
-            width: 170px;
-            border-bottom: 1px solid #0f172a;
-            margin-bottom: 3px;
           }
 
           @media print {
@@ -2430,7 +2253,7 @@ export function renderReportsView(container, navigateTo) {
         <div class="screen-control-bar no-print">
           <div class="scb-left">
             <span class="scb-badge">A4 Landscape</span>
-            <span class="scb-title">Trainer Mentorship & Evaluation Report • ${scopeName}</span>
+            <span class="scb-title">DH Bengal Sibaq 26 Report • ${filterSummary}</span>
             <span class="scb-hint">Showing <strong>${filteredCount}</strong> of <strong>${totalCount}</strong> mentors</span>
           </div>
           <div class="scb-right">
@@ -2444,70 +2267,41 @@ export function renderReportsView(container, navigateTo) {
         </div>
 
         <div class="sheet-wrapper">
-          <!-- Document Letterhead -->
-          <div class="header-box">
-            <div class="brand-row">
-              <div class="brand-logo-sq">DH</div>
-              <div>
-                <div class="brand-org">DARUL HUDA BENGAL • SIBAQ TRAINING ACADEMY</div>
-                <div class="brand-title">TRAINER MENTORSHIP & EVALUATION DOSSIER</div>
-                <div class="brand-sub">Mentor Specialization, Mentee Allocation & Check-in Compliance Overview</div>
-              </div>
+          <!-- Minimal Official Single-Line Header -->
+          <div class="report-header-line">
+            <div class="rhl-left">
+              <span class="rhl-brand">DH Bengal Sibaq 26 Report</span>
+              <span class="rhl-sep">—</span>
+              <span class="rhl-filter"><span class="rhl-filter-label">Filter:</span> ${filterSummary}</span>
             </div>
-            <div class="meta-box">
-              <div class="meta-line"><span class="meta-k">Date:</span> <span class="meta-v">${todayFormatted} • ${timeFormatted}</span></div>
-              <div class="meta-line"><span class="meta-k">Document Ref:</span> <span class="meta-v mono">DHB-TMER-${docRef}</span></div>
-              <div class="meta-line"><span class="meta-k">Authority:</span> <span class="meta-v" style="color: #4338ca;">Mentorship Management Office</span></div>
-            </div>
-          </div>
-
-          <!-- Scope Ribbon -->
-          <div class="scope-ribbon">
-            <div class="sr-left">
-              <span class="sr-lbl">Filter Scope:</span>
-              <span class="scope-badge">
-                ${scopeName}
-              </span>
-              ${filterTags.filter(t => !t.isMain).map(t => `
-                <span class="sub-filter-pill"><strong>${t.label}:</strong> ${t.val}</span>
-              `).join('')}
-            </div>
-            <div class="sr-metrics">
-              <div class="m-box">
-                <span class="m-val">${filteredCount} <small style="font-size: 8.5px; font-weight: normal; color: #64748b;">/ ${totalCount}</small></span>
-                <div class="m-lbl">Mentors in Scope</div>
-              </div>
-              <div class="m-box">
-                <span class="m-val">${totalMentees}</span>
-                <div class="m-lbl">Total Mentees Covered</div>
-              </div>
-              <div class="m-box">
-                <span class="m-val">${avgCompliance}%</span>
-                <div class="m-lbl">Avg Compliance</div>
-              </div>
-              <div class="m-box">
-                <span class="m-val">${avgMenteeReadiness}%</span>
-                <div class="m-lbl">Mentee Readiness</div>
-              </div>
+            <div class="rhl-right">
+              <span class="rhl-stat"><strong>${filteredCount}</strong> Mentors</span>
+              <span class="rhl-dot">•</span>
+              <span class="rhl-stat"><strong>${totalMentees}</strong> Mentees Covered</span>
+              <span class="rhl-dot">•</span>
+              <span class="rhl-stat">Compliance: <strong>${avgCompliance}%</strong></span>
+              <span class="rhl-dot">•</span>
+              <span class="rhl-stat">Avg Readiness: <strong>${avgMenteeReadiness}%</strong></span>
             </div>
           </div>
 
           ${trainers.length === 0 ? `
             <div style="padding: 40px; text-align: center; border: 1.5px dashed #cbd5e1; border-radius: 8px; color: #64748b; font-size: 13px;">
-              No mentors found matching: <strong>${scopeName}</strong>.
+              No mentors found matching: <strong>${filterSummary}</strong>.
             </div>
           ` : `
             <!-- Data Table -->
             <table>
               <thead>
                 <tr>
-                  <th style="width: 18%;">Trainer Name & Contact</th>
+                  <th style="width: 19%;">Trainer Name & Contact</th>
                   <th style="width: 13%;">Specialization</th>
-                  <th style="width: 24%;">Assigned Programs</th>
+                  <th style="width: 23%;">Assigned Programs</th>
                   <th style="width: 7%;">Mentees</th>
                   <th style="width: 13%;">Meeting Compliance</th>
-                  <th style="width: 11%;">Avg Readiness</th>
-                  <th style="width: 14%;">Score Breakdown</th>
+                  <th style="width: 10%;">Avg Readiness</th>
+                  <th style="width: 10%;">Score Breakdown</th>
+                  <th style="width: 5%;">Latest Meet</th>
                 </tr>
               </thead>
               <tbody>
@@ -2516,13 +2310,13 @@ export function renderReportsView(container, navigateTo) {
                   return `
                     <tr>
                       <td>
-                        <div style="font-weight: 700; color: #0f172a; font-size: 10px;">${t.trainer.name}</div>
-                        ${t.trainer.phone ? `<div style="font-size: 8.5px; color: #64748b;">${t.trainer.phone}</div>` : ''}
+                        <div class="trn-name">${t.trainer.name}</div>
+                        ${t.trainer.phone ? `<div class="trn-phone">${t.trainer.phone}</div>` : ''}
                       </td>
-                      <td style="font-weight: 600; color: #334155;">${t.trainer.expertise || 'General'}</td>
+                      <td class="trn-exp">${t.trainer.expertise || 'General'}</td>
                       <td>
                         ${t.assignedPrograms.length > 0 ? t.assignedPrograms.map(p => `
-                          <span class="prog-chip"><strong>[${p.code}]</strong> ${p.name}</span>
+                          <span class="prog-chip"><strong>${p.code}</strong> ${p.name}</span>
                         `).join('') : '<span style="color: #94a3b8; font-size: 8.5px;">No assigned programs</span>'}
                       </td>
                       <td style="font-weight: 700; color: #0f172a;">${t.menteeCount}</td>
@@ -2540,7 +2334,7 @@ export function renderReportsView(container, navigateTo) {
                         <span style="color: #94a3b8; margin: 0 2px;">/</span>
                         <span style="color: #b91c1c; font-weight: 700;">${t.distribution.needsAttentionCount} Lagging</span>
                       </td>
-                      <td style="font-size: 9px; color: #334155;">
+                      <td style="font-size: 8.5px; color: #334155;">
                         ${t.latestMeet ? t.latestMeet.date : '<span style="color: #94a3b8;">None</span>'}
                       </td>
                     </tr>
@@ -2550,20 +2344,10 @@ export function renderReportsView(container, navigateTo) {
             </table>
           `}
 
-          <!-- Footer with Sign-off -->
+          <!-- Minimal Official Sign-off Footer -->
           <div class="doc-footer">
-            <div class="f-col">
-              <div style="font-weight: 700; color: #0f172a;">DARUL HUDA BENGAL • SIBAQ TRAINING HUB</div>
-              <div>Report Filter: <strong>${scopeName}</strong> • Generated on ${todayFormatted}</div>
-            </div>
-            <div class="f-col" style="text-align: center;">
-              <div>Official Academic Mentorship Evaluation</div>
-              <div style="font-size: 8px; color: #94a3b8;">Strictly Confidential & Controlled Document</div>
-            </div>
-            <div class="f-col" style="text-align: right;">
-              <div class="f-sign-line"></div>
-              <div style="font-weight: 700; color: #0f172a;">Authorized Mentorship Dean / Controller</div>
-            </div>
+            <div>DH Bengal Sibaq 26 • Official Mentorship & Evaluation Report</div>
+            <div>Authorized Academic Sign-Off: _________________________________________</div>
           </div>
         </div>
 

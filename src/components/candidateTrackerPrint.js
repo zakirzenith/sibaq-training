@@ -89,7 +89,7 @@ function renderSingleCandidateTracker(candidate) {
       <div class="tracker-header-box">
         <div class="tracker-title-black-bg">
           <h1 class="ttb-title">Sibaq '26</h1>
-          <div class="ttb-sub">OFFLINE PROGRESS TRACKER</div>
+          <div class="ttb-sub">offline progress tracker</div>
         </div>
       </div>
 
@@ -125,27 +125,23 @@ function renderSingleCandidateTracker(candidate) {
               <span class="cd-value cd-mono">${candidate.adNo || '—'}</span>
             </div>
           </div>
-          <div class="cd-row cd-inst-row">
-            <span class="cd-label">INSTITUTION:</span>
-            <span class="cd-value">${candidate.institution || 'Darul Huda Bengal • Sibaq Training Academy'}</span>
-          </div>
         </div>
       </div>
 
       <!-- Top of Page Information: Assigned Programs with Designated Mentors -->
       <div class="programs-ref-box">
         <div class="ref-box-title">
-          <span>ASSIGNED PROGRAMS & DESIGNATED MENTORS DIRECTORY</span>
-          <span class="ref-count-pill">${programs.length} Assigned Programs</span>
+          <span>ASSIGNED PROGRAMS &amp; DESIGNATED MENTORS DIRECTORY</span>
+          <span class="ref-count-pill">${programs.length} Programs</span>
         </div>
         <table class="ref-table">
           <thead>
             <tr>
               <th style="width: 7%; text-align: center;">SL</th>
-              <th style="width: 13%;">Program Code</th>
-              <th style="width: 35%;">Program Title</th>
-              <th style="width: 17%;">Category & Type</th>
-              <th style="width: 28%;">Designated Mentor</th>
+              <th style="width: 15%;">Program Code</th>
+              <th style="width: 40%;">Program Title</th>
+              <th style="width: 16%;">Category</th>
+              <th style="width: 22%;">Designated Mentor</th>
             </tr>
           </thead>
           <tbody>
@@ -162,7 +158,7 @@ function renderSingleCandidateTracker(candidate) {
               </tr>
             `).join('') : `
               <tr>
-                <td colspan="5" style="text-align: center; color: #555; padding: 7px; font-style: italic;">
+                <td colspan="5" style="text-align: center; color: #555; padding: 6px; font-style: italic;">
                   No digital programs registered. Mentors can write assigned programs manually below.
                 </td>
               </tr>
@@ -171,73 +167,53 @@ function renderSingleCandidateTracker(candidate) {
         </table>
       </div>
 
-      <!-- Daily Progress Tracker: 1 NOV to 20 NOV -->
+      <!-- Clean Unified Daily Progress Log: 1 NOV to 20 NOV -->
       <div class="daily-tracker-container">
-        <div class="daily-section-intro">
-          <span>DAILY MENTORSHIP & PROGRESS LOG • 1 NOV TO 20 NOV 2026</span>
-          <span class="dsi-rule">Mandatory daily check-in, remarks & mentor physical signature</span>
-        </div>
-
-        ${trackerDates.map(d => `
-          <div class="date-block">
-            <div class="date-bar">
-              <div class="date-bar-left">
-                <span class="date-badge">DAY ${String(d.dayNumber).padStart(2, '0')}</span>
-                <span class="date-text">${d.fullDateStr}</span>
-                <span class="date-day-sep">—</span>
-                <span class="date-day">${d.dayName.toUpperCase()}</span>
-              </div>
-              <div class="date-bar-right">
-                <span>Daily Program Check-in</span>
-              </div>
-            </div>
-
-            <table class="date-table">
-              <thead>
-                <tr>
-                  <th style="width: 24%;">Program Assigned</th>
-                  <th style="width: 18%;">Designated Mentor</th>
-                  <th style="width: 22%;">Module / Practice Focus</th>
-                  <th style="width: 8%; text-align: center;">Marks / %</th>
-                  <th style="width: 18%;">Mentor Remarks</th>
-                  <th style="width: 10%; text-align: center;">Mentor Sign</th>
+        <table class="daily-master-table">
+          <thead>
+            <tr>
+              <th style="width: 14%;">Date</th>
+              <th style="width: 34%;">Program Assigned</th>
+              <th style="width: 38%;">Mentor Remarks</th>
+              <th style="width: 14%; text-align: center;">Mentor Sign</th>
+            </tr>
+          </thead>
+          ${trackerDates.map(d => `
+            <tbody class="date-group">
+              ${programList.map((p, idx) => `
+                <tr class="prog-row ${idx === 0 ? 'date-first-row' : ''}">
+                  ${idx === 0 ? `
+                    <td rowspan="${programList.length}" class="date-col">
+                      <div class="d-date">${d.dateStr}</div>
+                      <div class="d-day">${d.dayName}</div>
+                    </td>
+                  ` : ''}
+                  <td class="prog-col">
+                    <span class="p-code font-bold">[${p.code}]</span>
+                    <span class="p-name font-bold">${p.name}</span>
+                  </td>
+                  <td class="remarks-col"></td>
+                  <td class="sign-col"></td>
                 </tr>
-              </thead>
-              <tbody>
-                ${programList.map(p => `
-                  <tr>
-                    <td>
-                      <div class="dt-prog-code font-bold">[${p.code}] ${p.name}</div>
-                    </td>
-                    <td>
-                      <div class="dt-mentor-name font-bold">${p.mentorName}</div>
-                    </td>
-                    <td class="write-area"></td>
-                    <td class="score-area text-center"></td>
-                    <td class="write-area"></td>
-                    <td class="sign-area text-center"></td>
-                  </tr>
-                `).join('')}
-              </tbody>
-            </table>
-          </div>
-        `).join('')}
+              `).join('')}
+            </tbody>
+          `).join('')}
+        </table>
       </div>
 
       <!-- Final Official Sign-Off Box -->
       <div class="final-signoff-box">
-        <div class="fsb-title">FINAL ACADEMIC ENDORSEMENT & SUBMISSION END-OF-CYCLE</div>
         <div class="fsb-grid">
           <div class="fsb-cell">
-            <div class="fsb-lbl">TOTAL SESSIONS COMPLETED:</div>
-            <div class="fsb-line">_______ / 20 Days Attended</div>
-          </div>
-          <div class="fsb-cell">
-            <div class="fsb-lbl">CANDIDATE SIGNATURE:</div>
+            <div class="fsb-lbl">Candidate Signature:</div>
             <div class="fsb-sign-line"></div>
           </div>
           <div class="fsb-cell">
-            <div class="fsb-lbl">ACADEMIC CONTROLLER VERIFICATION & SEAL:</div>
+            <div class="fsb-lbl">Head Mentor Verification:</div>
+            <div class="fsb-sign-line"></div>
+          </div>
+          <div class="fsb-cell">
+            <div class="fsb-lbl">Academic Controller Seal:</div>
             <div class="fsb-sign-line"></div>
           </div>
         </div>
@@ -603,206 +579,149 @@ export function printCandidateOfflineTracker(candidateOrCandidates) {
           margin-left: 2px;
         }
 
-        /* Daily Progress Section */
+        /* Daily Progress Section: Master Unified Table */
         .daily-tracker-container {
           width: 100%;
-        }
-        .daily-section-intro {
-          border-bottom: 1.5px solid #000000;
-          padding-bottom: 3px;
           margin-bottom: 8px;
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          font-size: 8.5px;
-          font-weight: 900;
-          letter-spacing: 0.06em;
-          text-transform: uppercase;
-        }
-        .dsi-rule {
-          font-size: 8px;
-          font-weight: 600;
-          color: #333333;
-          text-transform: none;
         }
 
-        /* Date Block (Avoid breaking across pages) */
-        .date-block {
-          border: 1.5px solid #000000;
-          border-radius: 4px;
-          margin-bottom: 8px;
-          overflow: hidden;
-          page-break-inside: avoid;
-          break-inside: avoid;
-        }
-        .date-bar {
-          background: #000000 !important;
-          color: #ffffff !important;
-          padding: 4px 8px;
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          font-size: 9px;
-          font-weight: 800;
-          -webkit-print-color-adjust: exact !important;
-          print-color-adjust: exact !important;
-        }
-        .date-bar-left {
-          display: flex;
-          align-items: center;
-          gap: 6px;
-        }
-        .date-badge {
-          background: #ffffff;
-          color: #000000;
-          padding: 1px 5px;
-          border-radius: 2px;
-          font-size: 8px;
-          font-weight: 900;
-          letter-spacing: 0.05em;
-        }
-        .date-text {
-          font-weight: 900;
-          letter-spacing: 0.05em;
-          color: #ffffff;
-        }
-        .date-day-sep {
-          color: #888888;
-        }
-        .date-day {
-          font-weight: 700;
-          color: #eeeeee;
-          letter-spacing: 0.04em;
-        }
-        .date-bar-right {
-          font-size: 8px;
-          font-weight: 700;
-          letter-spacing: 0.03em;
-          color: #dddddd;
-          text-transform: uppercase;
-        }
-
-        /* Date Table */
-        .date-table {
+        .daily-master-table {
           width: 100%;
           border-collapse: collapse;
           table-layout: fixed;
-          font-size: 8.5px;
+          border: 1.5px solid #000000;
+          background: #ffffff;
         }
-        .date-table thead {
+
+        .daily-master-table thead {
           display: table-header-group;
         }
-        .date-table th {
-          background: #f2f2f2 !important;
-          color: #000000;
+
+        .daily-master-table th {
+          background: #000000 !important;
+          color: #ffffff !important;
+          border-right: 1px solid #444444;
           border-bottom: 1.5px solid #000000;
-          border-right: 1px solid #000000;
-          padding: 4px 6px;
-          font-size: 8px;
+          padding: 6px 8px;
+          font-size: 8.5px;
           font-weight: 900;
           text-transform: uppercase;
+          letter-spacing: 0.05em;
           text-align: left;
-          letter-spacing: 0.03em;
-          vertical-align: middle;
           -webkit-print-color-adjust: exact !important;
           print-color-adjust: exact !important;
         }
-        .date-table th:last-child {
+        .daily-master-table th:last-child {
           border-right: none;
         }
-        .date-table td {
-          border-bottom: 1px solid #000000;
-          border-right: 1px solid #000000;
-          padding: 5px 6px;
+
+        .date-group {
+          page-break-inside: avoid;
+          break-inside: avoid;
+          border-top: 1.5px solid #000000;
+        }
+        .date-group:first-of-type {
+          border-top: none;
+        }
+
+        .daily-master-table td {
           vertical-align: middle;
-          line-height: 1.25;
+          border-right: 1px solid #000000;
+          padding: 5px 8px;
+          font-size: 8.5px;
         }
-        .date-table td:last-child {
+        .daily-master-table td:last-child {
           border-right: none;
         }
-        .date-table tbody tr:last-child td {
+
+        .prog-row {
+          border-bottom: 1px solid #d4d4d4;
+        }
+        .date-group tr:last-child {
           border-bottom: none;
         }
 
-        .dt-prog-code {
-          font-size: 8.5px;
-          color: #000000;
+        .date-col {
+          background: #f7f7f7 !important;
+          text-align: center;
+          vertical-align: middle !important;
+          padding: 4px 6px !important;
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
         }
-        .dt-mentor-name {
+        .d-date {
+          font-size: 9px;
+          font-weight: 900;
+          color: #000000;
+          white-space: nowrap;
+        }
+        .d-day {
+          font-size: 7.5px;
+          font-weight: 700;
+          color: #444444;
+          text-transform: uppercase;
+          letter-spacing: 0.04em;
+          margin-top: 1px;
+        }
+
+        .prog-col {
           font-size: 8.5px;
+          line-height: 1.25;
+        }
+        .p-code {
+          color: #000000;
+          margin-right: 3px;
+        }
+        .p-name {
           color: #000000;
         }
 
-        /* Writeable Blank Areas (Designed with comfortable writing height) */
-        .write-area {
+        .remarks-col {
           height: 30px;
           min-height: 30px;
           background: #ffffff;
         }
-        .score-area {
-          height: 30px;
-          min-height: 30px;
-          font-family: ui-monospace, SFMono-Regular, monospace;
-          font-weight: 800;
-          font-size: 9.5px;
-          background: #ffffff;
-        }
-        .sign-area {
+
+        .sign-col {
           height: 30px;
           min-height: 30px;
           background: #ffffff;
+          text-align: center;
         }
 
         /* Final Sign-off Box */
         .final-signoff-box {
           border: 1.5px solid #000000;
           border-radius: 4px;
-          margin-top: 12px;
-          margin-bottom: 8px;
+          margin-top: 10px;
+          margin-bottom: 6px;
           overflow: hidden;
           page-break-inside: avoid;
           break-inside: avoid;
-        }
-        .fsb-title {
-          background: #000000 !important;
-          color: #ffffff !important;
-          padding: 4px 8px;
-          font-size: 8.5px;
-          font-weight: 900;
-          text-transform: uppercase;
-          letter-spacing: 0.08em;
-          text-align: center;
-          -webkit-print-color-adjust: exact !important;
-          print-color-adjust: exact !important;
+          background: #ffffff;
         }
         .fsb-grid {
           display: grid;
-          grid-template-columns: 1fr 1fr 1.2fr;
-          padding: 10px 10px;
-          gap: 14px;
-          background: #ffffff;
+          grid-template-columns: 1fr 1fr 1fr;
+          padding: 8px 12px;
+          gap: 16px;
         }
         .fsb-cell {
           display: flex;
           flex-direction: column;
-          gap: 6px;
+          gap: 4px;
         }
         .fsb-lbl {
           font-size: 8px;
-          font-weight: 900;
+          font-weight: 800;
           color: #000000;
           text-transform: uppercase;
           letter-spacing: 0.04em;
         }
-        .fsb-line {
-          font-size: 10px;
-          font-weight: 700;
-          color: #000000;
-        }
         .fsb-sign-line {
-          border-bottom: 1.5px solid #000000;
-          height: 22px;
-          margin-top: 4px;
+          border-bottom: 1px solid #000000;
+          height: 20px;
+          margin-top: 2px;
         }
 
         /* Bottom Running Footer */

@@ -262,7 +262,6 @@ class StateService {
         trainerId: p.trainerId && String(p.trainerId).trim() ? String(p.trainerId).trim() : null,
         candidateIds: Array.isArray(p.candidateIds) ? p.candidateIds.map(id => String(id).trim()).filter(Boolean) : []
       }));
-      this.reclassifyProgramsStageType(false);
       this.deactivateNonStageProgramsAndCandidates(false);
       this.saveState();
     });
@@ -608,9 +607,10 @@ class StateService {
   }
 
   addProgram(programData) {
-    const typeNormalized = String(programData.type || 'Non-Stage').toLowerCase().includes('non')
+    const typeNormalized = String(programData.type || 'Stage').toLowerCase().includes('non')
       ? 'Non-Stage'
       : 'Stage';
+    const isStage = typeNormalized === 'Stage';
 
     const newProgram = {
       id: programData.id ? String(programData.id).trim() : `prg-${Date.now()}-${Math.floor(Math.random() * 1000)}`,
@@ -618,12 +618,20 @@ class StateService {
       name: String(programData.name || '').trim(),
       category: normalizeCategory(programData.category || 'BIDĀYA'),
       type: typeNormalized,
+      status: isStage ? 'Active' : 'Inactive',
+      isActive: isStage,
+      isManualType: true,
       trainerId: programData.trainerId && String(programData.trainerId).trim() ? String(programData.trainerId).trim() : null,
       candidateIds: Array.isArray(programData.candidateIds) ? programData.candidateIds.map(id => String(id).trim()).filter(Boolean) : [],
       createdAt: programData.createdAt || new Date().toISOString()
     };
 
+    if (!isStage) {
+      newProgram.deactivatedAt = new Date().toISOString();
+    }
+
     this.programs.unshift(newProgram);
+    this.deactivateNonStageProgramsAndCandidates(false);
     this.saveState();
 
     if (firebaseService.isInitialized) {
@@ -650,23 +658,45 @@ class StateService {
       updatedTrainerId = updateData.trainerId && String(updateData.trainerId).trim() ? String(updateData.trainerId).trim() : null;
     }
 
+    const isStage = typeNormalized === 'Stage';
+
     this.programs[index] = {
       ...this.programs[index],
       ...updateData,
       type: typeNormalized,
+      status: isStage ? 'Active' : 'Inactive',
+      isActive: isStage,
+      isManualType: true,
       trainerId: updatedTrainerId,
       code: updateData.code ? String(updateData.code).trim().toUpperCase() : this.programs[index].code,
       name: updateData.name ? String(updateData.name).trim() : this.programs[index].name,
       category: updateData.category ? normalizeCategory(updateData.category) : this.programs[index].category
     };
 
-    this.saveState();
+    if (isStage) {
+      delete this.programs[index].deactivatedAt;
+    } else {
+      this.programs[index].deactivatedAt = this.programs[index].deactivatedAt || new Date().toISOString();
+    }
+
+    this.saveState(false);
+
+    // Re-evaluate candidates and Non-Stage deactivation so candidates enrolled in this program are reactivated if it became Stage!
+    this.deactivateNonStageProgramsAndCandidates(true);
 
     if (firebaseService.isInitialized) {
       firebaseService.setDoc('programs', cleanId, this.programs[index]).catch(e => console.warn(e));
     }
 
     return this.programs[index];
+  }
+
+  toggleProgramStageType(programId) {
+    const cleanId = String(programId).trim();
+    const program = this.getProgramById(cleanId);
+    if (!program) return null;
+    const newType = program.type === 'Stage' ? 'Non-Stage' : 'Stage';
+    return this.updateProgram(cleanId, { type: newType });
   }
 
   deleteProgram(id) {
@@ -795,10 +825,15 @@ class StateService {
     const updatedPrograms = [];
 
     this.programs.forEach(p => {
+      // NEVER override if user manually set it or if it already has a valid type!
+      if (p.isManualType) return;
+      if (p.type === 'Stage' || p.type === 'Non-Stage') return;
+
       const currentType = p.type;
-      const detectedType = inferProgramType('', p.code, p.name);
+      const detectedType = inferProgramType(p.type || '', p.code, p.name);
       if (detectedType && detectedType !== currentType) {
         p.type = detectedType;
+        p.isManualType = true;
         updatedPrograms.push(p);
         reclassifiedCount++;
       }
@@ -824,7 +859,7 @@ class StateService {
     const updatedPrograms = [];
     const updatedCandidates = [];
 
-    // 1. Deactivate all Non-Stage programs & data
+    // 1. Deactivate all Non-Stage programs, reactivate Stage programs
     this.programs.forEach(p => {
       const isNonStage = p.type === 'Non-Stage' || String(p.type || '').toLowerCase().includes('non');
       if (isNonStage) {
@@ -836,28 +871,35 @@ class StateService {
           deactivatedProgramsCount++;
         }
       } else {
-        if (p.status === undefined || p.status === null || p.status === 'Inactive') {
+        if (p.status !== 'Active' || p.isActive !== true || p.deactivatedAt) {
           p.status = 'Active';
           p.isActive = true;
+          delete p.deactivatedAt;
+          updatedPrograms.push(p);
         }
       }
     });
 
-    // 2. Deactivate meets associated with Non-Stage programs
+    // 2. Deactivate meets associated with Non-Stage programs, reactivate Stage meets
     const nonStageProgIds = new Set(
       this.programs.filter(p => p.type === 'Non-Stage' || p.status === 'Inactive').map(p => p.id)
     );
     this.dailyMeets.forEach(m => {
-      if (m.programId && nonStageProgIds.has(m.programId)) {
-        m.status = 'Inactive';
-        m.isActive = false;
+      if (m.programId) {
+        if (nonStageProgIds.has(m.programId)) {
+          m.status = 'Inactive';
+          m.isActive = false;
+        } else {
+          m.status = 'Active';
+          m.isActive = true;
+        }
       }
     });
 
-    // 3. Deactivate all candidates who have only Non-Stage programs (or no Stage programs)
+    // 3. Deactivate candidates who have only Non-Stage programs, reactivate candidates with Stage programs
     this.candidates.forEach(c => {
       const assigned = this.getCandidatePrograms(c.id);
-      const stageProgs = assigned.filter(p => p.type === 'Stage' && p.status !== 'Inactive' && p.isActive !== false);
+      const stageProgs = assigned.filter(p => (p.type === 'Stage' || !String(p.type || '').toLowerCase().includes('non')) && p.status !== 'Inactive' && p.isActive !== false);
 
       if (stageProgs.length === 0) {
         // Has ONLY non-stage programs (or not enrolled in any stage programs)
@@ -871,10 +913,11 @@ class StateService {
         }
       } else {
         // Has at least one active stage program
-        if (c.status !== 'Active' || c.isActive !== true) {
+        if (c.status !== 'Active' || c.isActive !== true || c.deactivationReason || c.deactivatedAt) {
           c.status = 'Active';
           c.isActive = true;
           delete c.deactivationReason;
+          delete c.deactivatedAt;
           updatedCandidates.push(c);
         }
       }

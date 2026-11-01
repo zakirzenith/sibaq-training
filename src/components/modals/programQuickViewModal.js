@@ -267,7 +267,12 @@ export function openProgramQuickViewModal(programId, contextCandidateId = null) 
   if (btnEdit) {
     btnEdit.addEventListener('click', () => {
       closeModal();
-      openProgramFormModal({ program });
+      openProgramFormModal({
+        program: state.getProgramById(program.id) || program,
+        onSave: () => {
+          openProgramQuickViewModal(program.id, contextCandidateId);
+        }
+      });
     });
   }
 

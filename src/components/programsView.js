@@ -440,6 +440,9 @@ export function renderProgramsView(container, navigateTo) {
         </div>
 
         <div class="pdt-actions" style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
+          <button type="button" id="btnQuickToggleProgType" class="saas-pill-btn-sm" style="${isStage ? 'border-color: #f59e0b; color: #d97706; background: #fffbeb;' : 'border-color: #2563eb; color: #1d4ed8; background: #eff6ff;'}" title="Quickly switch between Stage and Non-Stage">
+            ${isStage ? 'Switch to Non-Stage' : '🎭 Switch to Stage (Active)'}
+          </button>
           <button type="button" id="btnExportThisProg" class="saas-pill-btn-sm desktop-only-btn" title="Export this roster to Excel">
             ${getIcon('download')} <span>Export</span>
           </button>
@@ -453,7 +456,7 @@ export function renderProgramsView(container, navigateTo) {
       </div>
 
       ${(!isStage || program.status === 'Inactive') ? `
-        <div style="background: #f8fafc; border: 1.5px solid #cbd5e1; border-radius: 8px; padding: 10px 14px; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+        <div style="background: #f8fafc; border: 1.5px solid #cbd5e1; border-radius: 8px; padding: 10px 14px; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap;">
           <div style="display: flex; align-items: center; gap: 8px;">
             <span style="font-size: 15px;">🏁</span>
             <div>
@@ -461,7 +464,12 @@ export function renderProgramsView(container, navigateTo) {
               <p style="margin: 2px 0 0; font-size: 11px; color: #64748b;">All non-stage events are concluded. Candidates who have only non-stage programs are deactivated and excluded from offline progress trackers.</p>
             </div>
           </div>
-          <span class="badge" style="background: #e2e8f0; color: #475569; font-weight: 800; font-size: 10px; padding: 3px 8px;">STATUS: INACTIVE</span>
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <button type="button" id="btnBannerSwitchToStage" class="btn btn-sm btn-primary" style="height: 30px; font-size: 11.5px; font-weight: 700; gap: 6px; background: #2563eb; color: #ffffff; border-color: #2563eb;">
+              🎭 Mark as Stage (Active)
+            </button>
+            <span class="badge" style="background: #e2e8f0; color: #475569; font-weight: 800; font-size: 10px; padding: 3px 8px;">STATUS: INACTIVE</span>
+          </div>
         </div>
       ` : ''}
 
@@ -660,12 +668,33 @@ export function renderProgramsView(container, navigateTo) {
       });
     }
 
+    // 1b. Quick Toggle Stage / Non-Stage
+    const handleToggleType = () => {
+      const currentProg = state.getProgramById(program.id) || program;
+      const newType = currentProg.type === 'Stage' ? 'Non-Stage' : 'Stage';
+      state.updateProgram(program.id, { type: newType });
+      toast.success(`Program [${currentProg.code}] switched to ${newType}!`);
+      renderLeftList();
+      renderRightDetail(program.id);
+    };
+
+    const btnQuickToggle = programDetailContainer.querySelector('#btnQuickToggleProgType');
+    if (btnQuickToggle) {
+      btnQuickToggle.addEventListener('click', handleToggleType);
+    }
+
+    const btnBannerToggle = programDetailContainer.querySelector('#btnBannerSwitchToStage');
+    if (btnBannerToggle) {
+      btnBannerToggle.addEventListener('click', handleToggleType);
+    }
+
     // 2. Edit program
     programDetailContainer.querySelector('#btnEditThisProg').addEventListener('click', () => {
       openProgramFormModal({
-        program,
+        program: state.getProgramById(program.id) || program,
         onSave: () => {
           renderLeftList();
+          renderRightDetail(program.id);
         }
       });
     });

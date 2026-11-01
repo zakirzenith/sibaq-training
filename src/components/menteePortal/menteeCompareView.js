@@ -92,7 +92,7 @@ export function renderMenteeCompareView(container, navigate, initialTab = 'overv
             <div class="mph-badge-row">
               <span class="badge badge-category-pill">${myCategory}</span>
               <span class="badge badge-adno-pill">AD: ${candidate.adNo || candidate.chestNo || 'N/A'}</span>
-              <span class="badge badge-portal-active">🏆 Category Competitor Arena</span>
+              <span class="badge badge-portal-active">Category Competitor Arena</span>
             </div>
             <h1 class="mph-title">Peer Performance &amp; Category Standings</h1>
           </div>

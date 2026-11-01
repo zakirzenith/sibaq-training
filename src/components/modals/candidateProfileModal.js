@@ -5,6 +5,7 @@ import { openRecordMeetModal } from './recordMeetModal.js';
 import { openTrainerProfileModal } from './trainerProfileModal.js';
 import { openCandidateFormModal } from './candidateFormModal.js';
 import { openImageCropperModal } from './imageCropperModal.js';
+import { printCandidateOfflineTracker } from '../candidateTrackerPrint.js';
 
 /**
  * Candidate Profile Modal
@@ -74,7 +75,12 @@ export function openCandidateProfileModal({ candidateId, onUpdate = () => {} }) 
             </div>
           </div>
         </div>
-        <button class="modal-close-btn" aria-label="Close">${getIcon('x')}</button>
+        <div style="display: flex; align-items: center; gap: 8px;">
+          <button type="button" id="btnProfilePrintTracker" class="btn btn-sm btn-outline" style="height: 32px; padding: 0 12px; font-size: 11.5px; font-weight: 700; gap: 6px; border-color: #0f172a; color: #0f172a; background: #ffffff;" title="Print Offline Daily Progress Tracker (1-20 Nov)">
+            ${getIcon('printer')} Offline Tracker
+          </button>
+          <button class="modal-close-btn" aria-label="Close">${getIcon('x')}</button>
+        </div>
       </div>
 
       <!-- Modal Body -->
@@ -328,6 +334,13 @@ export function openCandidateProfileModal({ candidateId, onUpdate = () => {} }) 
   overlay.addEventListener('click', e => {
     if (e.target === overlay) close();
   });
+
+  const btnProfilePrintTracker = overlay.querySelector('#btnProfilePrintTracker');
+  if (btnProfilePrintTracker) {
+    btnProfilePrintTracker.addEventListener('click', () => {
+      printCandidateOfflineTracker(candidate);
+    });
+  }
 
   // Record meet from profile
   const btnProfileRecordMeet = overlay.querySelector('#btnProfileRecordMeet');

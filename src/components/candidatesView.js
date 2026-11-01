@@ -8,10 +8,12 @@ import { openAssignCandidatesModal } from './modals/assignCandidatesModal.js';
 import { openCandidateProfileModal } from './modals/candidateProfileModal.js';
 import { openBulkPhotoUploadModal } from './modals/bulkPhotoUploadModal.js';
 import { createFilterBar } from './filterEngine.js';
+import { printCandidateOfflineTracker, openCandidateTrackerModal } from './candidateTrackerPrint.js';
 
 export function renderCandidatesView(container, navigateTo) {
   let activeFilters = {};
   let currentSearchQuery = '';
+  let lastFilteredCandidates = [];
 
   container.innerHTML = `
     <div class="saas-view-header">
@@ -22,6 +24,9 @@ export function renderCandidatesView(container, navigateTo) {
 
       <div class="saas-header-actions">
         <div class="saas-action-pill-group desktop-only-btn">
+          <button id="btnDailyOfflineTrackers" class="saas-pill-btn" title="Download / Print Offline Daily Progress Trackers (1 Nov - 20 Nov)" style="background: #0f172a; color: #ffffff; border-color: #0f172a; font-weight: 700;">
+            ${getIcon('printer')} Offline Trackers (1-20 Nov)
+          </button>
           <button id="btnDownloadCandTemplate" class="saas-pill-btn" title="Download formatted sample Excel sheet">
             ${getIcon('fileSpreadsheet')} Template
           </button>
@@ -35,6 +40,10 @@ export function renderCandidatesView(container, navigateTo) {
             ${getIcon('camera') || getIcon('image') || getIcon('upload')} Bulk Photos
           </button>
         </div>
+
+        <button id="btnMobileDailyOfflineTrackers" class="saas-pill-btn mobile-only-btn" title="Offline Trackers (1-20 Nov)" style="background: #0f172a; color: #ffffff; border-color: #0f172a; font-weight: 700;">
+          ${getIcon('printer')} Trackers
+        </button>
 
         <button id="btnMobileBulkPhotos" class="saas-pill-btn mobile-only-btn" title="Bulk upload photos" style="background: #eef2ff; color: #4338ca; border-color: #c7d2fe; font-weight: 700;">
           ${getIcon('camera') || getIcon('image') || getIcon('upload')} Photos
@@ -71,7 +80,7 @@ export function renderCandidatesView(container, navigateTo) {
               <th>Category</th>
               <th>Class / Grade</th>
               <th>Enrolled Programs</th>
-              <th style="width: 110px; text-align: right;">Actions</th>
+              <th style="width: 140px; text-align: right;">Actions</th>
             </tr>
           </thead>
           <tbody id="candidatesTableBody">
@@ -196,6 +205,7 @@ export function renderCandidatesView(container, navigateTo) {
       return true;
     });
 
+    lastFilteredCandidates = filtered;
     countBadge.textContent = `${filtered.length}`;
     tableBody.innerHTML = '';
     mobileList.innerHTML = '';
@@ -269,6 +279,9 @@ export function renderCandidatesView(container, navigateTo) {
         </td>
         <td style="text-align: right;">
           <div class="table-actions-cell" style="justify-content: flex-end;">
+            <button class="saas-circle-btn btn-print-cand-tracker" title="Print Offline Tracker (1-20 Nov)" data-id="${c.id}" style="color: #0f172a;">
+              ${getIcon('printer')}
+            </button>
             <button class="saas-circle-btn btn-edit-cand" title="Edit Candidate" data-id="${c.id}">
               ${getIcon('edit')}
             </button>
@@ -297,6 +310,9 @@ export function renderCandidatesView(container, navigateTo) {
             </div>
           </div>
           <div class="mcc-actions">
+            <button type="button" class="saas-circle-btn btn-print-cand-tracker" title="Print Offline Tracker (1-20 Nov)" data-id="${c.id}" style="color: #0f172a;">
+              ${getIcon('printer')}
+            </button>
             <button type="button" class="saas-circle-btn btn-edit-cand" title="Edit" data-id="${c.id}">
               ${getIcon('edit')}
             </button>
@@ -356,6 +372,27 @@ export function renderCandidatesView(container, navigateTo) {
         });
       });
 
+      // Wire Print Offline Progress Tracker (1-20 Nov)
+      const handlePrintTracker = () => {
+        printCandidateOfflineTracker(c);
+      };
+
+      const btnPrintDesktop = tr.querySelector('.btn-print-cand-tracker');
+      if (btnPrintDesktop) {
+        btnPrintDesktop.addEventListener('click', (e) => {
+          e.stopPropagation();
+          handlePrintTracker();
+        });
+      }
+
+      const btnPrintMobile = mobileCard.querySelector('.btn-print-cand-tracker');
+      if (btnPrintMobile) {
+        btnPrintMobile.addEventListener('click', (e) => {
+          e.stopPropagation();
+          handlePrintTracker();
+        });
+      }
+
       // Wire Edit Candidate
       const handleEdit = (cid) => {
         const cand = state.getCandidateById(cid);
@@ -395,6 +432,23 @@ export function renderCandidatesView(container, navigateTo) {
   }
 
   // Header Actions
+  const handleOpenOfflineTrackerModal = () => {
+    openCandidateTrackerModal({
+      candidates: lastFilteredCandidates.length > 0 ? lastFilteredCandidates : state.getCandidates(),
+      allCandidates: state.getCandidates()
+    });
+  };
+
+  const btnOfflineTrackers = container.querySelector('#btnDailyOfflineTrackers');
+  if (btnOfflineTrackers) {
+    btnOfflineTrackers.addEventListener('click', handleOpenOfflineTrackerModal);
+  }
+
+  const btnMobileOfflineTrackers = container.querySelector('#btnMobileDailyOfflineTrackers');
+  if (btnMobileOfflineTrackers) {
+    btnMobileOfflineTrackers.addEventListener('click', handleOpenOfflineTrackerModal);
+  }
+
   const btnDownloadTemplate = container.querySelector('#btnDownloadCandTemplate');
   if (btnDownloadTemplate) {
     btnDownloadTemplate.addEventListener('click', () => {

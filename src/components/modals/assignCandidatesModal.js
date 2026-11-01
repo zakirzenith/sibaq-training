@@ -29,6 +29,9 @@ export function openAssignCandidatesModal({ programId, onSave = () => {} }) {
               ${program.type === 'Stage' ? getIcon('stage') : getIcon('nonStage')} ${program.type}
             </span>
             <span class="saas-tag-pill p-neutral">${program.category} Category</span>
+            <button type="button" id="btnAssignModalToggleType" class="btn btn-sm btn-outline" style="font-size: 11px; font-weight: 700; height: 26px; padding: 0 10px; margin-left: 6px; ${program.type === 'Stage' ? 'border-color: #f59e0b; color: #d97706; background: #fffbeb;' : 'border-color: #2563eb; color: #1d4ed8; background: #eff6ff;'}" title="Click to switch Stage / Non-Stage">
+              ${program.type === 'Stage' ? 'Switch to Non-Stage' : '🎭 Switch to Stage (Active)'}
+            </button>
           </div>
           <h2 class="modal-title" style="font-size: 20px; font-weight: 800; color: #0f172a;">${program.name}</h2>
         </div>
@@ -478,6 +481,21 @@ export function openAssignCandidatesModal({ programId, onSave = () => {} }) {
     excelService.exportSingleProgram(program, assignedCandidates, trainer);
     toast.info(`Exported roster for [${program.code}] ${program.name}`);
   });
+
+  // Wire quick toggle stage/non-stage
+  const btnToggleTypeModal = overlay.querySelector('#btnAssignModalToggleType');
+  if (btnToggleTypeModal) {
+    btnToggleTypeModal.addEventListener('click', () => {
+      const currentProg = state.getProgramById(program.id);
+      if (!currentProg) return;
+      const newType = currentProg.type === 'Stage' ? 'Non-Stage' : 'Stage';
+      state.updateProgram(program.id, { type: newType });
+      toast.success(`Program [${currentProg.code}] switched to ${newType}!`);
+      close();
+      openAssignCandidatesModal({ programId, onSave });
+      onSave();
+    });
+  }
 
   // Initial render
   renderAssignedChips();

@@ -390,8 +390,13 @@ export function renderProgramsView(container, navigateTo) {
         // On phone view, switch to detail view and scroll to top
         splitLayout.classList.add('mobile-show-detail');
         window.scrollTo({ top: 0, behavior: 'smooth' });
-        renderLeftList();
-        renderRightDetail(p);
+
+        // Instant active highlight without destroying sidebar DOM
+        programsListContainer.querySelectorAll('.prog-sidebar-card').forEach(card => {
+          card.classList.toggle('active-program', card.getAttribute('data-id') === p.id);
+        });
+
+        renderRightDetail(p.id);
       });
 
       programsListContainer.appendChild(item);
@@ -402,7 +407,8 @@ export function renderProgramsView(container, navigateTo) {
   }
 
   function renderRightDetail(programOrId) {
-    const program = typeof programOrId === 'object' ? programOrId : state.getProgramById(programOrId);
+    const pid = typeof programOrId === 'object' && programOrId ? programOrId.id : programOrId;
+    const program = state.getProgramById(pid);
 
     if (!program) {
       programDetailContainer.innerHTML = `
@@ -669,23 +675,29 @@ export function renderProgramsView(container, navigateTo) {
     }
 
     // 1b. Quick Toggle Stage / Non-Stage
-    const handleToggleType = () => {
-      const currentProg = state.getProgramById(program.id) || program;
+    const handleToggleType = (e) => {
+      if (e) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
+      const currentProg = state.getProgramById(program.id);
+      if (!currentProg) return;
+
       const newType = currentProg.type === 'Stage' ? 'Non-Stage' : 'Stage';
-      state.updateProgram(program.id, { type: newType });
+      state.updateProgram(currentProg.id, { type: newType });
       toast.success(`Program [${currentProg.code}] switched to ${newType}!`);
       renderLeftList();
-      renderRightDetail(program.id);
+      renderRightDetail(currentProg.id);
     };
 
     const btnQuickToggle = programDetailContainer.querySelector('#btnQuickToggleProgType');
     if (btnQuickToggle) {
-      btnQuickToggle.addEventListener('click', handleToggleType);
+      btnQuickToggle.onclick = handleToggleType;
     }
 
     const btnBannerToggle = programDetailContainer.querySelector('#btnBannerSwitchToStage');
     if (btnBannerToggle) {
-      btnBannerToggle.addEventListener('click', handleToggleType);
+      btnBannerToggle.onclick = handleToggleType;
     }
 
     // 2. Edit program
@@ -845,8 +857,5 @@ export function renderProgramsView(container, navigateTo) {
       return;
     }
     renderLeftList();
-    if (selectedProgramId) {
-      renderRightDetail(selectedProgramId);
-    }
   });
 }

@@ -679,10 +679,11 @@ class StateService {
       this.programs[index].deactivatedAt = this.programs[index].deactivatedAt || new Date().toISOString();
     }
 
-    this.saveState(false);
+    // Re-evaluate candidates and Non-Stage deactivation with zero-lag linear pass
+    this.deactivateNonStageProgramsAndCandidates(false);
 
-    // Re-evaluate candidates and Non-Stage deactivation so candidates enrolled in this program are reactivated if it became Stage!
-    this.deactivateNonStageProgramsAndCandidates(true);
+    // Save and broadcast state once
+    this.saveState(true);
 
     if (firebaseService.isInitialized) {
       firebaseService.setDoc('programs', cleanId, this.programs[index]).catch(e => console.warn(e));
@@ -896,12 +897,25 @@ class StateService {
       }
     });
 
-    // 3. Deactivate candidates who have only Non-Stage programs, reactivate candidates with Stage programs
-    this.candidates.forEach(c => {
-      const assigned = this.getCandidatePrograms(c.id);
-      const stageProgs = assigned.filter(p => (p.type === 'Stage' || !String(p.type || '').toLowerCase().includes('non')) && p.status !== 'Inactive' && p.isActive !== false);
+    // 3. Ultra-fast linear O(P + C) pass: build set of candidate IDs enrolled in active Stage programs
+    const candidatesWithActiveStage = new Set();
+    this.programs.forEach(p => {
+      const isNonStage = p.type === 'Non-Stage' || String(p.type || '').toLowerCase().includes('non');
+      if (!isNonStage && p.status !== 'Inactive' && p.isActive !== false) {
+        if (Array.isArray(p.candidateIds)) {
+          p.candidateIds.forEach(cid => {
+            if (cid) candidatesWithActiveStage.add(String(cid).trim().toLowerCase());
+          });
+        }
+      }
+    });
 
-      if (stageProgs.length === 0) {
+    this.candidates.forEach(c => {
+      const idClean = String(c.id || '').trim().toLowerCase();
+      const adClean = String(c.adNo || '').trim().toLowerCase();
+      const hasStage = candidatesWithActiveStage.has(idClean) || (adClean && candidatesWithActiveStage.has(adClean));
+
+      if (!hasStage) {
         // Has ONLY non-stage programs (or not enrolled in any stage programs)
         if (c.status !== 'Inactive' || c.isActive !== false) {
           c.status = 'Inactive';

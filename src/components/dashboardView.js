@@ -215,4 +215,22 @@ export function renderDashboardView(container, navigateTo) {
       });
     });
   });
+
+  // Keep dashboard metrics in sync without re-mounting
+  const unsubscribeState = state.subscribe(() => {
+    if (!document.body.contains(container)) {
+      unsubscribeState();
+      return;
+    }
+    const updatedMetrics = state.getMetrics();
+    const updatedDaily = state.getDailySummary();
+    const valTotalCand = container.querySelector('[data-nav="candidates"] .stat-value');
+    if (valTotalCand) valTotalCand.textContent = updatedMetrics.totalCandidates;
+    const valTotalProg = container.querySelector('[data-nav="programs"] .stat-value');
+    if (valTotalProg) valTotalProg.textContent = updatedMetrics.totalPrograms;
+    const valTotalTrn = container.querySelector('[data-nav="trainers"] .stat-value');
+    if (valTotalTrn) valTotalTrn.textContent = updatedMetrics.totalTrainers;
+    const valTotalMeets = container.querySelector('[data-nav="daily-progress"] .stat-value');
+    if (valTotalMeets) valTotalMeets.textContent = `${updatedDaily.metCount} / ${updatedDaily.totalScheduled}`;
+  });
 }

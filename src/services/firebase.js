@@ -25,8 +25,9 @@ class FirebaseService {
     this.isInitialized = false;
     this.statusListeners = new Set();
     this.unsubscribers = [];
-    this.connectionStatus = 'disconnected'; // 'connected' | 'connecting' | 'disconnected' | 'error'
+    this.connectionStatus = 'disconnected'; // 'connected' | 'connecting' | 'disconnected' | 'error' | 'quota-exceeded'
     this.connectionError = null;
+    this.isQuotaExceeded = false;
 
     this.initFromActiveConfig();
   }
@@ -159,7 +160,17 @@ class FirebaseService {
         });
         onData(items);
       }, (err) => {
-        console.warn(`Firestore subscription error for ${collectionName}:`, err);
+        if (err && (err.code === 'resource-exhausted' || String(err.message || '').includes('Quota exceeded'))) {
+          if (!this.isQuotaExceeded) {
+            this.isQuotaExceeded = true;
+            this.connectionStatus = 'quota-exceeded';
+            this.connectionError = 'Firebase Firestore quota exceeded. Operating smoothly in local offline mode.';
+            console.warn(`Firestore quota exceeded on ${collectionName}. Pausing cloud writes; running in fast local mode.`);
+            this.notifyStatus();
+          }
+        } else {
+          console.warn(`Firestore subscription error for ${collectionName}:`, err);
+        }
         if (onError) onError(err);
       });
 
@@ -173,12 +184,18 @@ class FirebaseService {
 
   // --- CRUD Operations ---
   async setDoc(collectionName, docId, data) {
-    if (!this.db || !this.isInitialized) return null;
+    if (!this.db || !this.isInitialized || this.isQuotaExceeded) return null;
     try {
       const docRef = doc(this.db, collectionName, String(docId));
       await setDoc(docRef, { ...data, updatedAt: new Date().toISOString() }, { merge: true });
       return true;
     } catch (e) {
+      if (e && (e.code === 'resource-exhausted' || String(e.message || '').includes('Quota exceeded'))) {
+        this.isQuotaExceeded = true;
+        this.connectionStatus = 'quota-exceeded';
+        this.notifyStatus();
+        return null;
+      }
       console.error(`Error saving document to ${collectionName}/${docId}:`, e);
       throw e;
     }
@@ -190,12 +207,18 @@ class FirebaseService {
   }
 
   async deleteDoc(collectionName, docId) {
-    if (!this.db || !this.isInitialized) return null;
+    if (!this.db || !this.isInitialized || this.isQuotaExceeded) return null;
     try {
       const docRef = doc(this.db, collectionName, String(docId));
       await deleteDoc(docRef);
       return true;
     } catch (e) {
+      if (e && (e.code === 'resource-exhausted' || String(e.message || '').includes('Quota exceeded'))) {
+        this.isQuotaExceeded = true;
+        this.connectionStatus = 'quota-exceeded';
+        this.notifyStatus();
+        return null;
+      }
       console.error(`Error deleting document from ${collectionName}/${docId}:`, e);
       throw e;
     }
@@ -207,7 +230,7 @@ class FirebaseService {
   }
 
   async batchSync(collectionName, items) {
-    if (!this.db || !this.isInitialized || !Array.isArray(items)) return null;
+    if (!this.db || !this.isInitialized || this.isQuotaExceeded || !Array.isArray(items)) return null;
     try {
       const batch = writeBatch(this.db);
       items.forEach(item => {
@@ -218,6 +241,14 @@ class FirebaseService {
       await batch.commit();
       return true;
     } catch (e) {
+      if (e && (e.code === 'resource-exhausted' || String(e.message || '').includes('Quota exceeded'))) {
+        this.isQuotaExceeded = true;
+        this.connectionStatus = 'quota-exceeded';
+        this.connectionError = 'Firebase Firestore quota exceeded. Operating smoothly in local offline mode.';
+        console.warn(`Firestore quota exceeded on batchSync ${collectionName}. Pausing cloud writes.`);
+        this.notifyStatus();
+        return null;
+      }
       console.error(`Error batch syncing to ${collectionName}:`, e);
       throw e;
     }

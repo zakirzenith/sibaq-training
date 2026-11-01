@@ -212,13 +212,18 @@ class StateService {
   }
 
   notify() {
-    for (const callback of this.subscribers) {
-      try {
-        callback(this);
-      } catch (err) {
-        console.error('Error in state subscriber:', err);
+    if (this._notifyScheduled) return;
+    this._notifyScheduled = true;
+    requestAnimationFrame(() => {
+      this._notifyScheduled = false;
+      for (const callback of this.subscribers) {
+        try {
+          callback(this);
+        } catch (err) {
+          console.error('Error in state subscriber:', err);
+        }
       }
-    }
+    });
   }
 
   // --- CLOUD FIRESTORE SYNCHRONIZATION ---
@@ -245,16 +250,19 @@ class StateService {
 
     // Real-time snapshot listeners for each collection
     const unsubCandidates = firebaseService.subscribe('candidates', (items) => {
+      if (!Array.isArray(items) || items.length === 0) return;
       this.candidates = items.map(c => ({
         ...c,
         id: String(c.id || '').trim(),
         category: normalizeCategory(c.category || 'BIDĀYA')
       }));
-      this.deactivateNonStageProgramsAndCandidates(false);
-      this.saveState();
+      // Clean up non-stage programs and candidates locally WITHOUT syncing back to cloud inside listener!
+      this.deactivateNonStageProgramsAndCandidates(false, false);
+      this.saveState(true);
     });
 
     const unsubPrograms = firebaseService.subscribe('programs', (items) => {
+      if (!Array.isArray(items) || items.length === 0) return;
       this.programs = items.map(p => ({
         ...p,
         id: String(p.id || '').trim(),
@@ -262,32 +270,35 @@ class StateService {
         trainerId: p.trainerId && String(p.trainerId).trim() ? String(p.trainerId).trim() : null,
         candidateIds: Array.isArray(p.candidateIds) ? p.candidateIds.map(id => String(id).trim()).filter(Boolean) : []
       }));
-      this.deactivateNonStageProgramsAndCandidates(false);
-      this.saveState();
+      this.deactivateNonStageProgramsAndCandidates(false, false);
+      this.saveState(true);
     });
 
     const unsubTrainers = firebaseService.subscribe('trainers', (items) => {
+      if (!Array.isArray(items) || items.length === 0) return;
       this.trainers = items.map(t => ({
         ...t,
         id: String(t.id || '').trim()
       }));
-      this.saveState();
+      this.saveState(true);
     });
 
     const unsubMeets = firebaseService.subscribe('dailyMeets', (items) => {
+      if (!Array.isArray(items)) return;
       this.dailyMeets = items.map(m => ({
         ...m,
         id: String(m.id || '').trim()
       }));
-      this.saveState();
+      this.saveState(true);
     });
 
     const unsubAppeals = firebaseService.subscribe('appeals', (items) => {
+      if (!Array.isArray(items)) return;
       this.appeals = items.map(a => ({
         ...a,
         id: String(a.id || '').trim()
       }));
-      this.saveState();
+      this.saveState(true);
     });
 
     
@@ -854,7 +865,7 @@ class StateService {
    * and all candidates who have only Non-Stage programs.
    * Candidates with at least one Stage program remain Active.
    */
-  deactivateNonStageProgramsAndCandidates(triggerNotify = true) {
+  deactivateNonStageProgramsAndCandidates(triggerNotify = true, syncToCloud = true) {
     let deactivatedProgramsCount = 0;
     let deactivatedCandidatesCount = 0;
     const updatedPrograms = [];
@@ -940,7 +951,7 @@ class StateService {
     if (updatedPrograms.length > 0 || updatedCandidates.length > 0) {
       this.saveState(triggerNotify);
 
-      if (firebaseService.isInitialized) {
+      if (syncToCloud && firebaseService.isInitialized && !firebaseService.isQuotaExceeded) {
         if (updatedPrograms.length > 0) {
           firebaseService.batchSync('programs', updatedPrograms).catch(e => console.warn(e));
         }
@@ -954,6 +965,25 @@ class StateService {
       deactivatedPrograms: deactivatedProgramsCount,
       deactivatedCandidates: deactivatedCandidatesCount
     };
+  }
+
+  /**
+   * Fast O(Programs) hash map index for looking up all programs assigned to any candidate.
+   * Maps both candidate ID and Admission Number to program arrays for instant O(1) lookups.
+   */
+  getCandidateProgramsMap() {
+    const map = new Map();
+    this.programs.forEach(p => {
+      if (Array.isArray(p.candidateIds)) {
+        p.candidateIds.forEach(cid => {
+          if (!cid) return;
+          const key = String(cid).trim().toLowerCase();
+          if (!map.has(key)) map.set(key, []);
+          map.get(key).push(p);
+        });
+      }
+    });
+    return map;
   }
 
   getCandidateStagePrograms(candidateId) {

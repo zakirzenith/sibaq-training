@@ -160,7 +160,13 @@ export function renderCandidatesView(container, navigateTo) {
         icon: 'activity',
         getOptions: () => {
           const cands = state.getCandidates();
-          const activeStage = cands.filter(c => (state.getCandidateStagePrograms(c.id) || []).length > 0).length;
+          const pMap = state.getCandidateProgramsMap();
+          let activeStage = 0;
+          cands.forEach(c => {
+            const progs = pMap.get(String(c.id).toLowerCase()) || (c.adNo ? pMap.get(String(c.adNo).toLowerCase()) : null) || [];
+            const hasStage = progs.some(p => p.type === 'Stage' && p.status !== 'Inactive' && p.isActive !== false);
+            if (hasStage) activeStage++;
+          });
           const inactiveNonStage = cands.length - activeStage;
           return [
             { value: 'active', label: 'Active (Stage Candidates)', count: activeStage },
@@ -174,7 +180,12 @@ export function renderCandidatesView(container, navigateTo) {
         icon: 'zap',
         getOptions: () => {
           const cands = state.getCandidates();
-          const enrolled = cands.filter(c => state.getCandidatePrograms(c.id).length > 0).length;
+          const pMap = state.getCandidateProgramsMap();
+          let enrolled = 0;
+          cands.forEach(c => {
+            const progs = pMap.get(String(c.id).toLowerCase()) || (c.adNo ? pMap.get(String(c.adNo).toLowerCase()) : null) || [];
+            if (progs.length > 0) enrolled++;
+          });
           const notEnrolled = cands.length - enrolled;
           return [
             { value: 'enrolled', label: 'Enrolled in Programs', count: enrolled },
@@ -190,8 +201,93 @@ export function renderCandidatesView(container, navigateTo) {
     }
   });
 
+  // Delegated event handling for instant, non-laggy clicks across desktop table and mobile touch cards
+  const handleOpenProfile = (cid) => {
+    openCandidateProfileModal({
+      candidateId: cid,
+      onUpdate: () => renderTable()
+    });
+  };
+
+  const handlePrintTracker = (cid) => {
+    const cand = state.getCandidateById(cid);
+    if (cand) printCandidateOfflineTracker(cand);
+  };
+
+  const handleEdit = (cid) => {
+    const cand = state.getCandidateById(cid);
+    if (cand) {
+      openCandidateFormModal({
+        candidate: cand,
+        onSave: () => renderTable()
+      });
+    }
+  };
+
+  const handleDelete = (cid) => {
+    const cand = state.getCandidateById(cid);
+    if (!cand) return;
+    if (confirm(`Are you sure you want to delete candidate ${cand.name}?`)) {
+      state.deleteCandidate(cid);
+      toast.info(`Candidate ${cand.name} deleted.`);
+      renderTable();
+    }
+  };
+
+  const setupDelegatedListClicks = (containerEl) => {
+    containerEl.addEventListener('click', (e) => {
+      const progChip = e.target.closest('.clickable-program');
+      if (progChip) {
+        e.stopPropagation();
+        const pid = progChip.getAttribute('data-pid');
+        if (pid) {
+          openAssignCandidatesModal({
+            programId: pid,
+            onSave: () => renderTable()
+          });
+        }
+        return;
+      }
+
+      const printBtn = e.target.closest('.btn-print-cand-tracker');
+      if (printBtn) {
+        e.stopPropagation();
+        const cid = printBtn.getAttribute('data-id');
+        if (cid) handlePrintTracker(cid);
+        return;
+      }
+
+      const editBtn = e.target.closest('.btn-edit-cand');
+      if (editBtn) {
+        e.stopPropagation();
+        const cid = editBtn.getAttribute('data-id');
+        if (cid) handleEdit(cid);
+        return;
+      }
+
+      const delBtn = e.target.closest('.btn-delete-cand');
+      if (delBtn) {
+        e.stopPropagation();
+        const cid = delBtn.getAttribute('data-id');
+        if (cid) handleDelete(cid);
+        return;
+      }
+
+      const profBtn = e.target.closest('.btn-view-profile, .saas-student-cell, .mcc-name-btn, .mcc-profile-bar-btn');
+      if (profBtn) {
+        const cid = profBtn.getAttribute('data-cid') || profBtn.closest('[data-cid]')?.getAttribute('data-cid');
+        if (cid) handleOpenProfile(cid);
+        return;
+      }
+    });
+  };
+
+  setupDelegatedListClicks(tableBody);
+  setupDelegatedListClicks(mobileList);
+
   function renderTable() {
     const candidates = state.getCandidates();
+    const progMap = state.getCandidateProgramsMap();
 
     const filtered = candidates.filter(c => {
       const q = currentSearchQuery.toLowerCase().trim();
@@ -202,32 +298,34 @@ export function renderCandidatesView(container, navigateTo) {
       const matchesSearch = !q || cName.includes(q) || cAd.includes(q) || cCls.includes(q);
       if (!matchesSearch) return false;
 
-      // Filter: Category (robust normalized comparison)
+      // Filter: Category
       if (activeFilters.category) {
         const itemCat = String(c.category || 'General').trim().toLowerCase();
         const targetCat = String(activeFilters.category).trim().toLowerCase();
         if (itemCat !== targetCat) return false;
       }
 
-      // Filter: Class (robust normalized comparison)
+      // Filter: Class
       if (activeFilters.class) {
         const itemCls = String(c.class || 'No Class').trim().toLowerCase();
         const targetCls = String(activeFilters.class).trim().toLowerCase();
         if (itemCls !== targetCls) return false;
       }
 
+      // Fast O(1) Candidate Programs Lookup
+      const progs = progMap.get(String(c.id).toLowerCase()) || (c.adNo ? progMap.get(String(c.adNo).toLowerCase()) : null) || [];
+      const hasStage = progs.some(p => p.type === 'Stage' && p.status !== 'Inactive' && p.isActive !== false);
+
       // Filter: Candidate Status
       if (activeFilters.status) {
-        const isStageActive = (state.getCandidateStagePrograms(c.id) || []).length > 0;
-        if (activeFilters.status === 'active' && !isStageActive) return false;
-        if (activeFilters.status === 'inactive' && isStageActive) return false;
+        if (activeFilters.status === 'active' && !hasStage) return false;
+        if (activeFilters.status === 'inactive' && hasStage) return false;
       }
 
       // Filter: Enrollment
       if (activeFilters.enrollment) {
-        const progCount = state.getCandidatePrograms(c.id).length;
-        if (activeFilters.enrollment === 'enrolled' && progCount === 0) return false;
-        if (activeFilters.enrollment === 'not_enrolled' && progCount > 0) return false;
+        if (activeFilters.enrollment === 'enrolled' && progs.length === 0) return false;
+        if (activeFilters.enrollment === 'not_enrolled' && progs.length > 0) return false;
       }
 
       return true;
@@ -262,8 +360,8 @@ export function renderCandidatesView(container, navigateTo) {
     }
 
     filtered.forEach(c => {
-      const assignedPrograms = state.getCandidatePrograms(c.id);
-      const stagePrograms = state.getCandidateStagePrograms(c.id);
+      const assignedPrograms = progMap.get(String(c.id).toLowerCase()) || (c.adNo ? progMap.get(String(c.adNo).toLowerCase()) : null) || [];
+      const stagePrograms = assignedPrograms.filter(p => p.type === 'Stage' && p.status !== 'Inactive' && p.isActive !== false);
       const isInactiveNonStage = c.status === 'Inactive' || stagePrograms.length === 0;
       const initials = (c.name || 'C').split(' ').map(n => n[0]).slice(0, 2).join('');
 
@@ -276,7 +374,7 @@ export function renderCandidatesView(container, navigateTo) {
           <div class="saas-student-cell" data-cid="${c.id}" style="cursor: pointer;">
             <div class="saas-avatar-soft">${c.photo ? `<img src="${c.photo}" alt="${c.name}" class="saas-avatar-img" />` : initials}</div>
             <div class="saas-student-info">
-              <button class="candidate-name-btn btn-view-profile" data-cid="${c.id}" title="Click to view candidate profile">
+              <button type="button" class="candidate-name-btn btn-view-profile" data-cid="${c.id}" title="Click to view candidate profile">
                 <strong>${c.name}</strong>
               </button>
               ${isInactiveNonStage ? `
@@ -305,13 +403,13 @@ export function renderCandidatesView(container, navigateTo) {
                         const isNonStage = p.type === 'Non-Stage' || p.status === 'Inactive';
                         if (isNonStage) {
                           return `
-                            <span class="saas-prog-capsule p-nonstage clickable-program" data-pid="${p.id}" title="${p.name} (Non-Stage - Completed)" style="opacity: 0.65; text-decoration: line-through; border-style: dashed;">
+                            <span class="saas-prog-capsule p-nonstage clickable-program" data-pid="${p.id}" title="${p.name} (Non-Stage - Completed)" style="opacity: 0.65; text-decoration: line-through; border-style: dashed; cursor: pointer;">
                               ${p.code} (Done)
                             </span>
                           `;
                         }
                         return `
-                          <span class="saas-prog-capsule p-stage clickable-program" data-pid="${p.id}" title="${p.name}">
+                          <span class="saas-prog-capsule p-stage clickable-program" data-pid="${p.id}" title="${p.name}" style="cursor: pointer;">
                             ${p.code}
                           </span>
                         `;
@@ -324,13 +422,13 @@ export function renderCandidatesView(container, navigateTo) {
         </td>
         <td style="text-align: right;">
           <div class="table-actions-cell" style="justify-content: flex-end;">
-            <button class="saas-circle-btn btn-print-cand-tracker" title="${isInactiveNonStage ? 'Offline tracker not available (Non-Stage only)' : 'Print Offline Tracker (1-20 Nov)'}" data-id="${c.id}" style="${isInactiveNonStage ? 'color: #94a3b8; opacity: 0.6;' : 'color: #0f172a;'}">
+            <button type="button" class="saas-circle-btn btn-print-cand-tracker" title="${isInactiveNonStage ? 'Offline tracker not available (Non-Stage only)' : 'Print Offline Tracker (1-20 Nov)'}" data-id="${c.id}" style="${isInactiveNonStage ? 'color: #94a3b8; opacity: 0.6;' : 'color: #0f172a;'}">
               ${getIcon('printer')}
             </button>
-            <button class="saas-circle-btn btn-edit-cand" title="Edit Candidate" data-id="${c.id}">
+            <button type="button" class="saas-circle-btn btn-edit-cand" title="Edit Candidate" data-id="${c.id}">
               ${getIcon('edit')}
             </button>
-            <button class="saas-circle-btn text-danger btn-delete-cand" title="Delete Candidate" data-id="${c.id}">
+            <button type="button" class="saas-circle-btn text-danger btn-delete-cand" title="Delete Candidate" data-id="${c.id}">
               ${getIcon('trash')}
             </button>
           </div>
@@ -380,13 +478,13 @@ export function renderCandidatesView(container, navigateTo) {
                 const isNonStage = p.type === 'Non-Stage' || p.status === 'Inactive';
                 if (isNonStage) {
                   return `
-                    <span class="saas-prog-capsule p-nonstage" style="opacity: 0.65; text-decoration: line-through; border-style: dashed;">
+                    <span class="saas-prog-capsule p-nonstage clickable-program" data-pid="${p.id}" style="opacity: 0.65; text-decoration: line-through; border-style: dashed; cursor: pointer;">
                       ${p.code} (Done)
                     </span>
                   `;
                 }
                 return `
-                  <span class="saas-prog-capsule p-stage">
+                  <span class="saas-prog-capsule p-stage clickable-program" data-pid="${p.id}" style="cursor: pointer;">
                     ${p.code} • ${p.name}
                   </span>
                 `;
@@ -400,91 +498,6 @@ export function renderCandidatesView(container, navigateTo) {
           <span class="mcc-arrow">&rarr;</span>
         </button>
       `;
-
-      // Wire Desktop Events
-      tr.querySelectorAll('.clickable-program').forEach(chip => {
-        chip.addEventListener('click', (e) => {
-          e.stopPropagation();
-          const pid = chip.getAttribute('data-pid');
-          openAssignCandidatesModal({
-            programId: pid,
-            onSave: () => renderTable()
-          });
-        });
-      });
-
-      // Wire Profile Clicks on Both Desktop & Mobile
-      const openProfile = (cid) => {
-        openCandidateProfileModal({
-          candidateId: cid,
-          onUpdate: () => renderTable()
-        });
-      };
-
-      tr.querySelectorAll('.btn-view-profile, .saas-student-cell').forEach(el => {
-        el.addEventListener('click', () => openProfile(c.id));
-      });
-
-      mobileCard.querySelectorAll('.btn-view-profile').forEach(el => {
-        el.addEventListener('click', (e) => {
-          e.stopPropagation();
-          openProfile(c.id);
-        });
-      });
-
-      // Wire Print Offline Progress Tracker (1-20 Nov)
-      const handlePrintTracker = () => {
-        printCandidateOfflineTracker(c);
-      };
-
-      const btnPrintDesktop = tr.querySelector('.btn-print-cand-tracker');
-      if (btnPrintDesktop) {
-        btnPrintDesktop.addEventListener('click', (e) => {
-          e.stopPropagation();
-          handlePrintTracker();
-        });
-      }
-
-      const btnPrintMobile = mobileCard.querySelector('.btn-print-cand-tracker');
-      if (btnPrintMobile) {
-        btnPrintMobile.addEventListener('click', (e) => {
-          e.stopPropagation();
-          handlePrintTracker();
-        });
-      }
-
-      // Wire Edit Candidate
-      const handleEdit = (cid) => {
-        const cand = state.getCandidateById(cid);
-        if (cand) {
-          openCandidateFormModal({
-            candidate: cand,
-            onSave: () => renderTable()
-          });
-        }
-      };
-
-      tr.querySelector('.btn-edit-cand').addEventListener('click', () => handleEdit(c.id));
-      mobileCard.querySelector('.btn-edit-cand').addEventListener('click', (e) => {
-        e.stopPropagation();
-        handleEdit(c.id);
-      });
-
-      // Wire Delete Candidate
-      const handleDelete = (cid) => {
-        const cand = state.getCandidateById(cid);
-        if (confirm(`Are you sure you want to delete candidate ${cand?.name}?`)) {
-          state.deleteCandidate(cid);
-          toast.info(`Candidate ${cand?.name} deleted.`);
-          renderTable();
-        }
-      };
-
-      tr.querySelector('.btn-delete-cand').addEventListener('click', () => handleDelete(c.id));
-      mobileCard.querySelector('.btn-delete-cand').addEventListener('click', (e) => {
-        e.stopPropagation();
-        handleDelete(c.id);
-      });
 
       tableBody.appendChild(tr);
       mobileList.appendChild(mobileCard);

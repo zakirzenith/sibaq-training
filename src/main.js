@@ -89,20 +89,11 @@ class App {
       });
     };
 
-    // Subscribe to state changes to keep badges and views in sync across all devices
+    // Subscribe to state changes to keep badges and portal UI in sync across all devices
     state.subscribe(() => {
       this.updateBadges();
       if (this.isAuthenticated) {
         this.updatePortalUI();
-      }
-
-      // Auto-refresh views when changes arrive from Cloud Firestore
-      const activeModal = document.querySelector('.modal-backdrop');
-      const isTyping = document.activeElement && 
-        (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA');
-
-      if (this.isAuthenticated && !activeModal && !isTyping && this.currentView !== 'programs' && this.currentView !== 'login') {
-        this.render();
       }
     });
 
@@ -928,14 +919,22 @@ class App {
       if (!cloudDot || !cloudLabel) return;
       if (status.status === 'connected') {
         cloudDot.className = 'cloud-status-dot online';
+        cloudDot.style.background = '';
         cloudLabel.textContent = status.projectId ? `Cloud: ${status.projectId}` : 'Cloud: Connected';
         if (btnCloud) btnCloud.classList.add('connected');
       } else if (status.status === 'connecting') {
         cloudDot.className = 'cloud-status-dot connecting';
+        cloudDot.style.background = '';
         cloudLabel.textContent = 'Connecting...';
+        if (btnCloud) btnCloud.classList.remove('connected');
+      } else if (status.status === 'quota-exceeded') {
+        cloudDot.className = 'cloud-status-dot offline';
+        cloudDot.style.background = '#f59e0b';
+        cloudLabel.textContent = 'Cloud: Quota Limit (Local Mode)';
         if (btnCloud) btnCloud.classList.remove('connected');
       } else {
         cloudDot.className = 'cloud-status-dot offline';
+        cloudDot.style.background = '';
         cloudLabel.textContent = 'Database: Local';
         if (btnCloud) btnCloud.classList.remove('connected');
       }

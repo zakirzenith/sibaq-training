@@ -81,7 +81,7 @@ function renderSingleCandidateTracker(candidate) {
       <!-- Top Running Header (Visible on print) -->
       <div class="sheet-running-header">
         <span class="srh-left">Sibaq '26 • Offline Progress Tracker</span>
-        <span class="srh-center">Candidate: <strong>${candidate.name}</strong> (${cleanChest})</span>
+        <span class="srh-center">Candidate: <strong>${candidate.name}</strong> (Ad No: ${candidate.adNo || candidate.chestNo || '—'})</span>
         <span class="srh-right">Daily Mentorship Log (1 Nov – 20 Nov 2026)</span>
       </div>
 
@@ -107,23 +107,17 @@ function renderSingleCandidateTracker(candidate) {
           </div>
           <div class="cd-row-split">
             <div class="cd-cell">
-              <span class="cd-label">CHEST NO:</span>
-              <span class="cd-value cd-chest-badge">${cleanChest}</span>
+              <span class="cd-label">ADMISSION NO:</span>
+              <span class="cd-value cd-chest-badge">${candidate.adNo || candidate.chestNo || '—'}</span>
             </div>
             <div class="cd-cell">
               <span class="cd-label">CLASS / GRADE:</span>
               <span class="cd-value">${candidate.class || '—'}</span>
             </div>
           </div>
-          <div class="cd-row-split">
-            <div class="cd-cell">
-              <span class="cd-label">CATEGORY:</span>
-              <span class="cd-value">${candidate.category || 'General'}</span>
-            </div>
-            <div class="cd-cell">
-              <span class="cd-label">ADMISSION NO:</span>
-              <span class="cd-value cd-mono">${candidate.adNo || '—'}</span>
-            </div>
+          <div class="cd-row cd-cat-row">
+            <span class="cd-label">CATEGORY:</span>
+            <span class="cd-value">${candidate.category || 'General'}</span>
           </div>
         </div>
       </div>
@@ -209,11 +203,11 @@ function renderSingleCandidateTracker(candidate) {
             <div class="fsb-sign-line"></div>
           </div>
           <div class="fsb-cell">
-            <div class="fsb-lbl">Head Mentor Verification:</div>
+            <div class="fsb-lbl">Controller Signature:</div>
             <div class="fsb-sign-line"></div>
           </div>
           <div class="fsb-cell">
-            <div class="fsb-lbl">Academic Controller Seal:</div>
+            <div class="fsb-lbl">Mentor Signature:</div>
             <div class="fsb-sign-line"></div>
           </div>
         </div>
@@ -222,7 +216,7 @@ function renderSingleCandidateTracker(candidate) {
       <!-- Running Page Footer -->
       <div class="sheet-bottom-note">
         <span>Darul Huda Bengal • Sibaq '26 Official Candidate Mentorship Record</span>
-        <span>Candidate: ${candidate.name} (${cleanChest}) • Ref: SIB26-OPT-${cleanChest.replace('#', '')}</span>
+        <span>Candidate: ${candidate.name} (Ad No: ${candidate.adNo || candidate.chestNo || '—'}) • Ref: SIB26-OPT-${(candidate.adNo || candidate.id || '').replace(/[^a-zA-Z0-9]/g, '')}</span>
       </div>
 
     </div>
@@ -250,8 +244,8 @@ export function printCandidateOfflineTracker(candidateOrCandidates) {
   const isSingle = candidates.length === 1;
   const singleCand = isSingle ? candidates[0] : null;
   const pageTitle = isSingle 
-    ? `Sibaq '26 Offline Tracker - ${singleCand.name} (${formatChestNo(singleCand)})`
-    : `Sibaq '26 Offline Trackers (${candidates.length} Candidates)`;
+    ? `Sibaq '26 Offline Tracker - ${singleCand.name} (Ad No: ${singleCand.adNo || singleCand.chestNo || '—'})`
+    : `Sibaq '26 Offline Trackers (${candidates.length} Candidates Bulk)`;
 
   const allTrackersHtml = candidates.map(c => renderSingleCandidateTracker(c)).join('');
 
@@ -774,8 +768,8 @@ export function printCandidateOfflineTracker(candidateOrCandidates) {
           <span class="scb-title">Sibaq '26 Offline Progress Tracker</span>
           <span class="scb-hint">
             ${isSingle 
-              ? `Candidate: <strong>${singleCand.name}</strong> (${formatChestNo(singleCand)}) • 20 Days (1 Nov – 20 Nov)`
-              : `Bulk Batch: <strong>${candidates.length} candidates</strong> loaded with clean page breaks`}
+              ? `Candidate: <strong>${singleCand.name}</strong> (Ad No: ${singleCand.adNo || singleCand.chestNo || '—'}) • 20 Days (1 Nov – 20 Nov)`
+              : `Bulk Batch: <strong>${candidates.length} candidates</strong> loaded. Click "Print / Save as PDF" to download the complete file at once.`}
           </span>
         </div>
         <div class="scb-right">
@@ -853,44 +847,59 @@ export function openCandidateTrackerModal({ candidates = [], allCandidates = [],
           </div>
         </div>
 
-        <!-- Option 1: Print for Single Candidate -->
-        <div style="border: 1px solid #e2e8f0; border-radius: 6px; padding: 14px; background: #ffffff;">
+        <!-- Option 1: Primary Bulk Download/Print All Students at Once -->
+        <div style="border: 2px solid #000000; border-radius: 8px; padding: 16px; background: #000000; color: #ffffff;">
+          <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 10px;">
+            <div>
+              <div style="display: flex; align-items: center; gap: 8px;">
+                <span style="font-size: 13px; font-weight: 900; letter-spacing: 0.05em; text-transform: uppercase; color: #ffffff;">
+                  Bulk Download / Print All Students PDF
+                </span>
+                <span style="background: #ffffff; color: #000000; font-size: 10px; font-weight: 900; padding: 2px 7px; border-radius: 4px;">
+                  RECOMMENDED
+                </span>
+              </div>
+              <p style="margin: 4px 0 0; font-size: 11.5px; color: #d4d4d4; line-height: 1.4;">
+                Download or print all <strong>${masterList.length} students'</strong> 1 Nov – 20 Nov daily progress tracker sheets in a single combined PDF with clean page-breaks.
+              </p>
+            </div>
+          </div>
+          <button type="button" id="btnPrintAllCandidates" class="btn btn-saas-primary" style="width: 100%; height: 42px; font-size: 13px; font-weight: 800; background: #ffffff; color: #000000; border-color: #ffffff; justify-content: center; gap: 8px;">
+            ${getIcon('printer')} Download / Print All Students at Once (${masterList.length} Candidates)
+          </button>
+        </div>
+
+        <!-- Option 2: Print Filtered List -->
+        <div style="border: 1px solid #cbd5e1; border-radius: 6px; padding: 12px 14px; background: #ffffff;">
+          <div style="display: flex; justify-content: space-between; align-items: center;">
+            <div>
+              <span style="font-size: 11px; font-weight: 800; color: #0f172a; text-transform: uppercase;">
+                Print Current Filtered Selection (${currentList.length} Students)
+              </span>
+              <p style="margin: 2px 0 0; font-size: 11px; color: #64748b;">Matches your active filters on the candidates page.</p>
+            </div>
+            <button type="button" id="btnPrintFilteredCandidates" class="btn btn-outline" style="height: 36px; padding: 0 14px; font-weight: 700; font-size: 12px; gap: 6px; border-color: #0f172a; color: #0f172a;">
+              ${getIcon('filter')} Print Filtered (${currentList.length})
+            </button>
+          </div>
+        </div>
+
+        <!-- Option 3: Print for Single Candidate -->
+        <div style="border: 1px solid #cbd5e1; border-radius: 6px; padding: 12px 14px; background: #ffffff;">
           <label style="display: block; font-size: 11px; font-weight: 800; color: #0f172a; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.04em;">
-            1. Print for a Single Candidate
+            Print for an Individual Student
           </label>
           <div style="display: flex; gap: 8px;">
             <select id="selTrackerCandidate" class="form-control" style="flex: 1; height: 38px; font-size: 12px; font-weight: 600;">
               <option value="">-- Choose Candidate --</option>
               ${masterList.map(c => `
                 <option value="${c.id}" ${c.id === defaultCandidateId ? 'selected' : ''}>
-                  ${c.name} (${formatChestNo(c)}) • ${c.category || 'General'} (${(state.getCandidatePrograms(c.id) || []).length} programs)
+                  ${c.name} (Ad No: ${c.adNo || c.chestNo || '—'}) • ${c.category || 'General'} (${(state.getCandidatePrograms(c.id) || []).length} programs)
                 </option>
               `).join('')}
             </select>
-            <button type="button" id="btnPrintSelectedCand" class="btn btn-saas-primary" style="height: 38px; padding: 0 14px; font-weight: 800; gap: 6px; background: #000000; color: #ffffff; border-color: #000000;">
+            <button type="button" id="btnPrintSelectedCand" class="btn btn-outline" style="height: 38px; padding: 0 14px; font-weight: 800; gap: 6px; border-color: #000000; color: #000000;">
               ${getIcon('printer')} Print Sheet
-            </button>
-          </div>
-        </div>
-
-        <!-- Option 2: Bulk Print -->
-        <div style="border: 1px solid #e2e8f0; border-radius: 6px; padding: 14px; background: #ffffff;">
-          <label style="display: block; font-size: 11px; font-weight: 800; color: #0f172a; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.04em;">
-            2. Batch Print Multiple Candidates (With Page Breaks)
-          </label>
-          <div style="display: flex; flex-direction: column; gap: 8px;">
-            <button type="button" id="btnPrintFilteredCandidates" class="btn btn-outline" style="height: 38px; font-weight: 700; font-size: 12px; justify-content: space-between; border-color: #cbd5e1;">
-              <span style="display: flex; align-items: center; gap: 6px;">
-                ${getIcon('filter')} Print Current Filtered List (${currentList.length} Students)
-              </span>
-              <span style="font-size: 11px; color: #64748b;">${getIcon('printer')}</span>
-            </button>
-
-            <button type="button" id="btnPrintAllCandidates" class="btn btn-outline" style="height: 38px; font-weight: 700; font-size: 12px; justify-content: space-between; border-color: #cbd5e1;">
-              <span style="display: flex; align-items: center; gap: 6px;">
-                ${getIcon('users')} Print All Roster Candidates (${masterList.length} Students)
-              </span>
-              <span style="font-size: 11px; color: #64748b;">${getIcon('printer')}</span>
             </button>
           </div>
         </div>

@@ -24,8 +24,11 @@ export function renderCandidatesView(container, navigateTo) {
 
       <div class="saas-header-actions">
         <div class="saas-action-pill-group desktop-only-btn">
-          <button id="btnDailyOfflineTrackers" class="saas-pill-btn" title="Download / Print Offline Daily Progress Trackers (1 Nov - 20 Nov)" style="background: #0f172a; color: #ffffff; border-color: #0f172a; font-weight: 700;">
-            ${getIcon('printer')} Offline Trackers (1-20 Nov)
+          <button id="btnBulkDailyOfflineTrackers" class="saas-pill-btn" title="Download Bulk Progress Tracker PDF for All Students (1 Nov - 20 Nov)" style="background: #000000; color: #ffffff; border-color: #000000; font-weight: 800;">
+            ${getIcon('printer')} Bulk Trackers PDF (All)
+          </button>
+          <button id="btnDailyOfflineTrackers" class="saas-pill-btn" title="Filter / Select Candidates Progress Trackers">
+            ${getIcon('filter')} Trackers Selector
           </button>
           <button id="btnDownloadCandTemplate" class="saas-pill-btn" title="Download formatted sample Excel sheet">
             ${getIcon('fileSpreadsheet')} Template
@@ -41,8 +44,12 @@ export function renderCandidatesView(container, navigateTo) {
           </button>
         </div>
 
-        <button id="btnMobileDailyOfflineTrackers" class="saas-pill-btn mobile-only-btn" title="Offline Trackers (1-20 Nov)" style="background: #0f172a; color: #ffffff; border-color: #0f172a; font-weight: 700;">
-          ${getIcon('printer')} Trackers
+        <button id="btnMobileBulkDailyOfflineTrackers" class="saas-pill-btn mobile-only-btn" title="Download Bulk PDF for all students" style="background: #000000; color: #ffffff; border-color: #000000; font-weight: 800;">
+          ${getIcon('printer')} Bulk PDF
+        </button>
+
+        <button id="btnMobileDailyOfflineTrackers" class="saas-pill-btn mobile-only-btn" title="Offline Trackers (1-20 Nov)" style="background: #f1f5f9; color: #0f172a; border-color: #cbd5e1; font-weight: 700;">
+          ${getIcon('filter')} Trackers
         </button>
 
         <button id="btnMobileBulkPhotos" class="saas-pill-btn mobile-only-btn" title="Bulk upload photos" style="background: #eef2ff; color: #4338ca; border-color: #c7d2fe; font-weight: 700;">
@@ -432,6 +439,25 @@ export function renderCandidatesView(container, navigateTo) {
   }
 
   // Header Actions
+  const handleBulkPrintAll = () => {
+    const masterList = state.getCandidates();
+    if (!masterList || masterList.length === 0) {
+      toast.error('Candidate master roster is empty.');
+      return;
+    }
+    printCandidateOfflineTracker(masterList);
+  };
+
+  const btnBulkTrackers = container.querySelector('#btnBulkDailyOfflineTrackers');
+  if (btnBulkTrackers) {
+    btnBulkTrackers.addEventListener('click', handleBulkPrintAll);
+  }
+
+  const btnMobileBulkTrackers = container.querySelector('#btnMobileBulkDailyOfflineTrackers');
+  if (btnMobileBulkTrackers) {
+    btnMobileBulkTrackers.addEventListener('click', handleBulkPrintAll);
+  }
+
   const handleOpenOfflineTrackerModal = () => {
     openCandidateTrackerModal({
       candidates: lastFilteredCandidates.length > 0 ? lastFilteredCandidates : state.getCandidates(),

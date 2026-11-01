@@ -155,6 +155,20 @@ export function renderCandidatesView(container, navigateTo) {
         }
       },
       {
+        key: 'status',
+        label: 'Candidate Status',
+        icon: 'activity',
+        getOptions: () => {
+          const cands = state.getCandidates();
+          const activeStage = cands.filter(c => (state.getCandidateStagePrograms(c.id) || []).length > 0).length;
+          const inactiveNonStage = cands.length - activeStage;
+          return [
+            { value: 'active', label: 'Active (Stage Candidates)', count: activeStage },
+            { value: 'inactive', label: 'Inactive (Non-Stage Only)', count: inactiveNonStage }
+          ];
+        }
+      },
+      {
         key: 'enrollment',
         label: 'Enrollment Status',
         icon: 'zap',
@@ -202,6 +216,13 @@ export function renderCandidatesView(container, navigateTo) {
         if (itemCls !== targetCls) return false;
       }
 
+      // Filter: Candidate Status
+      if (activeFilters.status) {
+        const isStageActive = (state.getCandidateStagePrograms(c.id) || []).length > 0;
+        if (activeFilters.status === 'active' && !isStageActive) return false;
+        if (activeFilters.status === 'inactive' && isStageActive) return false;
+      }
+
       // Filter: Enrollment
       if (activeFilters.enrollment) {
         const progCount = state.getCandidatePrograms(c.id).length;
@@ -242,11 +263,13 @@ export function renderCandidatesView(container, navigateTo) {
 
     filtered.forEach(c => {
       const assignedPrograms = state.getCandidatePrograms(c.id);
+      const stagePrograms = state.getCandidateStagePrograms(c.id);
+      const isInactiveNonStage = c.status === 'Inactive' || stagePrograms.length === 0;
       const initials = (c.name || 'C').split(' ').map(n => n[0]).slice(0, 2).join('');
 
       // 1. Desktop Table Row
       const tr = document.createElement('tr');
-      tr.className = 'saas-table-row';
+      tr.className = `saas-table-row ${isInactiveNonStage ? 'row-inactive-candidate' : ''}`;
       tr.innerHTML = `
         <td><span class="saas-adno-pill">${c.adNo}</span></td>
         <td>
@@ -256,6 +279,11 @@ export function renderCandidatesView(container, navigateTo) {
               <button class="candidate-name-btn btn-view-profile" data-cid="${c.id}" title="Click to view candidate profile">
                 <strong>${c.name}</strong>
               </button>
+              ${isInactiveNonStage ? `
+                <span class="badge" style="background: #f1f5f9; color: #64748b; border: 1px solid #cbd5e1; font-size: 9.5px; font-weight: 700; padding: 1px 6px; border-radius: 4px; margin-left: 6px;" title="Non-Stage completed; candidate deactivated">
+                  Inactive • Non-Stage
+                </span>
+              ` : ''}
             </div>
           </div>
         </td>
@@ -273,11 +301,21 @@ export function renderCandidatesView(container, navigateTo) {
               assignedPrograms.length > 0
                 ? assignedPrograms
                     .map(
-                      p => `
-                  <span class="saas-prog-capsule ${p.type === 'Stage' ? 'p-stage' : 'p-nonstage'} clickable-program" data-pid="${p.id}" title="${p.name}">
-                    ${p.code}
-                  </span>
-                `
+                      p => {
+                        const isNonStage = p.type === 'Non-Stage' || p.status === 'Inactive';
+                        if (isNonStage) {
+                          return `
+                            <span class="saas-prog-capsule p-nonstage clickable-program" data-pid="${p.id}" title="${p.name} (Non-Stage - Completed)" style="opacity: 0.65; text-decoration: line-through; border-style: dashed;">
+                              ${p.code} (Done)
+                            </span>
+                          `;
+                        }
+                        return `
+                          <span class="saas-prog-capsule p-stage clickable-program" data-pid="${p.id}" title="${p.name}">
+                            ${p.code}
+                          </span>
+                        `;
+                      }
                     )
                     .join(' ')
                 : '<span class="text-muted text-xs">Not enrolled yet</span>'
@@ -286,7 +324,7 @@ export function renderCandidatesView(container, navigateTo) {
         </td>
         <td style="text-align: right;">
           <div class="table-actions-cell" style="justify-content: flex-end;">
-            <button class="saas-circle-btn btn-print-cand-tracker" title="Print Offline Tracker (1-20 Nov)" data-id="${c.id}" style="color: #0f172a;">
+            <button class="saas-circle-btn btn-print-cand-tracker" title="${isInactiveNonStage ? 'Offline tracker not available (Non-Stage only)' : 'Print Offline Tracker (1-20 Nov)'}" data-id="${c.id}" style="${isInactiveNonStage ? 'color: #94a3b8; opacity: 0.6;' : 'color: #0f172a;'}">
               ${getIcon('printer')}
             </button>
             <button class="saas-circle-btn btn-edit-cand" title="Edit Candidate" data-id="${c.id}">
@@ -301,7 +339,7 @@ export function renderCandidatesView(container, navigateTo) {
 
       // 2. Mobile Touch Card (< 769px) with Direct Action Buttons
       const mobileCard = document.createElement('div');
-      mobileCard.className = 'mobile-candidate-card';
+      mobileCard.className = `mobile-candidate-card ${isInactiveNonStage ? 'card-inactive-candidate' : ''}`;
       mobileCard.setAttribute('data-cid', c.id);
       mobileCard.innerHTML = `
         <div class="mcc-top">
@@ -310,6 +348,11 @@ export function renderCandidatesView(container, navigateTo) {
             <button type="button" class="mcc-name-btn btn-view-profile" data-cid="${c.id}">
               <strong class="mcc-name">${c.name}</strong>
             </button>
+            ${isInactiveNonStage ? `
+              <span class="badge" style="background: #f1f5f9; color: #64748b; border: 1px solid #cbd5e1; font-size: 9.5px; font-weight: 700; padding: 1px 6px; border-radius: 4px; display: inline-block; margin-bottom: 2px;">
+                Inactive • Non-Stage
+              </span>
+            ` : ''}
             <div class="mcc-sub">
               <span class="saas-adno-pill">${c.adNo}</span>
               <span class="saas-class-pill">${c.class || 'No Class'}</span>
@@ -317,7 +360,7 @@ export function renderCandidatesView(container, navigateTo) {
             </div>
           </div>
           <div class="mcc-actions">
-            <button type="button" class="saas-circle-btn btn-print-cand-tracker" title="Print Offline Tracker (1-20 Nov)" data-id="${c.id}" style="color: #0f172a;">
+            <button type="button" class="saas-circle-btn btn-print-cand-tracker" title="${isInactiveNonStage ? 'Offline tracker not available (Non-Stage only)' : 'Print Offline Tracker (1-20 Nov)'}" data-id="${c.id}" style="${isInactiveNonStage ? 'color: #94a3b8; opacity: 0.6;' : 'color: #0f172a;'}">
               ${getIcon('printer')}
             </button>
             <button type="button" class="saas-circle-btn btn-edit-cand" title="Edit" data-id="${c.id}">
@@ -333,11 +376,21 @@ export function renderCandidatesView(container, navigateTo) {
           <span class="mcc-prog-label">Programs:</span>
           ${
             assignedPrograms.length > 0
-              ? assignedPrograms.map(p => `
-                <span class="saas-prog-capsule ${p.type === 'Stage' ? 'p-stage' : 'p-nonstage'}">
-                  ${p.code} • ${p.name}
-                </span>
-              `).join('')
+              ? assignedPrograms.map(p => {
+                const isNonStage = p.type === 'Non-Stage' || p.status === 'Inactive';
+                if (isNonStage) {
+                  return `
+                    <span class="saas-prog-capsule p-nonstage" style="opacity: 0.65; text-decoration: line-through; border-style: dashed;">
+                      ${p.code} (Done)
+                    </span>
+                  `;
+                }
+                return `
+                  <span class="saas-prog-capsule p-stage">
+                    ${p.code} • ${p.name}
+                  </span>
+                `;
+              }).join('')
               : '<span class="text-muted text-xs">No programs assigned yet</span>'
           }
         </div>
@@ -440,12 +493,13 @@ export function renderCandidatesView(container, navigateTo) {
 
   // Header Actions
   const handleBulkPrintAll = () => {
-    const masterList = state.getCandidates();
-    if (!masterList || masterList.length === 0) {
-      toast.error('Candidate master roster is empty.');
+    state.deactivateNonStageProgramsAndCandidates(false);
+    const stageCandidates = state.getCandidates().filter(c => (state.getCandidateStagePrograms(c.id) || []).length > 0);
+    if (!stageCandidates || stageCandidates.length === 0) {
+      toast.error('No candidates with active Stage programs found to print.');
       return;
     }
-    printCandidateOfflineTracker(masterList);
+    printCandidateOfflineTracker(stageCandidates);
   };
 
   const btnBulkTrackers = container.querySelector('#btnBulkDailyOfflineTrackers');

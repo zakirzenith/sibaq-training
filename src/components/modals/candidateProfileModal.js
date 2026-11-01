@@ -19,6 +19,8 @@ export function openCandidateProfileModal({ candidateId, onUpdate = () => {} }) 
   }
 
   const assignedPrograms = state.getCandidatePrograms(candidate.id);
+  const stagePrograms = state.getCandidateStagePrograms(candidate.id);
+  const isInactiveCand = candidate.status === 'Inactive' || stagePrograms.length === 0;
 
   // Collect unique trainers across assigned programs
   const trainersMap = new Map();
@@ -60,6 +62,11 @@ export function openCandidateProfileModal({ candidateId, onUpdate = () => {} }) 
             <div class="profile-name-row" style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
               <h2 class="modal-title" style="margin: 0; font-size: 19px;">${candidate.name}</h2>
               <code class="ad-badge">${candidate.adNo}</code>
+              ${isInactiveCand ? `
+                <span class="badge" style="background: #f1f5f9; color: #64748b; font-weight: 700; border: 1px solid #cbd5e1; font-size: 10px; padding: 2px 7px;">
+                  Inactive • Non-Stage
+                </span>
+              ` : ''}
             </div>
             <div class="profile-badges-row" style="margin-top: 4px;">
               <span class="badge ${
@@ -76,7 +83,7 @@ export function openCandidateProfileModal({ candidateId, onUpdate = () => {} }) 
           </div>
         </div>
         <div style="display: flex; align-items: center; gap: 8px;">
-          <button type="button" id="btnProfilePrintTracker" class="btn btn-sm btn-outline" style="height: 32px; padding: 0 12px; font-size: 11.5px; font-weight: 700; gap: 6px; border-color: #0f172a; color: #0f172a; background: #ffffff;" title="Print Offline Daily Progress Tracker (1-20 Nov)">
+          <button type="button" id="btnProfilePrintTracker" class="btn btn-sm btn-outline" style="height: 32px; padding: 0 12px; font-size: 11.5px; font-weight: 700; gap: 6px; ${isInactiveCand ? 'border-color: #cbd5e1; color: #94a3b8; background: #f8fafc;' : 'border-color: #0f172a; color: #0f172a; background: #ffffff;'}" title="${isInactiveCand ? 'Candidate has only Non-Stage programs (completed). Offline tracker prints Stage programs only.' : 'Print Offline Daily Progress Tracker (1-20 Nov)'}">
             ${getIcon('printer')} Offline Tracker
           </button>
           <button class="modal-close-btn" aria-label="Close">${getIcon('x')}</button>
@@ -89,15 +96,15 @@ export function openCandidateProfileModal({ candidateId, onUpdate = () => {} }) 
         <div class="profile-stats-strip">
           <div class="profile-stat-card">
             <span class="p-stat-number">${assignedPrograms.length}</span>
-            <span class="p-stat-label">Assigned Programs</span>
+            <span class="p-stat-label">Total Assigned</span>
           </div>
           <div class="profile-stat-card">
-            <span class="p-stat-number">${assignedPrograms.filter(p => p.type === 'Stage').length}</span>
-            <span class="p-stat-label">Stage Items</span>
+            <span class="p-stat-number" style="color: #2563eb;">${stagePrograms.length}</span>
+            <span class="p-stat-label">Stage Items (Active)</span>
           </div>
           <div class="profile-stat-card">
-            <span class="p-stat-number">${assignedPrograms.filter(p => p.type === 'Non-Stage').length}</span>
-            <span class="p-stat-label">Non-Stage Items</span>
+            <span class="p-stat-number" style="color: #64748b;">${assignedPrograms.length - stagePrograms.length}</span>
+            <span class="p-stat-label">Non-Stage (Done)</span>
           </div>
           <div class="profile-stat-card">
             <span class="p-stat-number">${uniqueTrainers.length}</span>
@@ -158,7 +165,11 @@ export function openCandidateProfileModal({ candidateId, onUpdate = () => {} }) 
                         <span class="badge badge-neutral-xs">${prog.category}</span>
                       </div>
                       <div class="profile-prog-status">
-                        ${isMetToday ? `
+                        ${!isStage || prog.status === 'Inactive' ? `
+                          <span class="badge" style="background: #f1f5f9; color: #64748b; font-size: 10px; font-weight: 700; border: 1px solid #cbd5e1;">
+                            Completed • Inactive
+                          </span>
+                        ` : isMetToday ? `
                           <span class="badge badge-stage text-xs font-semibold" title="Met today: ${latestMeetToday.percentage}%" style="display: inline-flex; align-items: center; gap: 4px;">
                             ${getIcon('checkCircle')} Met Today (${latestMeetToday.percentage}%)
                           </span>

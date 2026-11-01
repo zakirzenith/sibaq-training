@@ -43,18 +43,24 @@ export function getTrackerDates() {
 }
 
 /**
- * Get assigned programs enriched with designated mentor details for a candidate
+ * Get assigned programs enriched with designated mentor details for a candidate.
+ * STRICTLY filters out all Non-Stage programs! The offline report tracker prints ONLY active Stage programs.
  */
 export function getEnrichedCandidatePrograms(candidateId) {
   const candidatePrograms = state.getCandidatePrograms(candidateId) || [];
-  return candidatePrograms.map(p => {
+  const stagePrograms = candidatePrograms.filter(p => {
+    const isNonStage = p.type === 'Non-Stage' || String(p.type || '').toLowerCase().includes('non');
+    return !isNonStage && p.status !== 'Inactive' && p.isActive !== false;
+  });
+
+  return stagePrograms.map(p => {
     const trn = p.trainerId ? state.getTrainerById(p.trainerId) : null;
     return {
       id: p.id,
       code: p.code || 'PRG',
       name: p.name || 'Untitled Program',
       category: p.category || 'General',
-      type: p.type || 'Stage',
+      type: 'Stage',
       trainerId: p.trainerId || '',
       mentorName: trn ? trn.name : 'Unassigned Mentor',
       mentorPhone: trn ? (trn.phone || '') : ''
@@ -71,8 +77,7 @@ function renderSingleCandidateTracker(candidate) {
   const trackerDates = getTrackerDates();
 
   const programList = programs.length > 0 ? programs : [
-    { code: 'PROG 1', name: '____________________________________', category: 'General', type: 'Stage', mentorName: '____________________________', mentorPhone: '' },
-    { code: 'PROG 2', name: '____________________________________', category: 'General', type: 'Non-Stage', mentorName: '____________________________', mentorPhone: '' }
+    { code: 'STAGE 1', name: '____________________________________', category: 'General', type: 'Stage', mentorName: '____________________________', mentorPhone: '' }
   ];
 
   return `
@@ -80,7 +85,7 @@ function renderSingleCandidateTracker(candidate) {
       
       <!-- Top Running Header (Visible on print) -->
       <div class="sheet-running-header">
-        <span class="srh-left">Sibaq '26 • Offline Progress Tracker</span>
+        <span class="srh-left">Sibaq '26 • Offline Progress Tracker (Stage Programs)</span>
         <span class="srh-center">Candidate: <strong>${candidate.name}</strong> (Ad No: ${candidate.adNo || candidate.chestNo || '—'})</span>
         <span class="srh-right">Daily Mentorship Log (1 Nov – 20 Nov 2026)</span>
       </div>
@@ -125,8 +130,8 @@ function renderSingleCandidateTracker(candidate) {
       <!-- Top of Page Information: Assigned Programs with Designated Mentors -->
       <div class="programs-ref-box">
         <div class="ref-box-title">
-          <span>ASSIGNED PROGRAMS &amp; DESIGNATED MENTORS DIRECTORY</span>
-          <span class="ref-count-pill">${programs.length} Programs</span>
+          <span>ASSIGNED STAGE PROGRAMS &amp; DESIGNATED MENTORS DIRECTORY</span>
+          <span class="ref-count-pill">${programs.length} Stage Programs</span>
         </div>
         <table class="ref-table">
           <thead>
@@ -228,12 +233,39 @@ function renderSingleCandidateTracker(candidate) {
  * Supports single candidate or array of candidates (bulk)
  */
 export function printCandidateOfflineTracker(candidateOrCandidates) {
-  const candidates = Array.isArray(candidateOrCandidates) ? candidateOrCandidates : [candidateOrCandidates];
+  // Ensure non-stage programs and candidates with only non-stage programs are deactivated
+  state.deactivateNonStageProgramsAndCandidates(false);
 
-  if (!candidates || candidates.length === 0) {
+  const rawCandidates = Array.isArray(candidateOrCandidates) ? candidateOrCandidates : [candidateOrCandidates];
+
+  if (!rawCandidates || rawCandidates.length === 0) {
     toast.error('No candidate selected to print.');
     return;
   }
+
+  const isSingleRequested = rawCandidates.length === 1;
+
+  // Filter candidates to strictly those who have at least one active Stage program
+  const eligibleCandidates = rawCandidates.filter(c => {
+    const stageProgs = getEnrichedCandidatePrograms(c.id);
+    return stageProgs.length > 0;
+  });
+
+  if (eligibleCandidates.length === 0) {
+    if (isSingleRequested) {
+      toast.warning(`${rawCandidates[0].name} has only Non-Stage programs, which are completed and deactivated. The offline tracker prints Stage programs only.`);
+    } else {
+      toast.warning('None of the selected candidates have active Stage programs. All non-stage programs have concluded and are excluded from the offline tracker.');
+    }
+    return;
+  }
+
+  if (!isSingleRequested && eligibleCandidates.length < rawCandidates.length) {
+    const excludedCount = rawCandidates.length - eligibleCandidates.length;
+    toast.info(`Printing ${eligibleCandidates.length} Stage candidate(s). ${excludedCount} candidate(s) with only Non-Stage programs were excluded.`);
+  }
+
+  const candidates = eligibleCandidates;
 
   const printWindow = window.open('', '_blank');
   if (!printWindow) {
@@ -245,7 +277,7 @@ export function printCandidateOfflineTracker(candidateOrCandidates) {
   const singleCand = isSingle ? candidates[0] : null;
   const pageTitle = isSingle 
     ? `Sibaq '26 Offline Tracker - ${singleCand.name} (Ad No: ${singleCand.adNo || singleCand.chestNo || '—'})`
-    : `Sibaq '26 Offline Trackers (${candidates.length} Candidates Bulk)`;
+    : `Sibaq '26 Offline Trackers (${candidates.length} Stage Candidates Bulk)`;
 
   const allTrackersHtml = candidates.map(c => renderSingleCandidateTracker(c)).join('');
 
@@ -808,8 +840,16 @@ export function printCandidateOfflineTracker(candidateOrCandidates) {
  * Interactive Modal for Controller to select candidate or bulk print offline progress trackers
  */
 export function openCandidateTrackerModal({ candidates = [], allCandidates = [], defaultCandidateId = null }) {
-  const currentList = candidates.length > 0 ? candidates : state.getCandidates();
-  const masterList = allCandidates.length > 0 ? allCandidates : state.getCandidates();
+  // Ensure non-stage programs and candidates are deactivated
+  state.deactivateNonStageProgramsAndCandidates(false);
+
+  const baseAll = allCandidates.length > 0 ? allCandidates : state.getCandidates();
+  const baseCurrent = candidates.length > 0 ? candidates : state.getCandidates();
+
+  // Filter strictly to candidates who have active Stage programs
+  const masterList = baseAll.filter(c => getEnrichedCandidatePrograms(c.id).length > 0);
+  const currentList = baseCurrent.filter(c => getEnrichedCandidatePrograms(c.id).length > 0);
+  const excludedCount = baseAll.length - masterList.length;
 
   const overlay = document.createElement('div');
   overlay.className = 'modal-backdrop';
@@ -826,7 +866,7 @@ export function openCandidateTrackerModal({ candidates = [], allCandidates = [],
               Offline Progress Tracker Sheets
             </h3>
             <p class="modal-subtitle" style="font-size: 11.5px; color: #64748b; margin-top: 1px;">
-              Print official black & white 1 Nov – 20 Nov daily meeting & signature sheets
+              Print official black & white 1 Nov – 20 Nov daily meeting & signature sheets (Stage Programs Only)
             </p>
           </div>
         </div>
@@ -838,12 +878,12 @@ export function openCandidateTrackerModal({ candidates = [], allCandidates = [],
         <div style="background: #f8fafc; border: 1.5px solid #000000; border-radius: 6px; padding: 12px 14px;">
           <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
             <div style="background: #000000; color: #ffffff; font-size: 10px; font-weight: 900; letter-spacing: 0.08em; padding: 2px 7px; border-radius: 3px;">
-              SIBAQ '26
+              SIBAQ '26 • STAGE PROGRAMS ONLY
             </div>
             <span style="font-size: 10px; font-weight: 800; color: #334155;">1 NOV TO 20 NOV 2026</span>
           </div>
           <div style="font-size: 11px; line-height: 1.45; color: #1e293b;">
-            Generates high-contrast black & white multi-page printable sheets. Includes candidate details, photo, top mentor reference directory, and daily rows with mentor signature and remark spaces for each assigned program.
+            All Non-Stage programs have concluded and are deactivated. This tracker prints <strong>active Stage programs only</strong>. Candidates who have only Non-Stage programs are deactivated and excluded (${excludedCount} non-stage candidate${excludedCount === 1 ? '' : 's'} excluded).
           </div>
         </div>
 
@@ -853,19 +893,19 @@ export function openCandidateTrackerModal({ candidates = [], allCandidates = [],
             <div>
               <div style="display: flex; align-items: center; gap: 8px;">
                 <span style="font-size: 13px; font-weight: 900; letter-spacing: 0.05em; text-transform: uppercase; color: #ffffff;">
-                  Bulk Download / Print All Students PDF
+                  Bulk Download / Print All Stage Students PDF
                 </span>
                 <span style="background: #ffffff; color: #000000; font-size: 10px; font-weight: 900; padding: 2px 7px; border-radius: 4px;">
                   RECOMMENDED
                 </span>
               </div>
               <p style="margin: 4px 0 0; font-size: 11.5px; color: #d4d4d4; line-height: 1.4;">
-                Download or print all <strong>${masterList.length} students'</strong> 1 Nov – 20 Nov daily progress tracker sheets in a single combined PDF with clean page-breaks.
+                Download or print all <strong>${masterList.length} active Stage students'</strong> 1 Nov – 20 Nov daily progress tracker sheets in a single combined PDF with clean page-breaks.
               </p>
             </div>
           </div>
           <button type="button" id="btnPrintAllCandidates" class="btn btn-saas-primary" style="width: 100%; height: 42px; font-size: 13px; font-weight: 800; background: #ffffff; color: #000000; border-color: #ffffff; justify-content: center; gap: 8px;">
-            ${getIcon('printer')} Download / Print All Students at Once (${masterList.length} Candidates)
+            ${getIcon('printer')} Download / Print All Stage Students at Once (${masterList.length} Candidates)
           </button>
         </div>
 
@@ -874,9 +914,9 @@ export function openCandidateTrackerModal({ candidates = [], allCandidates = [],
           <div style="display: flex; justify-content: space-between; align-items: center;">
             <div>
               <span style="font-size: 11px; font-weight: 800; color: #0f172a; text-transform: uppercase;">
-                Print Current Filtered Selection (${currentList.length} Students)
+                Print Current Filtered Selection (${currentList.length} Stage Students)
               </span>
-              <p style="margin: 2px 0 0; font-size: 11px; color: #64748b;">Matches your active filters on the candidates page.</p>
+              <p style="margin: 2px 0 0; font-size: 11px; color: #64748b;">Matches your active filters (only active Stage candidates are printed).</p>
             </div>
             <button type="button" id="btnPrintFilteredCandidates" class="btn btn-outline" style="height: 36px; padding: 0 14px; font-weight: 700; font-size: 12px; gap: 6px; border-color: #0f172a; color: #0f172a;">
               ${getIcon('filter')} Print Filtered (${currentList.length})
@@ -887,14 +927,14 @@ export function openCandidateTrackerModal({ candidates = [], allCandidates = [],
         <!-- Option 3: Print for Single Candidate -->
         <div style="border: 1px solid #cbd5e1; border-radius: 6px; padding: 12px 14px; background: #ffffff;">
           <label style="display: block; font-size: 11px; font-weight: 800; color: #0f172a; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.04em;">
-            Print for an Individual Student
+            Print for an Individual Stage Student
           </label>
           <div style="display: flex; gap: 8px;">
             <select id="selTrackerCandidate" class="form-control" style="flex: 1; height: 38px; font-size: 12px; font-weight: 600;">
               <option value="">-- Choose Candidate --</option>
               ${masterList.map(c => `
                 <option value="${c.id}" ${c.id === defaultCandidateId ? 'selected' : ''}>
-                  ${c.name} (Ad No: ${c.adNo || c.chestNo || '—'}) • ${c.category || 'General'} (${(state.getCandidatePrograms(c.id) || []).length} programs)
+                  ${c.name} (Ad No: ${c.adNo || c.chestNo || '—'}) • ${c.category || 'General'} (${getEnrichedCandidatePrograms(c.id).length} Stage programs)
                 </option>
               `).join('')}
             </select>

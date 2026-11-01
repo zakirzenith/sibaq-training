@@ -38,7 +38,7 @@ export function renderDashboardView(container, navigateTo) {
           <div class="stat-label">Total Candidates</div>
           <div class="stat-value">${metrics.totalCandidates}</div>
           <div class="stat-foot text-cyan">
-            ${metrics.uniqueEnrolledCandidates} enrolled in programs (${Math.round((metrics.uniqueEnrolledCandidates / (metrics.totalCandidates || 1)) * 100)}%)
+            ${metrics.activeCandidates !== undefined ? `${metrics.activeCandidates} active stage candidates (${metrics.inactiveCandidates} non-stage only)` : `${metrics.uniqueEnrolledCandidates} enrolled in programs`}
           </div>
         </div>
       </div>
@@ -49,7 +49,7 @@ export function renderDashboardView(container, navigateTo) {
           <div class="stat-label">Total Programs</div>
           <div class="stat-value">${metrics.totalPrograms}</div>
           <div class="stat-foot text-violet">
-            <span class="dot-stage"></span> ${metrics.stagePrograms} Stage • <span class="dot-nonstage"></span> ${metrics.nonStagePrograms} Non-Stage
+            <span class="dot-stage"></span> ${metrics.stagePrograms} Stage (Active) • <span class="dot-nonstage"></span> ${metrics.nonStagePrograms} Non-Stage (Done)
           </div>
         </div>
       </div>

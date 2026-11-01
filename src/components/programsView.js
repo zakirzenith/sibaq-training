@@ -159,11 +159,11 @@ export function renderProgramsView(container, navigateTo) {
         icon: 'stage',
         getOptions: () => {
           const progs = state.getPrograms();
-          const stageCount = progs.filter(p => p.type === 'Stage').length;
-          const nonStageCount = progs.filter(p => p.type === 'Non-Stage').length;
+          const stageCount = progs.filter(p => p.type === 'Stage' && p.status !== 'Inactive').length;
+          const nonStageCount = progs.filter(p => p.type === 'Non-Stage' || p.status === 'Inactive').length;
           return [
-            { value: 'Stage', label: 'Stage Only', count: stageCount },
-            { value: 'Non-Stage', label: 'Non-Stage Only', count: nonStageCount }
+            { value: 'Stage', label: 'Stage (Active)', count: stageCount },
+            { value: 'Non-Stage', label: 'Non-Stage (Completed / Inactive)', count: nonStageCount }
           ];
         }
       },
@@ -346,6 +346,9 @@ export function renderProgramsView(container, navigateTo) {
             <span class="badge ${isStage ? 'badge-stage' : 'badge-nonstage'}">
               ${isStage ? getIcon('stage') : getIcon('nonStage')} ${p.type}
             </span>
+            ${!isStage || p.status === 'Inactive' ? `
+              <span class="badge" style="background: #f1f5f9; color: #64748b; font-size: 9px; font-weight: 700; border: 1px solid #cbd5e1; padding: 1px 5px;">Completed</span>
+            ` : ''}
           </div>
           <span class="badge badge-neutral-xs">${p.category}</span>
         </div>
@@ -448,6 +451,19 @@ export function renderProgramsView(container, navigateTo) {
           </button>
         </div>
       </div>
+
+      ${(!isStage || program.status === 'Inactive') ? `
+        <div style="background: #f8fafc; border: 1.5px solid #cbd5e1; border-radius: 8px; padding: 10px 14px; margin-bottom: 12px; display: flex; align-items: center; justify-content: space-between; gap: 10px;">
+          <div style="display: flex; align-items: center; gap: 8px;">
+            <span style="font-size: 15px;">🏁</span>
+            <div>
+              <strong style="font-size: 12px; color: #334155;">Non-Stage Program Completed &amp; Deactivated</strong>
+              <p style="margin: 2px 0 0; font-size: 11px; color: #64748b;">All non-stage events are concluded. Candidates who have only non-stage programs are deactivated and excluded from offline progress trackers.</p>
+            </div>
+          </div>
+          <span class="badge" style="background: #e2e8f0; color: #475569; font-weight: 800; font-size: 10px; padding: 3px 8px;">STATUS: INACTIVE</span>
+        </div>
+      ` : ''}
 
       <!-- 1. DEDICATED TRAINER & MENTOR PANEL -->
       <div class="saas-section-card trainer-management-panel" style="margin-bottom: 14px;">

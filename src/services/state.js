@@ -168,6 +168,7 @@ class StateService {
         // Ensure accurate Stage vs Non-Stage classification on startup
         if (this.programs.length > 0) {
           this.reclassifyProgramsStageType(false);
+          this.deactivateNonStageProgramsAndCandidates(false);
         }
         return;
       }
@@ -249,6 +250,7 @@ class StateService {
         id: String(c.id || '').trim(),
         category: normalizeCategory(c.category || 'BIDĀYA')
       }));
+      this.deactivateNonStageProgramsAndCandidates(false);
       this.saveState();
     });
 
@@ -260,6 +262,8 @@ class StateService {
         trainerId: p.trainerId && String(p.trainerId).trim() ? String(p.trainerId).trim() : null,
         candidateIds: Array.isArray(p.candidateIds) ? p.candidateIds.map(id => String(id).trim()).filter(Boolean) : []
       }));
+      this.reclassifyProgramsStageType(false);
+      this.deactivateNonStageProgramsAndCandidates(false);
       this.saveState();
     });
 
@@ -576,6 +580,7 @@ class StateService {
       }
     });
 
+    this.deactivateNonStageProgramsAndCandidates(false);
     this.saveState();
 
     if (firebaseService.isInitialized && newOrUpdated.length > 0) {
@@ -774,6 +779,8 @@ class StateService {
       }
     });
 
+    this.reclassifyProgramsStageType(false);
+    this.deactivateNonStageProgramsAndCandidates(false);
     this.saveState();
 
     if (firebaseService.isInitialized && newOrUpdated.length > 0) {
@@ -804,6 +811,98 @@ class StateService {
       }
     }
     return { reclassifiedCount, total: this.programs.length };
+  }
+
+  /**
+   * Deactivates all Non-Stage programs, associated meets/records,
+   * and all candidates who have only Non-Stage programs.
+   * Candidates with at least one Stage program remain Active.
+   */
+  deactivateNonStageProgramsAndCandidates(triggerNotify = true) {
+    let deactivatedProgramsCount = 0;
+    let deactivatedCandidatesCount = 0;
+    const updatedPrograms = [];
+    const updatedCandidates = [];
+
+    // 1. Deactivate all Non-Stage programs & data
+    this.programs.forEach(p => {
+      const isNonStage = p.type === 'Non-Stage' || String(p.type || '').toLowerCase().includes('non');
+      if (isNonStage) {
+        if (p.status !== 'Inactive' || p.isActive !== false) {
+          p.status = 'Inactive';
+          p.isActive = false;
+          p.deactivatedAt = p.deactivatedAt || new Date().toISOString();
+          updatedPrograms.push(p);
+          deactivatedProgramsCount++;
+        }
+      } else {
+        if (p.status === undefined || p.status === null || p.status === 'Inactive') {
+          p.status = 'Active';
+          p.isActive = true;
+        }
+      }
+    });
+
+    // 2. Deactivate meets associated with Non-Stage programs
+    const nonStageProgIds = new Set(
+      this.programs.filter(p => p.type === 'Non-Stage' || p.status === 'Inactive').map(p => p.id)
+    );
+    this.dailyMeets.forEach(m => {
+      if (m.programId && nonStageProgIds.has(m.programId)) {
+        m.status = 'Inactive';
+        m.isActive = false;
+      }
+    });
+
+    // 3. Deactivate all candidates who have only Non-Stage programs (or no Stage programs)
+    this.candidates.forEach(c => {
+      const assigned = this.getCandidatePrograms(c.id);
+      const stageProgs = assigned.filter(p => p.type === 'Stage' && p.status !== 'Inactive' && p.isActive !== false);
+
+      if (stageProgs.length === 0) {
+        // Has ONLY non-stage programs (or not enrolled in any stage programs)
+        if (c.status !== 'Inactive' || c.isActive !== false) {
+          c.status = 'Inactive';
+          c.isActive = false;
+          c.deactivationReason = 'Only Non-Stage Programs (Non-Stage Completed)';
+          c.deactivatedAt = c.deactivatedAt || new Date().toISOString();
+          updatedCandidates.push(c);
+          deactivatedCandidatesCount++;
+        }
+      } else {
+        // Has at least one active stage program
+        if (c.status !== 'Active' || c.isActive !== true) {
+          c.status = 'Active';
+          c.isActive = true;
+          delete c.deactivationReason;
+          updatedCandidates.push(c);
+        }
+      }
+    });
+
+    if (updatedPrograms.length > 0 || updatedCandidates.length > 0) {
+      this.saveState(triggerNotify);
+
+      if (firebaseService.isInitialized) {
+        if (updatedPrograms.length > 0) {
+          firebaseService.batchSync('programs', updatedPrograms).catch(e => console.warn(e));
+        }
+        if (updatedCandidates.length > 0) {
+          firebaseService.batchSync('candidates', updatedCandidates).catch(e => console.warn(e));
+        }
+      }
+    }
+
+    return {
+      deactivatedPrograms: deactivatedProgramsCount,
+      deactivatedCandidates: deactivatedCandidatesCount
+    };
+  }
+
+  getCandidateStagePrograms(candidateId) {
+    return this.getCandidatePrograms(candidateId).filter(
+      p => p.type === 'Stage' && p.status !== 'Inactive' && p.isActive !== false
+    );
   }
 
   assignTrainerToProgram(programId, trainerId) {
@@ -1455,8 +1554,13 @@ class StateService {
       categoriesMap[c.category] = (categoriesMap[c.category] || 0) + 1;
     });
 
+    const activeCandidates = this.candidates.filter(c => (this.getCandidateStagePrograms(c.id) || []).length > 0).length;
+    const inactiveCandidates = totalCandidates - activeCandidates;
+
     return {
       totalCandidates,
+      activeCandidates,
+      inactiveCandidates,
       totalPrograms,
       totalTrainers,
       stagePrograms,

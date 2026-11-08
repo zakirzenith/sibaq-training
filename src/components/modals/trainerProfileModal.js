@@ -55,8 +55,8 @@ export function openTrainerProfileModal({ trainerId, onUpdate = () => {} }) {
           </div>
         </div>
         <div style="display: flex; gap: 8px; align-items: center;">
-          <button type="button" id="btnProfilePrintTrainerTracker" class="btn btn-sm btn-outline" style="height: 32px; padding: 0 12px; font-size: 11.5px; font-weight: 700; gap: 6px; border-color: #0f172a; color: #0f172a; background: #ffffff;" title="Print Offline Daily Progress Tracker (8-20 Nov A4 B&W)">
-            ${getIcon('printer')} <span>Offline Tracker</span>
+          <button type="button" id="btnProfilePrintTrainerTracker" class="btn btn-sm btn-outline" style="height: 32px; padding: 0 12px; font-size: 11.5px; font-weight: 700; gap: 6px; border-color: #0f172a; color: #0f172a; background: #ffffff;" title="Print Program Assignments & Candidates Sheet (A4 B&W)">
+            ${getIcon('printer')} <span>Print Roster</span>
           </button>
           ${(!isTrainer || isOwnProfile) ? `
             <button id="btnEditTrainerInProfile" class="btn btn-secondary btn-sm" title="Edit Trainer details">

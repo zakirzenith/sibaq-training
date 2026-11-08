@@ -25,7 +25,7 @@ export function renderTrainersView(container, navigateTo) {
       </div>
 
       <div class="saas-header-actions">
-        <button id="btnPrintTrainerTrackersBulk" class="saas-pill-btn" title="Print Offline Progress Trackers for trainers (8-20 Nov A4 B&W)">
+        <button id="btnPrintTrainerTrackersBulk" class="saas-pill-btn" title="Print Program Assignments & Candidates Roster for trainers (A4 B&W)">
           ${getIcon('printer')} Print Trackers (Bulk)
         </button>
         <button id="btnHeaderTrainerPortalLogin" class="saas-pill-btn" title="Sign in to Trainer Panel">
@@ -207,7 +207,7 @@ export function renderTrainersView(container, navigateTo) {
             <span class="saas-tag-pill p-stage">${t.expertise}</span>
           </div>
           <div class="stc-actions">
-            <button class="saas-circle-btn btn-print-trainer-tracker" title="Print Offline Progress Tracker (8-20 Nov A4 B&W)">
+            <button class="saas-circle-btn btn-print-trainer-tracker" title="Print Program Assignments & Candidates Roster (A4 B&W)">
               ${getIcon('printer')}
             </button>
             <button class="saas-circle-btn btn-view-trainer-profile" title="View Trainer Profile & Candidates">

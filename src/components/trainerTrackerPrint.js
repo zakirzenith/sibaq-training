@@ -1,4 +1,4 @@
-import { state } from '../services/state.js';
+import { state, isStageProgram } from '../services/state.js';
 import { getIcon } from './icons.js';
 import { toast } from './toast.js';
 
@@ -104,33 +104,31 @@ export function renderSingleTrainerTracker(trainerOrId) {
   const data = getTrainerEnrichedData(trainerId);
   if (!data) return '';
 
-  const { trainer, assignedPrograms, mentees, readiness, programsWithCandidates, trackingRoster } = data;
-  const trackerDates = getTrainerTrackerDates();
-
-  // If no programs or candidates are assigned digitally, supply structured empty rows for handwriting
-  const printableRoster = trackingRoster.length > 0 ? trackingRoster : [
-    { program: { code: 'PRG-01', name: '____________________________________', category: 'General' }, candidate: { name: '________________________________', adNo: '______', chestNo: '______' } },
-    { program: { code: 'PRG-02', name: '____________________________________', category: 'General' }, candidate: { name: '________________________________', adNo: '______', chestNo: '______' } }
-  ];
-
+  const { trainer, assignedPrograms, mentees, readiness, programsWithCandidates } = data;
   const totalProgramsCount = assignedPrograms.length;
   const totalMenteesCount = mentees.length;
+
+  const printDateStr = new Date().toLocaleDateString('en-GB', {
+    day: '2-digit',
+    month: 'short',
+    year: 'numeric'
+  });
 
   return `
     <div class="trainer-tracker-page-set">
       
       <!-- Top Running Header (Visible on print) -->
       <div class="sheet-running-header">
-        <span class="srh-left">Sibaq '26 • Mentor Daily Progress Tracker</span>
+        <span class="srh-left">Darul Huda Bengal • Sibaq '26</span>
         <span class="srh-center">Mentor: <strong>${trainer.name}</strong> • ${trainer.expertise || 'Mentor'}</span>
-        <span class="srh-right">Daily Coaching Log (8 Nov – 20 Nov 2026)</span>
+        <span class="srh-right">Assigned Programs &amp; Candidate Roster</span>
       </div>
 
       <!-- Main Center Heading: High-Contrast Black Background Header -->
       <div class="tracker-header-box">
         <div class="tracker-title-black-bg">
           <h1 class="ttb-title">Darul Huda Bengal • Sibaq '26</h1>
-          <div class="ttb-sub">MENTOR DAILY PROGRESS TRACKER • 8 TO 20 NOV 2026</div>
+          <div class="ttb-sub">MENTOR PROGRAM ASSIGNMENTS &amp; CANDIDATE ROSTER</div>
           <div class="ttb-period">"Victory or defeat is in your hands. Take it seriously; imagine losing this competition and the entire event along with it."</div>
         </div>
       </div>
@@ -167,87 +165,121 @@ export function renderSingleTrainerTracker(trainerOrId) {
         </div>
       </div>
 
-      <!-- Daily Progress Tracking Log: 8 NOV TO 20 NOV -->
-      <div class="daily-tracker-container">
-        <div class="daily-tracker-header">
-          <span>DAILY MENTORING, ATTENDANCE &amp; PROGRESS EVALUATION LOG</span>
-          <span class="dth-dates">8 NOV TO 20 NOV 2026</span>
+      <!-- Assigned Programs with Candidates Section -->
+      <div class="trainer-programs-container">
+        <div class="tpc-header">
+          <span>ASSIGNED PROGRAMS &amp; CANDIDATE ROSTER</span>
+          <span class="tpc-badge">${totalProgramsCount} Programs • ${totalMenteesCount} Candidates</span>
         </div>
-        
-        <table class="daily-master-table">
-          <thead>
-            <tr>
-              <th style="width: 11%;">Date &amp; Day</th>
-              <th style="width: 26%;">Candidate (Mentee)</th>
-              <th style="width: 23%;">Program Assigned</th>
-              <th style="width: 8%; text-align: center;">Absent</th>
-              <th style="width: 9%; text-align: center;">Readiness %</th>
-              <th style="width: 17%;">Mentor Remarks &amp; Focus Drills</th>
-              <th style="width: 6%; text-align: center;">Sign</th>
-            </tr>
-          </thead>
-          ${trackerDates.map(d => `
-            <tbody class="date-group">
-              ${printableRoster.map((item, idx) => `
-                <tr class="prog-row ${idx === 0 ? 'date-first-row' : ''}">
-                  ${idx === 0 ? `
-                    <td rowspan="${printableRoster.length}" class="date-col">
-                      <div class="d-date">${d.dateStr}</div>
-                      <div class="d-day">${d.dayName}</div>
-                      <div class="d-day-badge">Day ${d.dayNumber - 7}</div>
-                    </td>
-                  ` : ''}
 
-                  <!-- Candidate Name & Chest No (Single line, no SL number) -->
-                  <td class="cand-col">
-                    ${item.candidate ? `
-                      <div class="cand-single-line" title="${item.candidate.name}">
-                        <strong class="cand-name-text">${item.candidate.name}</strong>
-                        <span class="cand-chest-tag">(${formatChestNo(item.candidate)}${item.candidate.class ? ` • ${item.candidate.class}` : ''})</span>
-                      </div>
-                    ` : `
-                      <div class="blank-write-line">Candidate: __________________</div>
-                    `}
-                  </td>
+        ${programsWithCandidates.length > 0 ? programsWithCandidates.map((p, pIdx) => {
+          const isStage = isStageProgram(p);
+          const candList = p.resolvedCandidates || [];
 
-                  <!-- Program Code & Title -->
-                  <td class="prog-col">
-                    <span class="p-code font-bold">[${item.program.code}]</span>
-                    <span class="p-name">${item.program.name}</span>
-                  </td>
+          return `
+            <div class="trainer-program-card">
+              <div class="tpc-prog-bar">
+                <div class="tpc-prog-left">
+                  <span class="prog-index-num">#${pIdx + 1}</span>
+                  <span class="prog-code-pill">[${p.code || 'PRG'}]</span>
+                  <strong class="prog-name-title">${p.name}</strong>
+                </div>
+                <div class="tpc-prog-right">
+                  <span class="prog-cat-pill">${p.category || 'General'}</span>
+                  <span class="prog-type-pill ${isStage ? 'ptp-stage' : 'ptp-nonstage'}">
+                    ${isStage ? 'Stage' : 'Non-Stage'}
+                  </span>
+                  <span class="prog-cand-count">${candList.length} ${candList.length === 1 ? 'Candidate' : 'Candidates'}</span>
+                </div>
+              </div>
 
-                  <!-- Absent Checkbox Box -->
-                  <td class="absent-col">
-                    <div class="attendance-check-cell">
-                      <span class="absent-checkbox-box"></span>
-                      <span class="absent-label">Absent</span>
-                    </div>
-                  </td>
-
-                  <!-- Overall Readiness % Option Box -->
-                  <td class="readiness-col">
-                    <div class="readiness-box-wrap">
-                      <span class="readiness-box">
-                        <span class="rb-input-line"></span>
-                        <span class="rb-unit">%</span>
-                      </span>
-                    </div>
-                  </td>
-
-                  <!-- Mentor Remarks & Drills Column -->
-                  <td class="remarks-col">
-                    <div class="remarks-blank-line"></div>
-                  </td>
-
-                  <!-- Mentor Initials / Signature -->
-                  <td class="sign-col">
-                    <div class="sign-box-blank"></div>
-                  </td>
+              <table class="trainer-cand-table">
+                <thead>
+                  <tr>
+                    <th style="width: 5%; text-align: center;">SL</th>
+                    <th style="width: 14%;">Chest No</th>
+                    <th style="width: 33%;">Candidate Name</th>
+                    <th style="width: 12%;">Class</th>
+                    <th style="width: 12%;">Ad No</th>
+                    <th style="width: 10%; text-align: center;">Readiness %</th>
+                    <th style="width: 14%;">Remarks / Drills</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${candList.length > 0 ? candList.map((c, cIdx) => `
+                    <tr>
+                      <td style="text-align: center; font-weight: 800;">${cIdx + 1}</td>
+                      <td>
+                        <span class="chest-mono-tag">${formatChestNo(c)}</span>
+                      </td>
+                      <td>
+                        <strong class="cand-name-bold">${c.name}</strong>
+                      </td>
+                      <td>${c.class || '—'}</td>
+                      <td>${c.adNo || '—'}</td>
+                      <td style="text-align: center;">
+                        <div class="readiness-box">
+                          <span class="rb-input-line"></span>
+                          <span class="rb-unit">%</span>
+                        </div>
+                      </td>
+                      <td>
+                        <div class="remarks-ruled-line"></div>
+                      </td>
+                    </tr>
+                  `).join('') : `
+                    <tr>
+                      <td colspan="7" class="empty-cand-cell">
+                        <em>No candidates enrolled in this program yet. Mentors may write candidates manually below:</em>
+                      </td>
+                    </tr>
+                    <tr class="blank-cand-row">
+                      <td style="text-align: center; color: #888;">1</td>
+                      <td><span class="chest-blank-line"></span></td>
+                      <td><span class="name-blank-line"></span></td>
+                      <td></td>
+                      <td></td>
+                      <td style="text-align: center;">
+                        <div class="readiness-box"><span class="rb-input-line"></span><span class="rb-unit">%</span></div>
+                      </td>
+                      <td><div class="remarks-ruled-line"></div></td>
+                    </tr>
+                  `}
+                </tbody>
+              </table>
+            </div>
+          `;
+        }).join('') : `
+          <div class="empty-programs-card">
+            <p style="font-size: 11px; font-weight: 700; margin: 0 0 8px; color: #333333;">No programs are currently assigned to this mentor in the system.</p>
+            <table class="trainer-cand-table">
+              <thead>
+                <tr>
+                  <th style="width: 5%; text-align: center;">SL</th>
+                  <th style="width: 25%;">Assigned Program Code &amp; Title</th>
+                  <th style="width: 14%;">Chest No</th>
+                  <th style="width: 28%;">Candidate Name</th>
+                  <th style="width: 12%; text-align: center;">Readiness %</th>
+                  <th style="width: 16%;">Remarks</th>
                 </tr>
-              `).join('')}
-            </tbody>
-          `).join('')}
-        </table>
+              </thead>
+              <tbody>
+                ${[1, 2, 3, 4, 5].map(n => `
+                  <tr class="blank-cand-row">
+                    <td style="text-align: center; color: #888;">${n}</td>
+                    <td><span class="name-blank-line" style="width: 140px;"></span></td>
+                    <td><span class="chest-blank-line"></span></td>
+                    <td><span class="name-blank-line" style="width: 140px;"></span></td>
+                    <td style="text-align: center;">
+                      <div class="readiness-box"><span class="rb-input-line"></span><span class="rb-unit">%</span></div>
+                    </td>
+                    <td><div class="remarks-ruled-line"></div></td>
+                  </tr>
+                `).join('')}
+              </tbody>
+            </table>
+          </div>
+        `}
       </div>
 
       <!-- Bottom Action Strip: Important NB Notice & Single Trainer Signature -->
@@ -279,8 +311,8 @@ export function renderSingleTrainerTracker(trainerOrId) {
 
       <!-- Running Page Footer -->
       <div class="sheet-bottom-note">
-        <span>Darul Huda Bengal • Sibaq '26 Mentor Offline Progress Log</span>
-        <span>Mentor: <strong>${trainer.name}</strong> • ${totalMenteesCount} Mentees • Ref: SIB26-TRN-${(trainer.id || '').replace(/[^a-zA-Z0-9]/g, '')}</span>
+        <span>Darul Huda Bengal • Sibaq '26 Mentor Assignments Roster</span>
+        <span>Mentor: <strong>${trainer.name}</strong> • ${totalProgramsCount} Programs • ${totalMenteesCount} Mentees • Ref: SIB26-TRN-${(trainer.id || '').replace(/[^a-zA-Z0-9]/g, '')} • ${printDateStr}</span>
       </div>
 
     </div>
@@ -587,14 +619,14 @@ export function printTrainerOfflineTracker(trainerOrTrainers) {
           font-size: 10.5px;
         }
 
-        /* Daily Progress Tracking Container */
-        .daily-tracker-container {
-          border: 1.5px solid #000000;
-          border-radius: 4px;
-          overflow: hidden;
+        /* Trainer Assigned Programs Container */
+        .trainer-programs-container {
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
           margin-bottom: 8px;
         }
-        .daily-tracker-header {
+        .tpc-header {
           background: #000000 !important;
           color: #ffffff !important;
           padding: 5px 10px;
@@ -605,10 +637,11 @@ export function printTrainerOfflineTracker(trainerOrTrainers) {
           display: flex;
           justify-content: space-between;
           align-items: center;
+          border-radius: 4px;
           -webkit-print-color-adjust: exact !important;
           print-color-adjust: exact !important;
         }
-        .dth-dates {
+        .tpc-badge {
           background: #ffffff;
           color: #000000;
           font-size: 8px;
@@ -617,160 +650,166 @@ export function printTrainerOfflineTracker(trainerOrTrainers) {
           border-radius: 3px;
         }
 
-        .daily-master-table {
+        .trainer-program-card {
+          border: 1.5px solid #000000;
+          border-radius: 4px;
+          overflow: hidden;
+          background: #ffffff;
+          page-break-inside: avoid;
+          break-inside: avoid;
+        }
+        .tpc-prog-bar {
+          background: #f0f0f0;
+          border-bottom: 1.5px solid #000000;
+          padding: 5px 10px;
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 10px;
+          flex-wrap: wrap;
+        }
+        .tpc-prog-left {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+        }
+        .prog-index-num {
+          font-size: 9px;
+          font-weight: 900;
+          color: #555555;
+        }
+        .prog-code-pill {
+          font-family: monospace;
+          font-size: 9.5px;
+          font-weight: 900;
+          background: #000000;
+          color: #ffffff;
+          padding: 1px 5px;
+          border-radius: 2px;
+          letter-spacing: 0.04em;
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
+        }
+        .prog-name-title {
+          font-size: 11px;
+          font-weight: 900;
+          color: #000000;
+        }
+        .tpc-prog-right {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+        }
+        .prog-cat-pill {
+          font-size: 8.5px;
+          font-weight: 800;
+          text-transform: uppercase;
+          color: #222222;
+        }
+        .prog-type-pill {
+          font-size: 8px;
+          font-weight: 800;
+          padding: 1px 5px;
+          border-radius: 2px;
+          text-transform: uppercase;
+        }
+        .ptp-stage {
+          background: #000000;
+          color: #ffffff;
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
+        }
+        .ptp-nonstage {
+          background: #e2e8f0;
+          color: #475569;
+          border: 1px solid #cbd5e1;
+        }
+        .prog-cand-count {
+          font-size: 8.5px;
+          font-weight: 800;
+          color: #000000;
+        }
+
+        .trainer-cand-table {
           width: 100%;
           border-collapse: collapse;
           font-size: 8.5px;
         }
-        .daily-master-table thead th {
-          background: #f0f0f0 !important;
+        .trainer-cand-table thead th {
+          background: #fbfbfb !important;
           color: #000000;
           font-weight: 800;
           text-transform: uppercase;
-          font-size: 8.5px;
-          padding: 5px 6px;
+          font-size: 8px;
+          padding: 5px 8px;
           border-bottom: 1.5px solid #000000;
           border-right: 1px solid #000000;
           text-align: left;
           -webkit-print-color-adjust: exact !important;
           print-color-adjust: exact !important;
         }
-        .daily-master-table thead th:last-child {
+        .trainer-cand-table thead th:last-child {
           border-right: none;
         }
-
-        .date-group {
-          border-bottom: 2px solid #000000;
-        }
-        .date-group:last-child {
-          border-bottom: none;
-        }
-
-        .prog-row td {
+        .trainer-cand-table tbody td {
           border-bottom: 1px solid #000000;
           border-right: 1px solid #000000;
-          padding: 5px 6px;
+          padding: 5px 8px;
           vertical-align: middle;
         }
-        .prog-row:last-child td {
+        .trainer-cand-table tbody tr:last-child td {
           border-bottom: none;
         }
-        .prog-row td:last-child {
+        .trainer-cand-table tbody td:last-child {
           border-right: none;
         }
-
-        /* Date Column */
-        .date-col {
-          background: #fafafa !important;
-          text-align: center;
-          vertical-align: middle !important;
-          padding: 6px 4px !important;
-          border-right: 1.5px solid #000000 !important;
-          -webkit-print-color-adjust: exact !important;
-          print-color-adjust: exact !important;
-        }
-        .d-date {
-          font-size: 10px;
+        .chest-mono-tag {
+          font-family: monospace;
           font-weight: 900;
-          line-height: 1.15;
-          text-transform: uppercase;
-        }
-        .d-day {
-          font-size: 8px;
-          font-weight: 700;
-          color: #333333;
-          margin-top: 2px;
-          text-transform: uppercase;
-        }
-        .d-day-badge {
-          display: inline-block;
-          margin-top: 3px;
-          background: #000000;
-          color: #ffffff;
-          font-size: 7.5px;
-          font-weight: 800;
-          padding: 1px 4px;
+          font-size: 9.5px;
+          background: #f0f0f0;
+          border: 1px solid #000000;
+          padding: 1px 5px;
           border-radius: 2px;
-          letter-spacing: 0.04em;
-        }
-
-        /* Candidate & Program Columns */
-        .cand-col {
-          vertical-align: middle;
-        }
-        .cand-single-line {
-          display: flex;
-          align-items: baseline;
-          gap: 5px;
+          display: inline-block;
           white-space: nowrap;
-          overflow: hidden;
-          text-overflow: ellipsis;
         }
-        .cand-name-text {
+        .cand-name-bold {
           font-size: 9.5px;
           font-weight: 800;
           color: #000000;
         }
-        .cand-chest-tag {
-          font-size: 8.5px;
-          font-weight: 700;
-          color: #222222;
-        }
-
-        .prog-col {
-          vertical-align: middle;
-        }
-        .p-code {
-          font-family: monospace;
-          font-size: 9px;
-          margin-right: 3px;
-        }
-        .p-name {
-          font-size: 8.5px;
-        }
-
-        /* Attendance / Absent Box Column */
-        .absent-col {
+        .empty-cand-cell {
           text-align: center;
-          vertical-align: middle;
+          color: #666666;
+          padding: 6px !important;
         }
-        .attendance-check-cell {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-          gap: 4px;
+        .chest-blank-line {
+          display: block;
+          width: 50px;
+          border-bottom: 1px dotted #888888;
+          height: 12px;
         }
-        .absent-checkbox-box {
-          display: inline-block;
-          width: 14px;
-          height: 14px;
-          border: 1.5px solid #000000;
-          background: #ffffff;
-          border-radius: 2px;
-          flex-shrink: 0;
+        .name-blank-line {
+          display: block;
+          width: 140px;
+          border-bottom: 1px dotted #888888;
+          height: 12px;
         }
-        .absent-label {
-          font-size: 8px;
-          font-weight: 700;
-          text-transform: uppercase;
+        .empty-programs-card {
+          border: 1.5px dashed #000000;
+          border-radius: 4px;
+          padding: 12px;
+          text-align: center;
         }
 
         /* Overall Readiness % Option Column */
-        .readiness-col {
-          text-align: center;
-          vertical-align: middle;
-        }
-        .readiness-box-wrap {
-          display: flex;
-          align-items: center;
-          justify-content: center;
-        }
         .readiness-box {
           display: inline-flex;
           align-items: center;
           justify-content: flex-end;
-          width: 52px;
-          height: 20px;
+          width: 48px;
+          height: 19px;
           border: 1.5px solid #000000;
           border-radius: 3px;
           background: #ffffff;
@@ -786,26 +825,8 @@ export function printTrainerOfflineTracker(trainerOrTrainers) {
           margin-left: 2px;
         }
 
-        /* Remarks Column */
-        .remarks-col {
-          vertical-align: middle;
-          height: 26px;
-        }
-        .remarks-blank-line {
+        .remarks-ruled-line {
           width: 100%;
-          height: 100%;
-          min-height: 18px;
-        }
-
-        /* Sign Column */
-        .sign-col {
-          vertical-align: middle;
-          text-align: center;
-          height: 26px;
-        }
-        .sign-box-blank {
-          width: 100%;
-          height: 100%;
           min-height: 18px;
         }
 
@@ -1013,10 +1034,10 @@ export function openTrainerTrackerModal({ trainers = [], allTrainers = [], defau
           </div>
           <div>
             <h3 class="modal-title" style="margin: 0; font-size: 16px; font-weight: 800;">
-              Trainer Offline Progress Tracker Sheets
+              Mentor Program Assignments &amp; Candidate Sheets
             </h3>
             <p class="modal-subtitle" style="font-size: 11.5px; color: #64748b; margin-top: 1px;">
-              Print official black &amp; white 8 Nov – 20 Nov daily monitoring &amp; evaluation logs
+              Print official black &amp; white mentor sheets with assigned programs and candidate rosters
             </p>
           </div>
         </div>
@@ -1028,12 +1049,12 @@ export function openTrainerTrackerModal({ trainers = [], allTrainers = [], defau
         <div style="background: #f8fafc; border: 1.5px solid #000000; border-radius: 6px; padding: 12px 14px;">
           <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px;">
             <div style="background: #000000; color: #ffffff; font-size: 10px; font-weight: 900; letter-spacing: 0.08em; padding: 2px 7px; border-radius: 3px;">
-              SIBAQ '26 • TRAINER TRACKERS
+              SIBAQ '26 • MENTOR ASSIGNMENTS
             </div>
-            <span style="font-size: 10px; font-weight: 800; color: #334155;">8 NOV TO 20 NOV 2026 (13 DAYS)</span>
+            <span style="font-size: 10px; font-weight: 800; color: #334155;">PROGRAMS &amp; CANDIDATES ROSTER</span>
           </div>
           <div style="font-size: 11px; line-height: 1.45; color: #1e293b;">
-            Includes trainer profile, assigned programs with enrolled candidate names, daily attendance checkboxes (<strong>Absent</strong> box), <strong>Overall Readiness %</strong> input box, and remarks space. Formatted for high-contrast A4 B&amp;W printing.
+            Includes mentor details, all assigned programs with their enrolled candidates, chest numbers, classes, admission numbers, readiness % evaluation box, and remarks space. Formatted for high-contrast A4 B&amp;W printing.
           </div>
         </div>
 
@@ -1043,19 +1064,19 @@ export function openTrainerTrackerModal({ trainers = [], allTrainers = [], defau
             <div>
               <div style="display: flex; align-items: center; gap: 8px;">
                 <span style="font-size: 13px; font-weight: 900; letter-spacing: 0.05em; text-transform: uppercase; color: #ffffff;">
-                  Bulk Download / Print All Trainers PDF
+                  Bulk Download / Print All Mentors PDF
                 </span>
                 <span style="background: #ffffff; color: #000000; font-size: 10px; font-weight: 900; padding: 2px 7px; border-radius: 4px;">
                   RECOMMENDED
                 </span>
               </div>
               <p style="margin: 4px 0 0; font-size: 11.5px; color: #d4d4d4; line-height: 1.4;">
-                Download or print all <strong>${baseAll.length} trainers'</strong> complete 8 Nov – 20 Nov daily monitoring dossiers in a single combined PDF with clean A4 page breaks.
+                Download or print all <strong>${baseAll.length} mentors'</strong> complete assigned programs and candidate rosters in a single combined PDF with clean A4 page breaks.
               </p>
             </div>
           </div>
           <button type="button" id="btnPrintAllTrainers" class="btn btn-saas-primary" style="width: 100%; height: 42px; font-size: 13px; font-weight: 800; background: #ffffff; color: #000000; border-color: #ffffff; justify-content: center; gap: 8px;">
-            ${getIcon('printer')} Download / Print All Trainers at Once (${baseAll.length} Trainers)
+            ${getIcon('printer')} Download / Print All Mentors at Once (${baseAll.length} Mentors)
           </button>
         </div>
 

@@ -78,7 +78,6 @@ export function renderSingleProgramSheet(programOrId) {
         <div class="program-title-black-bg">
           <h1 class="ptb-title">Darul Huda Bengal • Sibaq '26</h1>
           <div class="ptb-sub">OFFICIAL PROGRAM ASSIGNMENT &amp; CANDIDATE ROSTER</div>
-          <div class="ptb-quote">"Victory or defeat is in your hands. Take it seriously; imagine losing this competition and the entire event along with it."</div>
         </div>
       </div>
 
@@ -260,7 +259,6 @@ export function renderProgramsDirectoryTable(programsList) {
         <div class="program-title-black-bg">
           <h1 class="ptb-title">Darul Huda Bengal • Sibaq '26</h1>
           <div class="ptb-sub">CONSOLIDATED PROGRAMS &amp; MENTORSHIP MASTER DIRECTORY</div>
-          <div class="ptb-quote">"Victory or defeat is in your hands. Take it seriously; imagine losing this competition and the entire event along with it."</div>
         </div>
       </div>
 

@@ -131,7 +131,6 @@ export function renderSingleTrainerTracker(trainerOrId) {
         <div class="tracker-title-black-bg">
           <h1 class="ttb-title">Darul Huda Bengal • Sibaq '26</h1>
           <div class="ttb-sub">MENTOR PROGRAM ASSIGNMENTS &amp; CANDIDATE ROSTER</div>
-          <div class="ttb-period">"Victory or defeat is in your hands. Take it seriously; imagine losing this competition and the entire event along with it."</div>
         </div>
       </div>
 

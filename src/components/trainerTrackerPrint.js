@@ -121,8 +121,8 @@ export function renderSingleTrainerTracker(trainerOrId) {
       
       <!-- Top Running Header (Visible on print) -->
       <div class="sheet-running-header">
-        <span class="srh-left">Sibaq '26 • Trainer Daily Progress Tracker</span>
-        <span class="srh-center">Trainer: <strong>${trainer.name}</strong> • ${trainer.expertise || 'Mentor'}</span>
+        <span class="srh-left">Sibaq '26 • Mentor Daily Progress Tracker</span>
+        <span class="srh-center">Mentor: <strong>${trainer.name}</strong> • ${trainer.expertise || 'Mentor'}</span>
         <span class="srh-right">Daily Coaching Log (8 Nov – 20 Nov 2026)</span>
       </div>
 
@@ -130,8 +130,8 @@ export function renderSingleTrainerTracker(trainerOrId) {
       <div class="tracker-header-box">
         <div class="tracker-title-black-bg">
           <h1 class="ttb-title">Darul Huda Bengal • Sibaq '26</h1>
-          <div class="ttb-sub">TRAINER DAILY PROGRESS TRACKER • 8 TO 20 NOV 2026</div>
-          <div class="ttb-period">"CHAMPIONSHIP OR DEFEAT IS IN YOUR HANDS. TRAIN WITH UTMOST SERIOUSNESS — TREAT EVERY SINGLE DAY AS IF OUR ENTIRE EVENT VICTORY DEPENDS ON TODAY!"</div>
+          <div class="ttb-sub">MENTOR DAILY PROGRESS TRACKER • 8 TO 20 NOV 2026</div>
+          <div class="ttb-period">"Victory or defeat is in your hands. Take it seriously; imagine losing this competition and the entire event along with it."</div>
         </div>
       </div>
 
@@ -145,7 +145,7 @@ export function renderSingleTrainerTracker(trainerOrId) {
 
         <div class="trn-details-grid">
           <div class="td-row td-name-row">
-            <span class="td-label">TRAINER / MENTOR NAME:</span>
+            <span class="td-label">MENTOR:</span>
             <span class="td-value td-trainer-name">${trainer.name}</span>
           </div>
           
@@ -259,7 +259,7 @@ export function renderSingleTrainerTracker(trainerOrId) {
             <span class="nb-title">MANDATORY ESCALATION DIRECTIVE</span>
           </div>
           <div class="tfs-nb-content">
-            If any candidate is <strong>not practicing</strong>, <strong>refuses your orders/instructions</strong>, or is performing <strong>very low</strong>, contact immediately:
+            If any candidate is <strong>not practicing</strong>, <strong>refuses your orders/instructions</strong>, or is performing <strong>very low</strong>, take actions and inform immediately to these respective coordinators:
             <div class="tfs-nb-contacts">
               <span class="nb-contact">📞 <strong>+91 88917 17639</strong> (Rashid Ustad)</span>
               <span class="nb-contact-sep">•</span>
@@ -270,7 +270,7 @@ export function renderSingleTrainerTracker(trainerOrId) {
 
         <!-- Single Signature Box (Your Signature) -->
         <div class="tfs-sign-box">
-          <div class="tfs-sign-role">TRAINER / MENTOR</div>
+          <div class="tfs-sign-role">MENTOR</div>
           <div class="tfs-sign-name">${trainer.name}</div>
           <div class="tfs-sign-line"></div>
           <div class="tfs-sign-label">(Your Signature &amp; Date)</div>
@@ -279,8 +279,8 @@ export function renderSingleTrainerTracker(trainerOrId) {
 
       <!-- Running Page Footer -->
       <div class="sheet-bottom-note">
-        <span>Darul Huda Bengal • Sibaq '26 Trainer Offline Mentorship Log</span>
-        <span>Trainer: <strong>${trainer.name}</strong> • ${totalMenteesCount} Mentees • Ref: SIB26-TRN-${(trainer.id || '').replace(/[^a-zA-Z0-9]/g, '')}</span>
+        <span>Darul Huda Bengal • Sibaq '26 Mentor Offline Progress Log</span>
+        <span>Mentor: <strong>${trainer.name}</strong> • ${totalMenteesCount} Mentees • Ref: SIB26-TRN-${(trainer.id || '').replace(/[^a-zA-Z0-9]/g, '')}</span>
       </div>
 
     </div>
@@ -471,15 +471,15 @@ export function printTrainerOfflineTracker(trainerOrTrainers) {
           color: #eeeeee !important;
         }
         .ttb-period {
-          font-size: 8.5px;
+          font-size: 9.5px;
           font-weight: 800;
-          letter-spacing: 0.04em;
-          text-transform: uppercase;
+          letter-spacing: 0.02em;
+          font-style: italic;
           margin-top: 5px;
-          line-height: 1.35;
+          line-height: 1.4;
           color: #ffffff !important;
-          background: #1a1a1a;
-          padding: 4px 8px;
+          background: #111111;
+          padding: 5px 10px;
           border-radius: 3px;
           border: 1px solid #444444;
         }

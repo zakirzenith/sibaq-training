@@ -8,10 +8,12 @@ import { openExcelUploadModal } from './modals/excelUploadModal.js';
 import { openTrainerCredentialsBulkModal } from './modals/trainerCredentialsBulkModal.js';
 import { excelService } from '../services/excelService.js';
 import { createFilterBar } from './filterEngine.js';
+import { printTrainerOfflineTracker, openTrainerTrackerModal } from './trainerTrackerPrint.js';
 
 export function renderTrainersView(container, navigateTo) {
   let activeFilters = {};
   let currentSearchQuery = '';
+  let lastFilteredTrainers = [];
 
   container.innerHTML = `
     <div class="saas-view-header">
@@ -23,6 +25,9 @@ export function renderTrainersView(container, navigateTo) {
       </div>
 
       <div class="saas-header-actions">
+        <button id="btnPrintTrainerTrackersBulk" class="saas-pill-btn" title="Print Offline Progress Trackers for trainers (8-20 Nov A4 B&W)">
+          ${getIcon('printer')} Print Trackers (Bulk)
+        </button>
         <button id="btnHeaderTrainerPortalLogin" class="saas-pill-btn" title="Sign in to Trainer Panel">
           ${getIcon('lock')} Trainer Portal Login
         </button>
@@ -157,6 +162,7 @@ export function renderTrainersView(container, navigateTo) {
     });
 
     countBadge.textContent = `${filtered.length}`;
+    lastFilteredTrainers = filtered;
     trainersGrid.innerHTML = '';
 
     if (filtered.length === 0) {
@@ -201,6 +207,9 @@ export function renderTrainersView(container, navigateTo) {
             <span class="saas-tag-pill p-stage">${t.expertise}</span>
           </div>
           <div class="stc-actions">
+            <button class="saas-circle-btn btn-print-trainer-tracker" title="Print Offline Progress Tracker (8-20 Nov A4 B&W)">
+              ${getIcon('printer')}
+            </button>
             <button class="saas-circle-btn btn-view-trainer-profile" title="View Trainer Profile & Candidates">
               ${getIcon('user')}
             </button>
@@ -265,6 +274,15 @@ export function renderTrainersView(container, navigateTo) {
         </div>
       `;
 
+      // Print single trainer offline tracker
+      const btnPrintTracker = card.querySelector('.btn-print-trainer-tracker');
+      if (btnPrintTracker) {
+        btnPrintTracker.addEventListener('click', (e) => {
+          e.stopPropagation();
+          printTrainerOfflineTracker(t);
+        });
+      }
+
       // Open Trainer Profile
       const openProfile = () => {
         openTrainerProfileModal({
@@ -306,6 +324,22 @@ export function renderTrainersView(container, navigateTo) {
       });
 
       trainersGrid.appendChild(card);
+    });
+  }
+
+  // Header Print Offline Trackers (Bulk / Selective Modal)
+  const btnPrintTrackers = container.querySelector('#btnPrintTrainerTrackersBulk');
+  if (btnPrintTrackers) {
+    btnPrintTrackers.addEventListener('click', () => {
+      const allTrainers = state.getTrainers();
+      if (allTrainers.length === 0) {
+        toast.info('No trainers registered yet to print trackers.');
+        return;
+      }
+      openTrainerTrackerModal({
+        trainers: lastFilteredTrainers.length > 0 ? lastFilteredTrainers : allTrainers,
+        allTrainers: allTrainers
+      });
     });
   }
 

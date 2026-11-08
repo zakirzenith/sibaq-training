@@ -2,6 +2,7 @@ import { state, getProgressStatus } from '../../services/state.js';
 import { getIcon } from '../icons.js';
 import { openRecordMeetModal } from '../modals/recordMeetModal.js';
 import { openCandidateProfileModal } from '../modals/candidateProfileModal.js';
+import { printTrainerOfflineTracker } from '../trainerTrackerPrint.js';
 
 export function renderTrainerDashboardView(container, navigateTo) {
   const currentTrainer = state.getActiveTrainer();
@@ -126,9 +127,12 @@ export function renderTrainerDashboardView(container, navigateTo) {
               </div>
             </div>
 
-            <div class="thc-actions" style="display: flex; align-items: center; gap: 8px; flex-shrink: 0; width: 100%; max-width: 220px;">
-              <button type="button" id="btnGoToTrainerProgress" class="btn btn-sm" style="width: 100%; height: 40px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); border: none; color: #ffffff; border-radius: 10px; font-weight: 800; font-size: 12.5px; box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 8px; transition: transform 0.15s ease;">
+            <div class="thc-actions" style="display: flex; flex-direction: column; gap: 8px; flex-shrink: 0; width: 100%; max-width: 230px;">
+              <button type="button" id="btnGoToTrainerProgress" class="btn btn-sm" style="width: 100%; height: 38px; background: linear-gradient(135deg, #10b981 0%, #059669 100%); border: none; color: #ffffff; border-radius: 10px; font-weight: 800; font-size: 12px; box-shadow: 0 4px 14px rgba(16, 185, 129, 0.35); cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; transition: transform 0.15s ease;">
                 ${getIcon('calendar')} Daily Progress Tracker &rarr;
+              </button>
+              <button type="button" id="btnPrintMyOfflineTracker" class="btn btn-sm" style="width: 100%; height: 34px; background: rgba(255, 255, 255, 0.16); border: 1px solid rgba(255, 255, 255, 0.28); color: #ffffff; border-radius: 8px; font-weight: 700; font-size: 11.5px; cursor: pointer; display: flex; align-items: center; justify-content: center; gap: 6px; backdrop-filter: blur(8px); transition: all 0.15s ease;" title="Print Offline Daily Progress Tracker (8-20 Nov A4 B&W)">
+                ${getIcon('printer')} Print Offline Tracker (PDF)
               </button>
             </div>
           </div>
@@ -384,6 +388,13 @@ export function renderTrainerDashboardView(container, navigateTo) {
     if (btnProgress) {
       btnProgress.addEventListener('click', () => {
         navigateTo('trainer-daily-progress');
+      });
+    }
+
+    const btnPrintMyTracker = container.querySelector('#btnPrintMyOfflineTracker');
+    if (btnPrintMyTracker) {
+      btnPrintMyTracker.addEventListener('click', () => {
+        printTrainerOfflineTracker(currentTrainer);
       });
     }
 

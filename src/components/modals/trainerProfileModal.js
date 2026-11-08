@@ -4,6 +4,7 @@ import { toast } from '../toast.js';
 import { openTrainerFormModal } from './trainerFormModal.js';
 import { openCandidateProfileModal } from './candidateProfileModal.js';
 import { openRecordMeetModal } from './recordMeetModal.js';
+import { printTrainerOfflineTracker } from '../trainerTrackerPrint.js';
 
 /**
  * Trainer Profile Modal
@@ -54,6 +55,9 @@ export function openTrainerProfileModal({ trainerId, onUpdate = () => {} }) {
           </div>
         </div>
         <div style="display: flex; gap: 8px; align-items: center;">
+          <button type="button" id="btnProfilePrintTrainerTracker" class="btn btn-sm btn-outline" style="height: 32px; padding: 0 12px; font-size: 11.5px; font-weight: 700; gap: 6px; border-color: #0f172a; color: #0f172a; background: #ffffff;" title="Print Offline Daily Progress Tracker (8-20 Nov A4 B&W)">
+            ${getIcon('printer')} <span>Offline Tracker</span>
+          </button>
           ${(!isTrainer || isOwnProfile) ? `
             <button id="btnEditTrainerInProfile" class="btn btn-secondary btn-sm" title="Edit Trainer details">
               ${getIcon('edit')} <span>Edit</span>
@@ -215,17 +219,28 @@ export function openTrainerProfileModal({ trainerId, onUpdate = () => {} }) {
     if (e.target === overlay) close();
   });
 
-  // Edit trainer
-  overlay.querySelector('#btnEditTrainerInProfile').addEventListener('click', () => {
-    openTrainerFormModal({
-      trainer,
-      onSave: () => {
-        close();
-        onUpdate();
-        openTrainerProfileModal({ trainerId: trainer.id, onUpdate });
-      }
+  // Print Offline Tracker
+  const btnPrintTracker = overlay.querySelector('#btnProfilePrintTrainerTracker');
+  if (btnPrintTracker) {
+    btnPrintTracker.addEventListener('click', () => {
+      printTrainerOfflineTracker(trainer);
     });
-  });
+  }
+
+  // Edit trainer
+  const btnEditTrainer = overlay.querySelector('#btnEditTrainerInProfile');
+  if (btnEditTrainer) {
+    btnEditTrainer.addEventListener('click', () => {
+      openTrainerFormModal({
+        trainer,
+        onSave: () => {
+          close();
+          onUpdate();
+          openTrainerProfileModal({ trainerId: trainer.id, onUpdate });
+        }
+      });
+    });
+  }
 
   // Click on candidate to open candidate profile
   overlay.querySelectorAll('.tpm-cand-identity').forEach(el => {

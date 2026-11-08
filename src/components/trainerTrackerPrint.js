@@ -105,6 +105,8 @@ export function renderSingleTrainerTracker(trainerOrId) {
   if (!data) return '';
 
   const { trainer, assignedPrograms, mentees, readiness, programsWithCandidates } = data;
+  if (!mentees || mentees.length === 0) return '';
+
   const totalProgramsCount = assignedPrograms.length;
   const totalMenteesCount = mentees.length;
 
@@ -327,8 +329,28 @@ export function printTrainerOfflineTracker(trainerOrTrainers) {
   const rawTrainers = Array.isArray(trainerOrTrainers) ? trainerOrTrainers : [trainerOrTrainers];
 
   if (!rawTrainers || rawTrainers.length === 0) {
-    toast.error('No trainer selected to print.');
+    toast.error('No mentor selected to print.');
     return;
+  }
+
+  // Filter out any mentors who do not have any mentees assigned
+  const activeTrainers = rawTrainers.filter(t => {
+    const mentees = state.getTrainerMentees(t.id);
+    return Array.isArray(mentees) && mentees.length > 0;
+  });
+
+  if (activeTrainers.length === 0) {
+    if (rawTrainers.length === 1) {
+      toast.warning(`Mentor "${rawTrainers[0].name}" has no assigned mentees to print.`);
+    } else {
+      toast.warning('None of the selected mentors have assigned mentees to print.');
+    }
+    return;
+  }
+
+  if (activeTrainers.length < rawTrainers.length && rawTrainers.length > 1) {
+    const excludedCount = rawTrainers.length - activeTrainers.length;
+    toast.info(`Printing ${activeTrainers.length} mentors (${excludedCount} mentor${excludedCount > 1 ? 's' : ''} without mentees excluded).`);
   }
 
   const printWindow = window.open('', '_blank');
@@ -337,13 +359,13 @@ export function printTrainerOfflineTracker(trainerOrTrainers) {
     return;
   }
 
-  const isSingle = rawTrainers.length === 1;
-  const singleTrainer = isSingle ? rawTrainers[0] : null;
+  const isSingle = activeTrainers.length === 1;
+  const singleTrainer = isSingle ? activeTrainers[0] : null;
   const pageTitle = isSingle 
-    ? `Sibaq '26 Trainer Offline Tracker - ${singleTrainer.name} (${singleTrainer.expertise || 'Mentor'})`
-    : `Sibaq '26 Trainer Offline Trackers (${rawTrainers.length} Trainers Bulk)`;
+    ? `Sibaq '26 Mentor Roster - ${singleTrainer.name} (${singleTrainer.expertise || 'Mentor'})`
+    : `Sibaq '26 Mentor Rosters (${activeTrainers.length} Mentors Bulk)`;
 
-  const allTrackersHtml = rawTrainers.map(t => renderSingleTrainerTracker(t)).join('');
+  const allTrackersHtml = activeTrainers.map(t => renderSingleTrainerTracker(t)).join('');
 
   const fullPrintHtml = `
     <!DOCTYPE html>
@@ -971,11 +993,11 @@ export function printTrainerOfflineTracker(trainerOrTrainers) {
       <div class="screen-control-bar no-print">
         <div class="scb-left">
           <span class="scb-badge">A4 Black &amp; White Print</span>
-          <span class="scb-title">Sibaq '26 Trainer Offline Progress Tracker</span>
+          <span class="scb-title">Sibaq '26 Mentor Program Assignments &amp; Roster</span>
           <span class="scb-hint">
             ${isSingle 
-              ? `Trainer: <strong>${singleTrainer.name}</strong> • ${singleTrainer.expertise || 'Mentor'} • 13 Days (8 Nov – 20 Nov)`
-              : `Bulk Batch: <strong>${rawTrainers.length} Trainers</strong> loaded. Click "Print / Save as PDF" to download all sheets in a single file.`}
+              ? `Mentor: <strong>${singleTrainer.name}</strong> • ${singleTrainer.expertise || 'Mentor'} • Program &amp; Candidate Roster`
+              : `Bulk Batch: <strong>${activeTrainers.length} Mentors</strong> (Mentors without mentees excluded). Click "Print / Save as PDF" to download all sheets in a single file.`}
           </span>
         </div>
         <div class="scb-right">
@@ -1017,10 +1039,22 @@ export function openTrainerTrackerModal({ trainers = [], allTrainers = [], defau
   const baseAll = allTrainers.length > 0 ? allTrainers : state.getTrainers();
   const baseCurrent = trainers.length > 0 ? trainers : baseAll;
 
-  if (baseAll.length === 0) {
-    toast.error('No trainers registered yet.');
+  // Filter both lists to only include mentors who actually have assigned mentees
+  const baseAllWithMentees = baseAll.filter(t => {
+    const mentees = state.getTrainerMentees(t.id);
+    return Array.isArray(mentees) && mentees.length > 0;
+  });
+  const baseCurrentWithMentees = baseCurrent.filter(t => {
+    const mentees = state.getTrainerMentees(t.id);
+    return Array.isArray(mentees) && mentees.length > 0;
+  });
+
+  if (baseAllWithMentees.length === 0) {
+    toast.warning('No mentors have assigned mentees yet to print.');
     return;
   }
+
+  const excludedTotal = baseAll.length - baseAllWithMentees.length;
 
   const overlay = document.createElement('div');
   overlay.className = 'modal-backdrop';
@@ -1054,11 +1088,16 @@ export function openTrainerTrackerModal({ trainers = [], allTrainers = [], defau
             <span style="font-size: 10px; font-weight: 800; color: #334155;">PROGRAMS &amp; CANDIDATES ROSTER</span>
           </div>
           <div style="font-size: 11px; line-height: 1.45; color: #1e293b;">
-            Includes mentor details, all assigned programs with their enrolled candidates, chest numbers, classes, admission numbers, readiness % evaluation box, and remarks space. Formatted for high-contrast A4 B&amp;W printing.
+            Includes mentor details, assigned programs with enrolled candidates, chest numbers, classes, admission numbers, readiness % evaluation box, and remarks space. Formatted for high-contrast A4 B&amp;W printing.
+            ${excludedTotal > 0 ? `
+              <div style="margin-top: 6px; font-size: 10.5px; color: #475569; font-weight: 700; background: #f1f5f9; padding: 4px 8px; border-radius: 4px; border: 1px solid #cbd5e1;">
+                ℹ️ Note: <strong>${excludedTotal} mentor${excludedTotal > 1 ? 's' : ''}</strong> without any mentees are automatically excluded from the PDF.
+              </div>
+            ` : ''}
           </div>
         </div>
 
-        <!-- Option 1: Primary Bulk Download/Print All Trainers at Once -->
+        <!-- Option 1: Primary Bulk Download/Print All Mentors at Once -->
         <div style="border: 2px solid #000000; border-radius: 8px; padding: 16px; background: #000000; color: #ffffff;">
           <div style="display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; margin-bottom: 10px;">
             <div>
@@ -1071,41 +1110,41 @@ export function openTrainerTrackerModal({ trainers = [], allTrainers = [], defau
                 </span>
               </div>
               <p style="margin: 4px 0 0; font-size: 11.5px; color: #d4d4d4; line-height: 1.4;">
-                Download or print all <strong>${baseAll.length} mentors'</strong> complete assigned programs and candidate rosters in a single combined PDF with clean A4 page breaks.
+                Download or print all <strong>${baseAllWithMentees.length} mentors</strong> with assigned mentees in a single combined PDF with clean A4 page breaks.
               </p>
             </div>
           </div>
           <button type="button" id="btnPrintAllTrainers" class="btn btn-saas-primary" style="width: 100%; height: 42px; font-size: 13px; font-weight: 800; background: #ffffff; color: #000000; border-color: #ffffff; justify-content: center; gap: 8px;">
-            ${getIcon('printer')} Download / Print All Mentors at Once (${baseAll.length} Mentors)
+            ${getIcon('printer')} Download / Print All Mentors at Once (${baseAllWithMentees.length} Mentors)
           </button>
         </div>
 
-        <!-- Option 2: Print Current Filtered Trainers (if different) -->
-        ${baseCurrent.length !== baseAll.length ? `
+        <!-- Option 2: Print Current Filtered Mentors (if different) -->
+        ${baseCurrentWithMentees.length !== baseAllWithMentees.length && baseCurrentWithMentees.length > 0 ? `
           <div style="border: 1px solid #cbd5e1; border-radius: 6px; padding: 12px 14px; background: #ffffff;">
             <div style="display: flex; justify-content: space-between; align-items: center;">
               <div>
                 <span style="font-size: 11px; font-weight: 800; color: #0f172a; text-transform: uppercase;">
-                  Print Current Filtered Selection (${baseCurrent.length} Trainers)
+                  Print Current Filtered Selection (${baseCurrentWithMentees.length} Mentors)
                 </span>
-                <p style="margin: 2px 0 0; font-size: 11px; color: #64748b;">Matches your active search and expertise filters.</p>
+                <p style="margin: 2px 0 0; font-size: 11px; color: #64748b;">Matches your active search and expertise filters (with assigned mentees).</p>
               </div>
               <button type="button" id="btnPrintFilteredTrainers" class="btn btn-outline" style="height: 36px; padding: 0 14px; font-weight: 700; font-size: 12px; gap: 6px; border-color: #0f172a; color: #0f172a;">
-                ${getIcon('filter')} Print Filtered (${baseCurrent.length})
+                ${getIcon('filter')} Print Filtered (${baseCurrentWithMentees.length})
               </button>
             </div>
           </div>
         ` : ''}
 
-        <!-- Option 3: Print for Single Trainer -->
+        <!-- Option 3: Print for Single Mentor -->
         <div style="border: 1px solid #cbd5e1; border-radius: 6px; padding: 12px 14px; background: #ffffff;">
           <label style="display: block; font-size: 11px; font-weight: 800; color: #0f172a; margin-bottom: 6px; text-transform: uppercase; letter-spacing: 0.04em;">
-            Print for an Individual Trainer / Mentor
+            Print for an Individual Mentor
           </label>
           <div style="display: flex; gap: 8px;">
             <select id="selTrackerTrainer" class="form-control" style="flex: 1; height: 38px; font-size: 12px; font-weight: 600; border: 1.5px solid #cbd5e1; border-radius: 6px; padding: 0 10px;">
-              <option value="">-- Choose Trainer --</option>
-              ${baseAll.map(t => {
+              <option value="">-- Choose Mentor (${baseAllWithMentees.length} with mentees) --</option>
+              ${baseAllWithMentees.map(t => {
                 const trnProgs = state.getTrainerPrograms(t.id);
                 const trnMentees = state.getTrainerMentees(t.id);
                 return `
@@ -1146,7 +1185,7 @@ export function openTrainerTrackerModal({ trainers = [], allTrainers = [], defau
   // Action: Print All
   overlay.querySelector('#btnPrintAllTrainers').addEventListener('click', () => {
     close();
-    printTrainerOfflineTracker(baseAll);
+    printTrainerOfflineTracker(baseAllWithMentees);
   });
 
   // Action: Print Filtered
@@ -1154,21 +1193,26 @@ export function openTrainerTrackerModal({ trainers = [], allTrainers = [], defau
   if (btnFiltered) {
     btnFiltered.addEventListener('click', () => {
       close();
-      printTrainerOfflineTracker(baseCurrent);
+      printTrainerOfflineTracker(baseCurrentWithMentees);
     });
   }
 
-  // Action: Print Selected Trainer
+  // Action: Print Selected Mentor
   overlay.querySelector('#btnPrintSelectedTrainer').addEventListener('click', () => {
     const sel = overlay.querySelector('#selTrackerTrainer');
     const tid = sel.value;
     if (!tid) {
-      toast.warning('Please select a trainer from the dropdown to print.');
+      toast.warning('Please select a mentor from the dropdown to print.');
       return;
     }
     const t = state.getTrainerById(tid);
     if (!t) {
-      toast.error('Selected trainer not found.');
+      toast.error('Selected mentor not found.');
+      return;
+    }
+    const mentees = state.getTrainerMentees(t.id);
+    if (!mentees || mentees.length === 0) {
+      toast.warning(`Mentor "${t.name}" has no assigned mentees to print.`);
       return;
     }
     close();

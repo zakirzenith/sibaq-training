@@ -207,7 +207,9 @@ export function renderTrainersView(container, navigateTo) {
             <span class="saas-tag-pill p-stage">${t.expertise}</span>
           </div>
           <div class="stc-actions">
-            <button class="saas-circle-btn btn-print-trainer-tracker" title="Print Program Assignments & Candidates Roster (A4 B&W)">
+            <button class="saas-circle-btn btn-print-trainer-tracker" 
+              title="${mentees.length === 0 ? 'No mentees assigned yet to print' : 'Print Program Assignments & Candidates Roster (A4 B&W)'}"
+              ${mentees.length === 0 ? 'style="opacity: 0.45;"' : ''}>
               ${getIcon('printer')}
             </button>
             <button class="saas-circle-btn btn-view-trainer-profile" title="View Trainer Profile & Candidates">
@@ -279,6 +281,10 @@ export function renderTrainersView(container, navigateTo) {
       if (btnPrintTracker) {
         btnPrintTracker.addEventListener('click', (e) => {
           e.stopPropagation();
+          if (mentees.length === 0) {
+            toast.warning(`Mentor "${t.name}" has no assigned mentees to print.`);
+            return;
+          }
           printTrainerOfflineTracker(t);
         });
       }

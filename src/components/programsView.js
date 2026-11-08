@@ -9,6 +9,7 @@ import { openCandidateSelectModal } from './modals/candidateSelectModal.js';
 import { openTrainerPickerModal } from './modals/trainerPickerModal.js';
 import { openTrainerProfileModal } from './modals/trainerProfileModal.js';
 import { createFilterBar } from './filterEngine.js';
+import { printProgramRoster, openProgramPrintModal } from './programPrint.js';
 
 export function renderProgramsView(container, navigateTo) {
   let activeFilters = {};
@@ -65,6 +66,9 @@ export function renderProgramsView(container, navigateTo) {
       </div>
 
       <div class="saas-header-actions">
+        <button id="btnPrintProgramsMaster" class="saas-pill-btn" title="Print Program Rosters & Directory">
+          ${getIcon('printer')} Print Directory
+        </button>
         <div class="saas-action-pill-group desktop-only-btn">
           <button id="btnDownloadProgTemplate" class="saas-pill-btn" title="Download formatted sample Excel sheet">
             ${getIcon('fileSpreadsheet')} Template
@@ -119,6 +123,9 @@ export function renderProgramsView(container, navigateTo) {
             <span class="pba-text">selected</span>
           </div>
           <div class="pba-buttons">
+            <button type="button" class="btn-pba-print" id="btnBulkPrintPrograms" style="display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px; background: #0f172a; color: #ffffff; border: 1px solid #334155; border-radius: 6px; font-size: 11.5px; font-weight: 700; cursor: pointer;">
+              ${getIcon('printer')} <span>Print Selected</span>
+            </button>
             <button type="button" class="btn-pba-delete" id="btnBulkDeletePrograms">
               ${getIcon('trash')} <span>Delete Selected</span>
             </button>
@@ -146,6 +153,7 @@ export function renderProgramsView(container, navigateTo) {
   const progBulkBar = container.querySelector('#progBulkBar');
   const pbaCountBadge = container.querySelector('#pbaCountBadge');
   const btnBulkDeletePrograms = container.querySelector('#btnBulkDeletePrograms');
+  const btnBulkPrintPrograms = container.querySelector('#btnBulkPrintPrograms');
   const btnCancelBulkSelect = container.querySelector('#btnCancelBulkSelect');
 
   // Modern Notion/Linear Filter Engine for Programs
@@ -279,6 +287,21 @@ export function renderProgramsView(container, navigateTo) {
     updateBulkBar();
     renderLeftList();
   });
+
+  // Execute bulk print
+  if (btnBulkPrintPrograms) {
+    btnBulkPrintPrograms.addEventListener('click', () => {
+      const count = selectedProgramIds.size;
+      if (count === 0) return;
+      const selectedList = Array.from(selectedProgramIds)
+        .map(id => state.getProgramById(id))
+        .filter(Boolean);
+      openProgramPrintModal({
+        programs: selectedList,
+        allPrograms: state.getPrograms()
+      });
+    });
+  }
 
   // Execute bulk deletion
   btnBulkDeletePrograms.addEventListener('click', () => {
@@ -448,6 +471,9 @@ export function renderProgramsView(container, navigateTo) {
         <div class="pdt-actions" style="display: flex; align-items: center; gap: 8px; flex-shrink: 0;">
           <button type="button" id="btnQuickToggleProgType" class="saas-pill-btn-sm" style="${isStage ? 'border-color: #f59e0b; color: #d97706; background: #fffbeb;' : 'border-color: #2563eb; color: #1d4ed8; background: #eff6ff;'}" title="Quickly switch between Stage and Non-Stage">
             ${isStage ? 'Switch to Non-Stage' : '🎭 Switch to Stage (Active)'}
+          </button>
+          <button type="button" id="btnPrintThisProg" class="saas-pill-btn-sm" title="Print Program Roster Sheet (A4 B&W)">
+            ${getIcon('printer')} <span>Print Roster</span>
           </button>
           <button type="button" id="btnExportThisProg" class="saas-pill-btn-sm desktop-only-btn" title="Export this roster to Excel">
             ${getIcon('download')} <span>Export</span>
@@ -665,6 +691,14 @@ export function renderProgramsView(container, navigateTo) {
       });
     }
 
+    // 0. Print Program Roster (Single Sheet A4 B&W)
+    const btnPrintThisProg = programDetailContainer.querySelector('#btnPrintThisProg');
+    if (btnPrintThisProg) {
+      btnPrintThisProg.addEventListener('click', () => {
+        printProgramRoster(program, { mode: 'dossier' });
+      });
+    }
+
     // 1. Export program roster (Desktop)
     const btnExportThisProg = programDetailContainer.querySelector('#btnExportThisProg');
     if (btnExportThisProg) {
@@ -811,6 +845,22 @@ export function renderProgramsView(container, navigateTo) {
   }
 
   // Top Action Buttons
+  const btnPrintProgramsMaster = container.querySelector('#btnPrintProgramsMaster');
+  if (btnPrintProgramsMaster) {
+    btnPrintProgramsMaster.addEventListener('click', () => {
+      const allProgs = state.getPrograms();
+      if (allProgs.length === 0) {
+        toast.info('No programs in the database to print.');
+        return;
+      }
+      openProgramPrintModal({
+        programs: getProgramsList(),
+        allPrograms: allProgs,
+        defaultProgramId: selectedProgramId
+      });
+    });
+  }
+
   const btnDownloadProgTemplate = container.querySelector('#btnDownloadProgTemplate');
   if (btnDownloadProgTemplate) {
     btnDownloadProgTemplate.addEventListener('click', () => {

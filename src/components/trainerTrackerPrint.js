@@ -1,4 +1,4 @@
-import { state, isStageProgram } from '../services/state.js';
+import { state } from '../services/state.js';
 import { getIcon } from './icons.js';
 import { toast } from './toast.js';
 
@@ -121,7 +121,7 @@ export function renderSingleTrainerTracker(trainerOrId) {
       
       <!-- Top Running Header (Visible on print) -->
       <div class="sheet-running-header">
-        <span class="srh-left">Sibaq '26 • Official Trainer Offline Progress Tracker</span>
+        <span class="srh-left">Sibaq '26 • Trainer Daily Progress Tracker</span>
         <span class="srh-center">Trainer: <strong>${trainer.name}</strong> • ${trainer.expertise || 'Mentor'}</span>
         <span class="srh-right">Daily Coaching Log (8 Nov – 20 Nov 2026)</span>
       </div>
@@ -130,8 +130,8 @@ export function renderSingleTrainerTracker(trainerOrId) {
       <div class="tracker-header-box">
         <div class="tracker-title-black-bg">
           <h1 class="ttb-title">Darul Huda Bengal • Sibaq '26</h1>
-          <div class="ttb-sub">Official Trainer &amp; Mentor Offline Daily Progress Tracker</div>
-          <div class="ttb-period">TRAINING TIMELINE: 8 NOVEMBER 2026 TO 20 NOVEMBER 2026 (13 DAYS)</div>
+          <div class="ttb-sub">TRAINER DAILY PROGRESS TRACKER • 8 TO 20 NOV 2026</div>
+          <div class="ttb-period">"CHAMPIONSHIP OR DEFEAT IS IN YOUR HANDS. TRAIN WITH UTMOST SERIOUSNESS — TREAT EVERY SINGLE DAY AS IF OUR ENTIRE EVENT VICTORY DEPENDS ON TODAY!"</div>
         </div>
       </div>
 
@@ -149,15 +149,9 @@ export function renderSingleTrainerTracker(trainerOrId) {
             <span class="td-value td-trainer-name">${trainer.name}</span>
           </div>
           
-          <div class="td-row-split">
-            <div class="td-cell">
-              <span class="td-label">DOMAIN / EXPERTISE:</span>
-              <span class="td-value td-bold">${trainer.expertise || 'Performing Arts & Public Oratory'}</span>
-            </div>
-            <div class="td-cell">
-              <span class="td-label">EXPERIENCE / BADGE:</span>
-              <span class="td-value">${trainer.experience || 'Senior Mentor'}</span>
-            </div>
+          <div class="td-row">
+            <span class="td-label">DOMAIN / EXPERTISE:</span>
+            <span class="td-value td-bold">${trainer.expertise || 'Specialized Mentor'}</span>
           </div>
 
           <div class="td-row-split">
@@ -173,53 +167,6 @@ export function renderSingleTrainerTracker(trainerOrId) {
         </div>
       </div>
 
-      <!-- Assigned Programs & Enrolled Candidates Directory Table -->
-      <div class="programs-ref-box">
-        <div class="ref-box-title">
-          <span>ASSIGNED PROGRAMS &amp; CANDIDATES DIRECTORY</span>
-          <span class="ref-count-pill">${totalProgramsCount} Programs • ${totalMenteesCount} Candidates</span>
-        </div>
-        <table class="ref-table">
-          <thead>
-            <tr>
-              <th style="width: 5%; text-align: center;">SL</th>
-              <th style="width: 14%;">Program Code</th>
-              <th style="width: 28%;">Program Title</th>
-              <th style="width: 13%;">Category &amp; Type</th>
-              <th style="width: 40%;">Enrolled Candidates (Admission / Chest No &amp; Name)</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${programsWithCandidates.length > 0 ? programsWithCandidates.map((p, idx) => `
-              <tr>
-                <td style="text-align: center; font-weight: 800;">${idx + 1}</td>
-                <td class="font-mono font-bold">${p.code || '—'}</td>
-                <td class="font-bold">${p.name || 'Untitled Program'}</td>
-                <td>
-                  ${p.category || 'General'}
-                  <span class="type-pill-text">[${isStageProgram(p) ? 'Stage' : 'Non-Stage'}]</span>
-                </td>
-                <td>
-                  ${p.resolvedCandidates && p.resolvedCandidates.length > 0 
-                    ? p.resolvedCandidates.map(c => `
-                      <span class="cand-inline-chip">
-                        <strong>${formatChestNo(c)}</strong> ${c.name}
-                      </span>
-                    `).join(', ')
-                    : '<span style="color: #666; font-style: italic;">No candidates enrolled yet</span>'}
-                </td>
-              </tr>
-            `).join('') : `
-              <tr>
-                <td colspan="5" style="text-align: center; color: #555; padding: 8px; font-style: italic;">
-                  No digital programs registered under this trainer. Mentors may write assignments by hand below.
-                </td>
-              </tr>
-            `}
-          </tbody>
-        </table>
-      </div>
-
       <!-- Daily Progress Tracking Log: 8 NOV TO 20 NOV -->
       <div class="daily-tracker-container">
         <div class="daily-tracker-header">
@@ -230,13 +177,13 @@ export function renderSingleTrainerTracker(trainerOrId) {
         <table class="daily-master-table">
           <thead>
             <tr>
-              <th style="width: 12%;">Date &amp; Day</th>
-              <th style="width: 24%;">Candidate (Mentee)</th>
-              <th style="width: 22%;">Program Assigned</th>
-              <th style="width: 9%; text-align: center;">Absent</th>
-              <th style="width: 10%; text-align: center;">Readiness %</th>
-              <th style="width: 15%;">Mentor Remarks &amp; Focus Drills</th>
-              <th style="width: 8%; text-align: center;">Sign</th>
+              <th style="width: 11%;">Date &amp; Day</th>
+              <th style="width: 26%;">Candidate (Mentee)</th>
+              <th style="width: 23%;">Program Assigned</th>
+              <th style="width: 8%; text-align: center;">Absent</th>
+              <th style="width: 9%; text-align: center;">Readiness %</th>
+              <th style="width: 17%;">Mentor Remarks &amp; Focus Drills</th>
+              <th style="width: 6%; text-align: center;">Sign</th>
             </tr>
           </thead>
           ${trackerDates.map(d => `
@@ -251,14 +198,13 @@ export function renderSingleTrainerTracker(trainerOrId) {
                     </td>
                   ` : ''}
 
-                  <!-- Candidate Name & Chest No -->
+                  <!-- Candidate Name & Chest No (Single line, no SL number) -->
                   <td class="cand-col">
                     ${item.candidate ? `
-                      <div class="cand-title-line">
-                        <span class="cand-chest-mono">${formatChestNo(item.candidate)}</span>
+                      <div class="cand-single-line" title="${item.candidate.name}">
                         <strong class="cand-name-text">${item.candidate.name}</strong>
+                        <span class="cand-chest-tag">(${formatChestNo(item.candidate)}${item.candidate.class ? ` • ${item.candidate.class}` : ''})</span>
                       </div>
-                      ${item.candidate.class ? `<div class="cand-class-sub">${item.candidate.class}</div>` : ''}
                     ` : `
                       <div class="blank-write-line">Candidate: __________________</div>
                     `}
@@ -304,34 +250,36 @@ export function renderSingleTrainerTracker(trainerOrId) {
         </table>
       </div>
 
-      <!-- Final Official Sign-Off Section -->
-      <div class="final-signoff-box">
-        <div class="fsb-title">OFFICIAL COMPLETION &amp; VALIDATION SIGN-OFF</div>
-        <div class="fsb-grid">
-          <div class="fsb-cell">
-            <div class="fsb-lbl">Designated Trainer / Mentor:</div>
-            <div class="fsb-name">${trainer.name}</div>
-            <div class="fsb-sign-line"></div>
-            <div class="fsb-sub-date">Signature &amp; Date</div>
+      <!-- Bottom Action Strip: Important NB Notice & Single Trainer Signature -->
+      <div class="tracker-footer-strip">
+        <!-- NB Notice Box -->
+        <div class="tfs-nb-box">
+          <div class="tfs-nb-header">
+            <span class="nb-pill">IMPORTANT (NB)</span>
+            <span class="nb-title">MANDATORY ESCALATION DIRECTIVE</span>
           </div>
-          <div class="fsb-cell">
-            <div class="fsb-lbl">Competition Controller:</div>
-            <div class="fsb-name">Sibaq Operations Team</div>
-            <div class="fsb-sign-line"></div>
-            <div class="fsb-sub-date">Signature &amp; Date</div>
+          <div class="tfs-nb-content">
+            If any candidate is <strong>not practicing</strong>, <strong>refuses your orders/instructions</strong>, or is performing <strong>very low</strong>, contact immediately:
+            <div class="tfs-nb-contacts">
+              <span class="nb-contact">📞 <strong>+91 88917 17639</strong> (Rashid Ustad)</span>
+              <span class="nb-contact-sep">•</span>
+              <span class="nb-contact">📞 <strong>+91 83899 41063</strong> (Mehboob Ustad)</span>
+            </div>
           </div>
-          <div class="fsb-cell">
-            <div class="fsb-lbl">Academic Convener / Seal:</div>
-            <div class="fsb-name">Darul Huda Bengal</div>
-            <div class="fsb-sign-line"></div>
-            <div class="fsb-sub-date">Official Seal &amp; Verification</div>
-          </div>
+        </div>
+
+        <!-- Single Signature Box (Your Signature) -->
+        <div class="tfs-sign-box">
+          <div class="tfs-sign-role">TRAINER / MENTOR</div>
+          <div class="tfs-sign-name">${trainer.name}</div>
+          <div class="tfs-sign-line"></div>
+          <div class="tfs-sign-label">(Your Signature &amp; Date)</div>
         </div>
       </div>
 
       <!-- Running Page Footer -->
       <div class="sheet-bottom-note">
-        <span>Darul Huda Bengal • Sibaq '26 Official Trainer Offline Mentorship Log</span>
+        <span>Darul Huda Bengal • Sibaq '26 Trainer Offline Mentorship Log</span>
         <span>Trainer: <strong>${trainer.name}</strong> • ${totalMenteesCount} Mentees • Ref: SIB26-TRN-${(trainer.id || '').replace(/[^a-zA-Z0-9]/g, '')}</span>
       </div>
 
@@ -515,20 +463,25 @@ export function printTrainerOfflineTracker(trainerOrTrainers) {
           color: #ffffff !important;
         }
         .ttb-sub {
-          font-size: 10.5px;
+          font-size: 10px;
           font-weight: 800;
-          letter-spacing: 0.18em;
+          letter-spacing: 0.16em;
           text-transform: uppercase;
           margin-top: 3px;
           color: #eeeeee !important;
         }
         .ttb-period {
-          font-size: 9px;
-          font-weight: 700;
-          letter-spacing: 0.14em;
+          font-size: 8.5px;
+          font-weight: 800;
+          letter-spacing: 0.04em;
           text-transform: uppercase;
-          margin-top: 2px;
-          color: #cccccc !important;
+          margin-top: 5px;
+          line-height: 1.35;
+          color: #ffffff !important;
+          background: #1a1a1a;
+          padding: 4px 8px;
+          border-radius: 3px;
+          border: 1px solid #444444;
         }
 
         /* Trainer Summary Box (Black & White) */
@@ -632,79 +585,6 @@ export function printTrainerOfflineTracker(trainerOrTrainers) {
         }
         .td-badge-box {
           font-size: 10.5px;
-        }
-
-        /* Programs Reference Directory */
-        .programs-ref-box {
-          border: 1.5px solid #000000;
-          border-radius: 4px;
-          overflow: hidden;
-          margin-bottom: 8px;
-        }
-        .ref-box-title {
-          background: #000000 !important;
-          color: #ffffff !important;
-          padding: 4px 10px;
-          font-size: 9px;
-          font-weight: 900;
-          letter-spacing: 0.08em;
-          text-transform: uppercase;
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          -webkit-print-color-adjust: exact !important;
-          print-color-adjust: exact !important;
-        }
-        .ref-count-pill {
-          background: #ffffff;
-          color: #000000;
-          font-size: 8px;
-          font-weight: 900;
-          padding: 1px 6px;
-          border-radius: 3px;
-        }
-
-        .ref-table {
-          width: 100%;
-          border-collapse: collapse;
-          font-size: 8.5px;
-        }
-        .ref-table th {
-          background: #f0f0f0 !important;
-          color: #000000;
-          font-weight: 800;
-          text-transform: uppercase;
-          padding: 4px 6px;
-          border-bottom: 1.5px solid #000000;
-          border-right: 1px solid #000000;
-          text-align: left;
-          -webkit-print-color-adjust: exact !important;
-          print-color-adjust: exact !important;
-        }
-        .ref-table th:last-child {
-          border-right: none;
-        }
-        .ref-table td {
-          padding: 4px 6px;
-          border-bottom: 1px solid #000000;
-          border-right: 1px solid #000000;
-          vertical-align: top;
-        }
-        .ref-table tr:last-child td {
-          border-bottom: none;
-        }
-        .ref-table td:last-child {
-          border-right: none;
-        }
-        .cand-inline-chip {
-          display: inline-block;
-          margin-right: 4px;
-          white-space: nowrap;
-        }
-        .type-pill-text {
-          font-size: 8px;
-          font-weight: 700;
-          color: #333;
         }
 
         /* Daily Progress Tracking Container */
@@ -818,28 +698,23 @@ export function printTrainerOfflineTracker(trainerOrTrainers) {
         .cand-col {
           vertical-align: middle;
         }
-        .cand-title-line {
+        .cand-single-line {
           display: flex;
           align-items: baseline;
-          gap: 4px;
-        }
-        .cand-chest-mono {
-          font-family: monospace;
-          font-weight: 900;
-          font-size: 9px;
-          background: #f0f0f0;
-          border: 1px solid #000;
-          padding: 1px 4px;
-          border-radius: 2px;
+          gap: 5px;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
         }
         .cand-name-text {
           font-size: 9.5px;
-          color: #000;
+          font-weight: 800;
+          color: #000000;
         }
-        .cand-class-sub {
-          font-size: 8px;
-          color: #555;
-          margin-top: 1px;
+        .cand-chest-tag {
+          font-size: 8.5px;
+          font-weight: 700;
+          color: #222222;
         }
 
         .prog-col {
@@ -934,60 +809,98 @@ export function printTrainerOfflineTracker(trainerOrTrainers) {
           min-height: 18px;
         }
 
-        /* Final Official Sign-Off Section */
-        .final-signoff-box {
+        /* Bottom Action Strip: Important NB Notice & Single Trainer Signature */
+        .tracker-footer-strip {
+          display: flex;
           border: 1.5px solid #000000;
           border-radius: 4px;
-          overflow: hidden;
+          margin-top: 8px;
           margin-bottom: 6px;
           background: #ffffff;
+          overflow: hidden;
+          page-break-inside: avoid;
+          break-inside: avoid;
         }
-        .fsb-title {
+        .tfs-nb-box {
+          flex: 1;
+          padding: 6px 10px;
+          border-right: 1.5px solid #000000;
+          background: #ffffff;
+          display: flex;
+          flex-direction: column;
+          justify-content: center;
+        }
+        .tfs-nb-header {
+          display: flex;
+          align-items: center;
+          gap: 6px;
+          margin-bottom: 3px;
+        }
+        .nb-pill {
           background: #000000 !important;
           color: #ffffff !important;
-          padding: 4px 10px;
-          font-size: 8.5px;
+          font-size: 8px;
           font-weight: 900;
-          letter-spacing: 0.08em;
-          text-transform: uppercase;
+          padding: 1px 5px;
+          border-radius: 2px;
+          letter-spacing: 0.05em;
           -webkit-print-color-adjust: exact !important;
           print-color-adjust: exact !important;
         }
-        .fsb-grid {
-          display: grid;
-          grid-template-columns: repeat(3, 1fr);
-        }
-        .fsb-cell {
-          padding: 8px 12px;
-          border-right: 1px solid #000000;
-          display: flex;
-          flex-direction: column;
-          min-height: 64px;
-        }
-        .fsb-cell:last-child {
-          border-right: none;
-        }
-        .fsb-lbl {
-          font-size: 8px;
+        .nb-title {
+          font-size: 8.5px;
           font-weight: 800;
+          letter-spacing: 0.06em;
           text-transform: uppercase;
           color: #000000;
-          margin-bottom: 2px;
         }
-        .fsb-name {
+        .tfs-nb-content {
+          font-size: 8.5px;
+          color: #000000;
+          line-height: 1.35;
+        }
+        .tfs-nb-contacts {
+          margin-top: 3px;
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          font-size: 9px;
+          font-weight: 700;
+        }
+        .nb-contact-sep {
+          color: #888888;
+        }
+        .tfs-sign-box {
+          width: 170px;
+          min-width: 170px;
+          padding: 6px 12px;
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+          text-align: center;
+          background: #fdfdfd;
+        }
+        .tfs-sign-role {
+          font-size: 8px;
+          font-weight: 900;
+          letter-spacing: 0.06em;
+          text-transform: uppercase;
+          color: #000000;
+        }
+        .tfs-sign-name {
           font-size: 10px;
           font-weight: 800;
           color: #000000;
-          margin-bottom: auto;
+          margin-top: 1px;
         }
-        .fsb-sign-line {
+        .tfs-sign-line {
           border-bottom: 1.5px solid #000000;
-          margin-top: 24px;
-          margin-bottom: 3px;
+          margin: 18px 4px 3px;
         }
-        .fsb-sub-date {
-          font-size: 7.5px;
-          color: #444444;
+        .tfs-sign-label {
+          font-size: 8px;
+          font-weight: 700;
+          color: #333333;
           text-transform: uppercase;
         }
 
@@ -1241,3 +1154,4 @@ export function openTrainerTrackerModal({ trainers = [], allTrainers = [], defau
     printTrainerOfflineTracker(t);
   });
 }
+

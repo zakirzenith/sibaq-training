@@ -1,4 +1,4 @@
-import { state } from '../services/state.js';
+import { state, isStageProgram } from '../services/state.js';
 import { getIcon } from './icons.js';
 import { toast } from './toast.js';
 
@@ -48,10 +48,7 @@ export function getTrackerDates() {
  */
 export function getEnrichedCandidatePrograms(candidateId) {
   const candidatePrograms = state.getCandidatePrograms(candidateId) || [];
-  const stagePrograms = candidatePrograms.filter(p => {
-    const isNonStage = p.type === 'Non-Stage' || String(p.type || '').toLowerCase().includes('non');
-    return !isNonStage && p.status !== 'Inactive' && p.isActive !== false;
-  });
+  const stagePrograms = candidatePrograms.filter(p => isStageProgram(p));
 
   return stagePrograms.map(p => {
     const trn = p.trainerId ? state.getTrainerById(p.trainerId) : null;

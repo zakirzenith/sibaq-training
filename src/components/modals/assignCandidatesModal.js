@@ -1,4 +1,4 @@
-import { state } from '../../services/state.js';
+import { state, isStageProgram } from '../../services/state.js';
 import { excelService } from '../../services/excelService.js';
 import { toast } from '../toast.js';
 import { getIcon } from '../icons.js';
@@ -14,6 +14,7 @@ export function openAssignCandidatesModal({ programId, onSave = () => {} }) {
   // Work with a working set of assigned candidate IDs
   let assignedIds = new Set(program.candidateIds || []);
   let selectedTrainerId = program.trainerId || '';
+  const isStage = isStageProgram(program);
 
   const overlay = document.createElement('div');
   overlay.className = 'modal-backdrop';
@@ -24,13 +25,13 @@ export function openAssignCandidatesModal({ programId, onSave = () => {} }) {
       <div class="modal-header">
         <div class="program-title-block">
           <div class="sdb-badges-row mb-1">
-            <span class="saas-prog-capsule ${program.type === 'Stage' ? 'p-stage' : 'p-nonstage'}">${program.code}</span>
-            <span class="saas-tag-pill ${program.type === 'Stage' ? 'p-stage' : 'p-nonstage'}">
-              ${program.type === 'Stage' ? getIcon('stage') : getIcon('nonStage')} ${program.type}
+            <span class="saas-prog-capsule ${isStage ? 'p-stage' : 'p-nonstage'}">${program.code}</span>
+            <span class="saas-tag-pill ${isStage ? 'p-stage' : 'p-nonstage'}">
+              ${isStage ? getIcon('stage') : getIcon('nonStage')} ${isStage ? 'Stage' : 'Non-Stage'}
             </span>
             <span class="saas-tag-pill p-neutral">${program.category} Category</span>
-            <button type="button" id="btnAssignModalToggleType" class="btn btn-sm btn-outline" style="font-size: 11px; font-weight: 700; height: 26px; padding: 0 10px; margin-left: 6px; ${program.type === 'Stage' ? 'border-color: #f59e0b; color: #d97706; background: #fffbeb;' : 'border-color: #2563eb; color: #1d4ed8; background: #eff6ff;'}" title="Click to switch Stage / Non-Stage">
-              ${program.type === 'Stage' ? 'Switch to Non-Stage' : '🎭 Switch to Stage (Active)'}
+            <button type="button" id="btnAssignModalToggleType" class="btn btn-sm btn-outline" style="font-size: 11px; font-weight: 700; height: 26px; padding: 0 10px; margin-left: 6px; ${isStage ? 'border-color: #f59e0b; color: #d97706; background: #fffbeb;' : 'border-color: #2563eb; color: #1d4ed8; background: #eff6ff;'}" title="Click to switch Stage / Non-Stage">
+              ${isStage ? 'Switch to Non-Stage' : '🎭 Switch to Stage (Active)'}
             </button>
           </div>
           <h2 class="modal-title" style="font-size: 20px; font-weight: 800; color: #0f172a;">${program.name}</h2>
@@ -488,7 +489,7 @@ export function openAssignCandidatesModal({ programId, onSave = () => {} }) {
     btnToggleTypeModal.addEventListener('click', () => {
       const currentProg = state.getProgramById(program.id);
       if (!currentProg) return;
-      const newType = currentProg.type === 'Stage' ? 'Non-Stage' : 'Stage';
+      const newType = isStageProgram(currentProg) ? 'Non-Stage' : 'Stage';
       state.updateProgram(program.id, { type: newType });
       toast.success(`Program [${currentProg.code}] switched to ${newType}!`);
       close();

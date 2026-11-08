@@ -18,6 +18,25 @@ import { FIREBASE_CONFIG } from './firebaseConfig.js';
 
 const FIREBASE_CONFIG_KEY = 'mentorflow_firebase_config_v1';
 
+// Helper to sanitize data for Firestore (recursively strip undefined, normalize types)
+export function cleanFirestoreData(obj) {
+  if (obj === undefined) return null;
+  if (obj === null || typeof obj !== 'object') return obj;
+  if (obj instanceof Date) return obj.toISOString();
+  if (Array.isArray(obj)) {
+    return obj
+      .filter(item => item !== undefined)
+      .map(item => cleanFirestoreData(item));
+  }
+  const cleaned = {};
+  for (const [key, val] of Object.entries(obj)) {
+    if (val !== undefined) {
+      cleaned[key] = cleanFirestoreData(val);
+    }
+  }
+  return cleaned;
+}
+
 class FirebaseService {
   constructor() {
     this.app = null;
@@ -186,8 +205,12 @@ class FirebaseService {
   async setDoc(collectionName, docId, data) {
     if (!this.db || !this.isInitialized || this.isQuotaExceeded) return null;
     try {
-      const docRef = doc(this.db, collectionName, String(docId));
-      await setDoc(docRef, { ...data, updatedAt: new Date().toISOString() }, { merge: true });
+      const docRef = doc(this.db, collectionName, String(docId).trim());
+      const payload = cleanFirestoreData({
+        ...data,
+        updatedAt: new Date().toISOString()
+      });
+      await setDoc(docRef, payload, { merge: true });
       return true;
     } catch (e) {
       if (e && (e.code === 'resource-exhausted' || String(e.message || '').includes('Quota exceeded'))) {
@@ -230,15 +253,24 @@ class FirebaseService {
   }
 
   async batchSync(collectionName, items) {
-    if (!this.db || !this.isInitialized || this.isQuotaExceeded || !Array.isArray(items)) return null;
+    if (!this.db || !this.isInitialized || this.isQuotaExceeded || !Array.isArray(items) || items.length === 0) return null;
     try {
-      const batch = writeBatch(this.db);
-      items.forEach(item => {
-        if (!item.id) return;
-        const ref = doc(this.db, collectionName, String(item.id));
-        batch.set(ref, { ...item, updatedAt: new Date().toISOString() }, { merge: true });
-      });
-      await batch.commit();
+      // Firestore batch write limit is 500 documents per batch. Chunk by 400.
+      const CHUNK_SIZE = 400;
+      for (let i = 0; i < items.length; i += CHUNK_SIZE) {
+        const chunk = items.slice(i, i + CHUNK_SIZE);
+        const batch = writeBatch(this.db);
+        chunk.forEach(item => {
+          if (!item || !item.id) return;
+          const ref = doc(this.db, collectionName, String(item.id).trim());
+          const cleanItem = cleanFirestoreData({
+            ...item,
+            updatedAt: new Date().toISOString()
+          });
+          batch.set(ref, cleanItem, { merge: true });
+        });
+        await batch.commit();
+      }
       return true;
     } catch (e) {
       if (e && (e.code === 'resource-exhausted' || String(e.message || '').includes('Quota exceeded'))) {

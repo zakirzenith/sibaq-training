@@ -1,4 +1,4 @@
-import { state, getProgressStatus } from '../../services/state.js';
+import { state, getProgressStatus, isStageProgram } from '../../services/state.js';
 import { getIcon } from '../icons.js';
 import { toast } from '../toast.js';
 import { openTrainerFormModal } from './trainerFormModal.js';
@@ -81,7 +81,7 @@ export function openTrainerProfileModal({ trainerId, onUpdate = () => {} }) {
             <span class="p-stat-number">${assignedPrograms.length}</span>
             <span class="p-stat-label">Assigned Programs</span>
             <span class="text-xs text-muted" style="margin-top: 2px;">
-              ${assignedPrograms.filter(p => p.type === 'Stage').length} Stage • ${assignedPrograms.filter(p => p.type === 'Non-Stage').length} Non-Stage
+              ${assignedPrograms.filter(p => isStageProgram(p)).length} Stage • ${assignedPrograms.filter(p => !isStageProgram(p)).length} Non-Stage
             </span>
           </div>
 

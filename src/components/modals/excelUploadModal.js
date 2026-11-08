@@ -1,5 +1,5 @@
 import { excelService } from '../../services/excelService.js';
-import { state } from '../../services/state.js';
+import { state, isStageProgram } from '../../services/state.js';
 import { toast } from '../toast.js';
 import { getIcon } from '../icons.js';
 
@@ -311,8 +311,8 @@ export function openExcelUploadModal({ type = 'candidates', onComplete = () => {
           <td><strong>${row.name || '-'}</strong></td>
           <td><span class="badge badge-neutral">${row.category}</span></td>
           <td>
-            <button type="button" class="btn-toggle-preview-type badge ${row.type === 'Stage' ? 'badge-stage' : 'badge-nonstage'}" data-idx="${idx}" title="Click to toggle between Stage and Non-Stage" style="cursor: pointer; border: none;">
-              ${row.type === 'Stage' ? getIcon('stage') : getIcon('nonStage')} ${row.type} ⇄
+            <button type="button" class="btn-toggle-preview-type badge ${isStageProgram(row) ? 'badge-stage' : 'badge-nonstage'}" data-idx="${idx}" title="Click to toggle between Stage and Non-Stage" style="cursor: pointer; border: none;">
+              ${isStageProgram(row) ? getIcon('stage') : getIcon('nonStage')} ${isStageProgram(row) ? 'Stage' : 'Non-Stage'} ⇄
             </button>
           </td>
         `;
@@ -320,7 +320,8 @@ export function openExcelUploadModal({ type = 'candidates', onComplete = () => {
         const toggleBtn = tr.querySelector('.btn-toggle-preview-type');
         if (toggleBtn) {
           toggleBtn.addEventListener('click', () => {
-            row.type = row.type === 'Stage' ? 'Non-Stage' : 'Stage';
+            row.type = isStageProgram(row) ? 'Non-Stage' : 'Stage';
+            row.isManualType = true;
             renderPreview(rows);
           });
         }

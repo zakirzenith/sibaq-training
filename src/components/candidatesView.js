@@ -1,4 +1,4 @@
-import { state } from '../services/state.js';
+import { state, isStageProgram } from '../services/state.js';
 import { excelService } from '../services/excelService.js';
 import { toast } from './toast.js';
 import { getIcon } from './icons.js';
@@ -164,7 +164,7 @@ export function renderCandidatesView(container, navigateTo) {
           let activeStage = 0;
           cands.forEach(c => {
             const progs = pMap.get(String(c.id).toLowerCase()) || (c.adNo ? pMap.get(String(c.adNo).toLowerCase()) : null) || [];
-            const hasStage = progs.some(p => p.type === 'Stage' && p.status !== 'Inactive' && p.isActive !== false);
+            const hasStage = progs.some(p => isStageProgram(p));
             if (hasStage) activeStage++;
           });
           const inactiveNonStage = cands.length - activeStage;
@@ -314,7 +314,7 @@ export function renderCandidatesView(container, navigateTo) {
 
       // Fast O(1) Candidate Programs Lookup
       const progs = progMap.get(String(c.id).toLowerCase()) || (c.adNo ? progMap.get(String(c.adNo).toLowerCase()) : null) || [];
-      const hasStage = progs.some(p => p.type === 'Stage' && p.status !== 'Inactive' && p.isActive !== false);
+      const hasStage = progs.some(p => isStageProgram(p));
 
       // Filter: Candidate Status
       if (activeFilters.status) {
@@ -361,8 +361,8 @@ export function renderCandidatesView(container, navigateTo) {
 
     filtered.forEach(c => {
       const assignedPrograms = progMap.get(String(c.id).toLowerCase()) || (c.adNo ? progMap.get(String(c.adNo).toLowerCase()) : null) || [];
-      const stagePrograms = assignedPrograms.filter(p => p.type === 'Stage' && p.status !== 'Inactive' && p.isActive !== false);
-      const isInactiveNonStage = c.status === 'Inactive' || stagePrograms.length === 0;
+      const stagePrograms = assignedPrograms.filter(p => isStageProgram(p));
+      const isInactiveNonStage = stagePrograms.length === 0;
       const initials = (c.name || 'C').split(' ').map(n => n[0]).slice(0, 2).join('');
 
       // 1. Desktop Table Row
@@ -400,8 +400,8 @@ export function renderCandidatesView(container, navigateTo) {
                 ? assignedPrograms
                     .map(
                       p => {
-                        const isNonStage = p.type === 'Non-Stage' || p.status === 'Inactive';
-                        if (isNonStage) {
+                        const isStage = isStageProgram(p);
+                        if (!isStage) {
                           return `
                             <span class="saas-prog-capsule p-nonstage clickable-program" data-pid="${p.id}" title="${p.name} (Non-Stage - Completed)" style="opacity: 0.65; text-decoration: line-through; border-style: dashed; cursor: pointer;">
                               ${p.code} (Done)
@@ -475,8 +475,8 @@ export function renderCandidatesView(container, navigateTo) {
           ${
             assignedPrograms.length > 0
               ? assignedPrograms.map(p => {
-                const isNonStage = p.type === 'Non-Stage' || p.status === 'Inactive';
-                if (isNonStage) {
+                const isStage = isStageProgram(p);
+                if (!isStage) {
                   return `
                     <span class="saas-prog-capsule p-nonstage clickable-program" data-pid="${p.id}" style="opacity: 0.65; text-decoration: line-through; border-style: dashed; cursor: pointer;">
                       ${p.code} (Done)

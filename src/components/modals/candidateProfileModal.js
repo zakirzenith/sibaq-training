@@ -20,7 +20,7 @@ export function openCandidateProfileModal({ candidateId, onUpdate = () => {} }) 
 
   const assignedPrograms = state.getCandidatePrograms(candidate.id);
   const stagePrograms = state.getCandidateStagePrograms(candidate.id);
-  const isInactiveCand = candidate.status === 'Inactive' || stagePrograms.length === 0;
+  const isInactiveCand = stagePrograms.length === 0;
 
   // Collect unique trainers across assigned programs
   const trainersMap = new Map();

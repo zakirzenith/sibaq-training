@@ -1,4 +1,4 @@
-import { state, getProgressStatus } from '../../services/state.js';
+import { state, getProgressStatus, isStageProgram } from '../../services/state.js';
 import { getIcon } from '../icons.js';
 import { openCandidateDossierModal } from './candidateDossierModal.js';
 import { openProgramFormModal } from './programFormModal.js';
@@ -61,7 +61,8 @@ export function openProgramQuickViewModal(programId, contextCandidateId = null) 
   const overlay = document.createElement('div');
   overlay.className = 'modal-backdrop';
 
-  const typeClass = program.type === 'Stage' ? 'p-stage' : 'p-nonstage';
+  const isStage = isStageProgram(program);
+  const typeClass = isStage ? 'p-stage' : 'p-nonstage';
 
   overlay.innerHTML = `
     <div class="modal-dialog modal-lg" style="max-width: 720px; width: 95%; max-height: 90vh; display: flex; flex-direction: column;">
@@ -80,8 +81,8 @@ export function openProgramQuickViewModal(programId, contextCandidateId = null) 
               <span class="badge badge-neutral" style="font-size: 10px; font-weight: 700;">
                 ${program.category || 'General'}
               </span>
-              <span class="badge ${program.type === 'Stage' ? 'badge-stage' : 'badge-neutral'}" style="font-size: 10px; font-weight: 700;">
-                ${program.type}
+              <span class="badge ${isStage ? 'badge-stage' : 'badge-neutral'}" style="font-size: 10px; font-weight: 700;">
+                ${isStage ? 'Stage' : 'Non-Stage'}
               </span>
             </div>
             <h2 class="modal-title" style="font-size: 18px; margin: 0; color: #0f172a; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;">

@@ -1,4 +1,4 @@
-import { state } from '../../services/state.js';
+import { state, isStageProgram } from '../../services/state.js';
 import { getIcon } from '../icons.js';
 import { openProgramQuickViewModal } from './programQuickViewModal.js';
 
@@ -177,7 +177,7 @@ export function openCandidateDossierModal(candidateId) {
           ` : `
             <div style="display: flex; flex-direction: column; gap: 10px;">
               ${programReports.map(pr => {
-                const progTypeClass = pr.program.type === 'Stage' ? 'p-stage' : 'p-nonstage';
+                const progTypeClass = isStageProgram(pr.program) ? 'p-stage' : 'p-nonstage';
                 const deltaFormatted = pr.scoreDelta > 0 ? `+${pr.scoreDelta}%` : `${pr.scoreDelta}%`;
                 const deltaColor = pr.scoreDelta > 0 ? '#10b981' : (pr.scoreDelta < 0 ? '#ef4444' : '#64748b');
 

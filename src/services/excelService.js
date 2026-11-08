@@ -15,9 +15,24 @@ function cleanKey(str) {
 
 // Helper to intelligently classify Stage vs Non-Stage
 export function inferProgramType(rawType = '', code = '', name = '') {
+  // 1. Program Code 3rd character rule from start (Highest Priority)
+  // Check 3rd character from start of code:
+  // e.g. UNN1 -> 3rd char is 'N' => Non-Stage
+  // e.g. BSO1 or BSS1 -> 3rd char is 'O' or 'S' => Stage
+  const c = String(code || '').trim().toUpperCase();
+  const cleanCode = c.replace(/[^A-Z0-9]/g, '');
+  const thirdChar = cleanCode.length >= 3 ? cleanCode.charAt(2) : (c.length >= 3 ? c.charAt(2) : '');
+
+  if (thirdChar === 'N') {
+    return 'Non-Stage';
+  }
+  if (thirdChar === 'O' || thirdChar === 'S') {
+    return 'Stage';
+  }
+
   const cleanVal = String(rawType || '').trim().toLowerCase();
 
-  // 1. Explicit cell value matched (Priority #1)
+  // 2. Explicit cell value matched
   if (
     cleanVal.includes('non') ||
     cleanVal.includes('off') ||
@@ -32,8 +47,7 @@ export function inferProgramType(rawType = '', code = '', name = '') {
     return 'Stage';
   }
 
-  // 2. Sibaq Code Prefix Heuristic
-  const c = String(code || '').trim().toUpperCase();
+  // 3. Sibaq Code Prefix Heuristic
   // Bidaya Stage: BS, BST; Ula Stage: US, UST; Thanawiyyah Stage: TS, TST; Aliyah Stage: AS, AST
   if (/^(BS|BST|UST|US|TST|TS|AST|AS)\d+/i.test(c) || c.includes('STG') || c.includes('STAGE') || c.includes('ONSTAGE')) {
     return 'Stage';
@@ -819,7 +833,7 @@ export const excelService = {
       seenNewUsernames.set(finalUsername, matchedTrainer.id);
 
       // Check if another trainer in the system already uses this username
-      const conflictTrainer = existingTrainers.find(t => 
+      const conflictTrainer = existingTrainers.find(t =>
         String(t.id).trim() !== String(matchedTrainer.id).trim() &&
         String(t.username || t.name.toLowerCase().replace(/[^a-z0-9]/g, '')).trim().toLowerCase() === finalUsername
       );

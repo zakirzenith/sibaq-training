@@ -1,4 +1,4 @@
-import { state } from '../../services/state.js';
+import { state, isStageProgram } from '../../services/state.js';
 import { toast } from '../toast.js';
 import { getIcon } from '../icons.js';
 import { openTrainerPickerModal } from './trainerPickerModal.js';
@@ -39,8 +39,8 @@ export function openProgramFormModal({ program = null, onSave = () => {} }) {
           <div class="form-group flex-1">
             <label class="form-label" for="selProgType">Type (Stage / Non-Stage) *</label>
             <select id="selProgType" class="form-select">
-              <option value="Stage" ${program && program.type === 'Stage' ? 'selected' : ''}>Stage</option>
-              <option value="Non-Stage" ${!program || program.type === 'Non-Stage' ? 'selected' : ''}>Non-Stage</option>
+              <option value="Stage" ${program && isStageProgram(program) ? 'selected' : ''}>Stage</option>
+              <option value="Non-Stage" ${!program || !isStageProgram(program) ? 'selected' : ''}>Non-Stage</option>
             </select>
           </div>
         </div>

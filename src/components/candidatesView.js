@@ -24,7 +24,7 @@ export function renderCandidatesView(container, navigateTo) {
 
       <div class="saas-header-actions">
         <div class="saas-action-pill-group desktop-only-btn">
-          <button id="btnBulkDailyOfflineTrackers" class="saas-pill-btn" title="Download Bulk Progress Tracker PDF for All Students (1 Nov - 20 Nov)" style="background: #000000; color: #ffffff; border-color: #000000; font-weight: 800;">
+          <button id="btnBulkDailyOfflineTrackers" class="saas-pill-btn" title="Download Bulk Progress Tracker PDF for All Students (8 Nov - 20 Nov)" style="background: #000000; color: #ffffff; border-color: #000000; font-weight: 800;">
             ${getIcon('printer')} Bulk Trackers PDF (All)
           </button>
           <button id="btnDailyOfflineTrackers" class="saas-pill-btn" title="Filter / Select Candidates Progress Trackers">

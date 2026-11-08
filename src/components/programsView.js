@@ -17,6 +17,7 @@ export function renderProgramsView(container, navigateTo) {
   let selectedProgramId = null;
   let isSelectionMode = false;
   const selectedProgramIds = new Set();
+  
 
   function getProgramsList() {
     const programs = state.getPrograms();

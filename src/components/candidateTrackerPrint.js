@@ -18,7 +18,7 @@ export function formatChestNo(cand) {
 }
 
 /**
- * Generate dates array from 1 NOV to 20 NOV 2026
+ * Generate dates array from 8 NOV to 20 NOV 2026 (13 Days)
  */
 export function getTrackerDates() {
   const dates = [];
@@ -27,7 +27,7 @@ export function getTrackerDates() {
   const year = 2026;
   const month = 10; // November (0-indexed)
 
-  for (let d = 1; d <= 20; d++) {
+  for (let d = 8; d <= 20; d++) {
     const dt = new Date(year, month, d);
     const dayStr = String(d).padStart(2, '0');
     dates.push({
@@ -84,7 +84,7 @@ function renderSingleCandidateTracker(candidate) {
       <div class="sheet-running-header">
         <span class="srh-left">Sibaq '26 • Offline Progress Tracker (Stage Programs)</span>
         <span class="srh-center">Candidate: <strong>${candidate.name}</strong> (Ad No: ${candidate.adNo || candidate.chestNo || '—'})</span>
-        <span class="srh-right">Daily Mentorship Log (1 Nov – 20 Nov 2026)</span>
+        <span class="srh-right">Daily Mentorship Log (8 Nov – 20 Nov 2026)</span>
       </div>
 
       <!-- Main Center Heading: Black Background -->
@@ -163,7 +163,7 @@ function renderSingleCandidateTracker(candidate) {
         </table>
       </div>
 
-      <!-- Clean Unified Daily Progress Log: 1 NOV to 20 NOV -->
+      <!-- Clean Unified Daily Progress Log: 8 NOV to 20 NOV -->
       <div class="daily-tracker-container">
         <table class="daily-master-table">
           <thead>
@@ -797,7 +797,7 @@ export function printCandidateOfflineTracker(candidateOrCandidates) {
           <span class="scb-title">Sibaq '26 Offline Progress Tracker</span>
           <span class="scb-hint">
             ${isSingle 
-              ? `Candidate: <strong>${singleCand.name}</strong> (Ad No: ${singleCand.adNo || singleCand.chestNo || '—'}) • 20 Days (1 Nov – 20 Nov)`
+              ? `Candidate: <strong>${singleCand.name}</strong> (Ad No: ${singleCand.adNo || singleCand.chestNo || '—'}) • 13 Days (8 Nov – 20 Nov)`
               : `Bulk Batch: <strong>${candidates.length} candidates</strong> loaded. Click "Print / Save as PDF" to download the complete file at once.`}
           </span>
         </div>
@@ -863,7 +863,7 @@ export function openCandidateTrackerModal({ candidates = [], allCandidates = [],
               Offline Progress Tracker Sheets
             </h3>
             <p class="modal-subtitle" style="font-size: 11.5px; color: #64748b; margin-top: 1px;">
-              Print official black & white 1 Nov – 20 Nov daily meeting & signature sheets (Stage Programs Only)
+              Print official black & white 8 Nov – 20 Nov daily meeting & signature sheets (Stage Programs Only)
             </p>
           </div>
         </div>
@@ -877,7 +877,7 @@ export function openCandidateTrackerModal({ candidates = [], allCandidates = [],
             <div style="background: #000000; color: #ffffff; font-size: 10px; font-weight: 900; letter-spacing: 0.08em; padding: 2px 7px; border-radius: 3px;">
               SIBAQ '26 • STAGE PROGRAMS ONLY
             </div>
-            <span style="font-size: 10px; font-weight: 800; color: #334155;">1 NOV TO 20 NOV 2026</span>
+            <span style="font-size: 10px; font-weight: 800; color: #334155;">8 NOV TO 20 NOV 2026</span>
           </div>
           <div style="font-size: 11px; line-height: 1.45; color: #1e293b;">
             All Non-Stage programs have concluded and are deactivated. This tracker prints <strong>active Stage programs only</strong>. Candidates who have only Non-Stage programs are deactivated and excluded (${excludedCount} non-stage candidate${excludedCount === 1 ? '' : 's'} excluded).
@@ -897,7 +897,7 @@ export function openCandidateTrackerModal({ candidates = [], allCandidates = [],
                 </span>
               </div>
               <p style="margin: 4px 0 0; font-size: 11.5px; color: #d4d4d4; line-height: 1.4;">
-                Download or print all <strong>${masterList.length} active Stage students'</strong> 1 Nov – 20 Nov daily progress tracker sheets in a single combined PDF with clean page-breaks.
+                Download or print all <strong>${masterList.length} active Stage students'</strong> 8 Nov – 20 Nov daily progress tracker sheets in a single combined PDF with clean page-breaks.
               </p>
             </div>
           </div>
